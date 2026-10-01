@@ -1,4 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dungeon of Capitalism</title><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image"></head><body>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dungeon of Capitalism</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image"></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Alegreya:wght@400;700&display=swap">
@@ -29,7 +29,7 @@
   --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
   --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
   --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
@@ -37,7 +37,7 @@
     --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
     --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
     --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
-    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
   }
 }
 
@@ -195,7 +195,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 
 .flows { display: flex; flex-direction: column; }
 .flows .plot { min-height: 220px; }
-.flowtables { overflow-y: auto; max-height: 300px; margin-top: 6px; }
+.flowtables { margin-top: 6px; }
 .flowtables h3 { margin: 10px 0 2px; font-size: 15px; color: var(--ink-2); }
 .flowtables table { font-size: 13.5px; }
 .flowtables td.cat { white-space: normal; }
@@ -247,9 +247,9 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .replaybar input[type=range] { width: 100%; min-width: 0; accent-color: var(--accent); padding: 0; min-height: 24px; background: transparent; border: 0; display: block; }
 /* вехи записи под ползунком: форма — род события, цель касания 24 px, подпись — #rbTip */
 .replaybar .rb-n { order: 9; flex-basis: 100%; }
-.replaybar .rb-track { padding-bottom: 22px; }
-.rb-marks { position: absolute; left: 8px; right: 8px; bottom: 0; height: 22px; }
-.rb-m { position: absolute; bottom: 0; width: 24px; height: 22px; margin-left: -12px; padding: 0; min-height: 0; border: 0; background: transparent; cursor: pointer; }
+.replaybar .rb-track { padding-bottom: 24px; }
+.rb-marks { position: absolute; left: 8px; right: 8px; bottom: 0; height: 24px; }
+.rb-m { position: absolute; bottom: 0; width: 24px; height: 24px; margin-left: -12px; padding: 0; min-height: 0; border: 0; background: transparent; cursor: pointer; }
 .rb-m::before, .rb-m::after { content: ""; position: absolute; left: 7px; top: 6px; width: 10px; height: 10px; background: var(--accent); }
 .rb-m::after { display: none; }
 .rb-m.rb-frontier::before { clip-path: polygon(0 0, 100% 0, 50% 100%); }
@@ -354,8 +354,8 @@ dialog form { text-align: right; margin-top: 12px; }
 }
 @media (min-width: 681px) and (max-width: 1000px) {
   .aux { order: 2; }
-  .clock { order: 4; width: auto; max-width: 330px; }
-  .controls { order: 5; flex: 1 1 0; min-width: 0; }
+  .clock { order: 4; width: 300px; }
+  .controls { order: 5; flex: 1 1 100%; }
 }
 @media (max-width: 680px) {
   /* телефон: название; вкладки и «Тема · ? · Об игре»; дата; одна строка управления —
@@ -370,7 +370,6 @@ dialog form { text-align: right; margin-top: 12px; }
   .m-only { display: inline-block; }
   .d-only { display: none; }
   /* запись на телефоне: время ведёт нижняя полоса — строка управления в шапке не нужна */
-  .is-replay .top .controls { display: none; }
   .rb-tip { top: auto; bottom: 30px; }   /* полоса внизу — подпись над вехой */
   .replaybar #rbSpeed { min-height: 40px; padding: 4px 6px; }
   /* без вложенных прокруток: шахта и таблицы — во всю высоту, страница листается одна */
@@ -379,7 +378,8 @@ dialog form { text-align: right; margin-top: 12px; }
   .chronicle { height: 60vh; }
   .replaybar .rb-play, .replaybar .rb-share { min-height: 40px; }
   .controls button, .controls select, .aux button, .views button { padding: 6px 9px; min-height: 44px; white-space: nowrap; }
-  .replaybar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 2px 10px; border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0, 0, 0, .18); }
+  .replaybar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 2px 10px; border-top: 1px solid var(--line); }
+  .replaybar .rb-track { order: -1; }
   .replaybar .rb-k, .replaybar .rb-n { display: none; }
   .replaybar .rb-track { flex: 1 1 100%; }
   .replaybar .rb-t { min-width: 0; }
@@ -411,7 +411,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
 .views button.on .ic { opacity: 1; }
 
 /* заголовок-сортировка: кнопка без собственного вида, вид — от th */
-.th-sort { all: unset; cursor: pointer; font: inherit; color: inherit; }
+.th-sort { all: unset; cursor: pointer; font: inherit; color: inherit; display: inline-flex; align-items: center; min-height: 24px; }
 .th-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 .replaybar .rb-share { padding: 3px 10px; font-size: 13px; min-height: 28px; }
 .fatal { border-color: var(--critical); }
@@ -437,6 +437,22 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
 .rb-legend .rb-m.rb-wiped::before, .rb-legend .rb-m.rb-wiped::after { left: 6px; top: 0; }
 .tbl-more { margin: 8px 0 2px; }
 #introClose.primary { align-self: flex-start; }
+/* свёрнутые подробности: статьи потоков */
+.more-details { margin-top: 8px; }
+.more-details > summary { cursor: pointer; color: var(--accent); font-weight: 700; padding: 6px 0; min-height: 32px; }
+.mult.flat .empty { margin: 8px 0 0; }
+/* запись: время ведёт только полоса записи (пауза, скорость, ползунок) — в шапке управления нет */
+.is-replay .top .controls { display: none; }
+.replaybar .rb-speed { min-height: 32px; padding: 3px 6px; }
+@media (min-width: 681px) {
+  .replaybar .rb-k { order: 0; }
+  .replaybar .rb-play, .replaybar .rb-speed { order: 1; }
+  .replaybar .rb-track { order: 2; }
+  .replaybar .rb-t { order: 3; }
+  .replaybar .rb-f { order: 4; }
+  .replaybar .rb-share { order: 5; }
+}
+.rb-tip .tip-t { color: var(--ink-3); font-variant-numeric: lining-nums tabular-nums; }
 
 </style>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -473,7 +489,7 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
   <div class="aux">
     <span class="ro" id="readonly" hidden>только просмотр</span>
     <button type="button" id="btnTheme" title="Сменить тему">Тема</button>
-    <button type="button" id="btnHelp" title="Как смотреть: короткая вводная">?</button>
+    <button type="button" id="btnHelp" title="Как смотреть: короткая вводная" aria-label="Как смотреть: вводная">?</button>
     <button type="button" id="btnAbout">Об игре</button>
   </div>
 </header>
@@ -516,6 +532,7 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
   </section>
   <section class="card doom" id="doom" aria-label="Угроза городу" tabindex="-1"></section>
   <section class="tiles" id="tiles" aria-label="Сводка"></section>
+  <div class="vh" id="announce" aria-live="polite"></div>
 
   <div class="grid">
     <section class="card exchange" id="secExchange">
@@ -562,7 +579,7 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
         <div class="card-tools"><span class="hint" id="bookHint"></span></div>
       </div>
       <div class="mult"><div class="plot" id="plot-flows"></div></div>
-      <div class="flowtables" id="flowTables"></div>
+      <details class="more-details" id="flowMore"><summary>Статьи: откуда деньги приходят и куда уходят</summary><div class="flowtables" id="flowTables"></div></details>
     </section>
   </div>
 
@@ -730,9 +747,10 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
   let LIVES = null, GONE = null;
   async function entity(id) {
     const t = at(R.meta.card_frames, R.head), c = (await cards())[id];
-    if (c && !(c.ended != null && c.ended <= R.head && c.ended > t)) return Object.assign({ asof: t }, c);
     if (!LIVES) [LIVES, GONE] = await Promise.all([getJSON("lives.json"), getJSON("gone.json")]);
     const L = LIVES[id];
+    // в кадре карточка ещё «живая», а конец уже наступил (между кадром и сейчас) — показать конец
+    if (c && !(L && L[1] != null && L[1] <= R.head)) return Object.assign({ asof: t }, c);
     if (!L) return { error: "В записи такого нет" };
     const [born, ended, name] = L;
     if (born > R.head) return { name, error: `${name} появится позже — ${short(born)}.`, seek: born + 1 };
@@ -879,9 +897,9 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
     const ms = MS = placeMarks();
     const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
     box.innerHTML = ms.map((m, i) => {
-      const what = m.items.map(x => x.text).join("; ");
+      const what = m.items.map(x => `${short(x.t)} — ${x.text}`).join("; ");
       return `<button type="button" class="rb-m rb-${m.k}" style="left:${(m.t / R.meta.ticks * 100).toFixed(2)}%" data-t="${m.t}" data-i="${i}" ` +
-        `tabindex="${i === 0 ? 0 : -1}" aria-label="${short(m.t)}, ${KIND_RU[m.k]}: ${esc(what)}"></button>`;
+        `tabindex="${i === 0 ? 0 : -1}" aria-label="${KIND_RU[m.k]}: ${esc(what)}"></button>`;
     }).join("");
   }
   function bindMarks(box) {
@@ -890,7 +908,7 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
     let hideT = null;
     const show = (b, stay) => {
       const m = MS[+b.dataset.i];
-      tip.innerHTML = `<b>${short(m.t)}</b> · ${KIND_RU[m.k]}<br>${m.items.map(x => esc(x.text)).join("<br>")}`;
+      tip.innerHTML = `<b>${KIND_RU[m.k]}</b><br>${m.items.map(x => `<span class="tip-t">${short(x.t)}</span> ${esc(x.text)}`).join("<br>")}`;
       tip.hidden = false;
       const x = parseFloat(b.style.left);
       tip.style.left = `clamp(0px, calc(${x}% - 120px), calc(100% - 240px))`;
@@ -911,9 +929,13 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
       e.preventDefault(); e.stopPropagation();
       all[i].tabIndex = -1; all[j].tabIndex = 0; all[j].focus();
     });
+    let touch = false, armed = null;
+    box.addEventListener("pointerdown", e => { touch = e.pointerType === "touch"; });
     box.addEventListener("click", e => {
       const b = e.target.closest(".rb-m");
       if (!b) return;
+      if (touch && armed !== b) { armed = b; show(b, true); return; }   // на касании: сперва подпись
+      armed = null;
       seek(Math.max(0, +b.dataset.t - 5));
       if (R.speed === "pause") R.speed = "3";
       show(b, true);
@@ -949,6 +971,8 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
       `<div class="verdict-go"><button type="button" data-go="0">Смотреть с начала</button>` +
       `<button type="button" data-go="${R.meta.seat_at}">С момента, когда игрок занял дом</button></div>`;
     el.hidden = false;
+    const an = document.getElementById("announce");
+    if (an) an.textContent = `Запись кончилась. ${verdict}`;
     // «прибыль частная, риск общий»: кто разбогател — рядом с теми, кто погиб
     frame().then(fr => {
       const hs = (fr.houses || []).filter(h => h.cash != null).sort((a, b) => b.cash - a.cash);
@@ -978,8 +1002,8 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
       `<div class="rb-track"><input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
       `<div class="rb-marks" id="rbMarks" role="group" aria-label="Вехи записи: стрелками — между вехами, Enter — перейти"></div>` +
       `<div class="rb-tip" id="rbTip" hidden></div></div>` +
-      `<button type="button" class="rb-play m-only" id="rbPlay">Пауза</button>` +
-      `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="m-only">` +
+      `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
+      `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="rb-speed">` +
       ["1", "3", "10", "30", "max"].map(v => `<option value="${v}"${v === "3" ? " selected" : ""}>${v === "max" ? "макс" : v + "/с"}</option>`).join("") + `</select>` +
       `<span class="rb-t" id="rbTime"></span>` +
       `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>` +
@@ -1015,7 +1039,11 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
           R.savedHead = R.head; R.savedAt = performance.now();
           try { localStorage.setItem("doc-replay-head", String(R.head)); } catch (e) { /* без памяти */ }
         }
-        sl.value = R.head; tm.textContent = label(R.head);
+        sl.value = R.head;
+        const lb = R.head >= R.meta.ticks ? "конец записи" : label(R.head);
+        // дата — в шапке; здесь — только пока тянут ползунок (куда перенесёт)
+        if (sl.getAttribute("aria-valuetext") !== lb) sl.setAttribute("aria-valuetext", lb);
+        if (tm.textContent) tm.textContent = "";
         showVerdict(R.head >= R.meta.ticks);
         const f = `таблицы — на ${short(at(R.meta.frames, R.head))}`;
         if (fr.textContent !== f) fr.textContent = f;
@@ -1046,7 +1074,7 @@ const MAX_POINTS = 4000;        // точек на график (прорежи�
 
 let META = null;
 const ST = { cols: null, px: null, vol: null, last: -1, seq: 0, epoch: null, state: null, events: [] };
-const UI = { good: "iron_ore", pxMode: "line", evLevel: 2, tab: "market", sort: {}, drawer: [], market: null };
+const UI = { good: "weapon", pxMode: "line", evLevel: 2, tab: "market", sort: {}, drawer: [], market: null };
 
 // ------------------------------------------------------------- формат
 let DAY = 360;
@@ -1116,6 +1144,8 @@ function savedTheme() { try { return localStorage.getItem("doc-theme"); } catch 
 function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
+  const b = document.getElementById("btnTheme");   // кнопка говорит, какая тема сейчас
+  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `Тема<span class="d-only">: ${dark ? "тёмная" : "светлая"}</span>`; b.setAttribute("aria-label", dark ? "Тема: тёмная" : "Тема: светлая"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
 }
 function currentTheme() {
   const t = document.documentElement.getAttribute("data-theme");
@@ -1203,15 +1233,20 @@ function renderDoom() {
   // прорыв свежий (≤ 45 дн.) — главное сейчас он, даже если угроза после него опала
   const bEv = fresh ? ST.events.slice().reverse().find(e => e.k === "breach") : null;
   const lost = bEv ? (bEv.text.match(/Погибли (\d+)/) || [])[1] : null;
-  const level = fresh ? "critical" : gd >= thr ? "good" : trend === "up" ? "critical" : "warn";
+  // цвет — опасность (во сколько раз угроза сильнее), а тренд — словами рядом
+  const level = fresh ? "critical" : gd >= thr ? "good" : r1 > 3 ? "critical" : "warn";
   const head = fresh ? `<span class="st critical">■ прорыв ${num(since)} дн. назад${lost ? ` — погибли ${lost} человек` : ""}</span>`
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
       : `<span class="st ${level}">${level === "critical" ? "■" : "▲"} угроза сильнее в ${num(r1, 1)} раза</span>`;
-  const move = trend == null ? "" : trend === "up" ? "разрыв за 45 дн. растёт" : trend === "down" ? "разрыв за 45 дн. сокращается" : "разрыв за 45 дн. не меняется";
+  const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
   const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `угроза сильнее в ${num(r1, 1)} раза`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${num(since)} дн. назад)` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
   el.dataset.level = level;
+  if (fresh && UI.saidBreach !== lastBreach) {       // о прорыве — вслух, один раз
+    UI.saidBreach = lastBreach;
+    $("#announce").textContent = `Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""}.`;
+  }
   el.innerHTML =
     `<div class="doom-main">` +
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
@@ -1287,7 +1322,7 @@ function buildHeader() {
 function renderHeader() {
   const s = ST.state;
   if (!s) return;
-  $("#date").textContent = fmtDay(s.tick);
+  $("#date").textContent = s.replay && s.tick >= s.end ? `конец ${Math.round(s.end / DAY)}-го года` : fmtDay(s.tick);
   $("#seedLabel").textContent = `мир № ${s.seed}`;
   const saved = s.replay ? (s.tick >= s.end ? "" : ` · запись — ${Math.round(s.end / DAY)} лет`) : s.saved ? ` · снимок ${evDay(s.saved.tick)} (${s.saved.at.slice(11, 16)})` : (s.can_save ? " · снимка ещё нет" : " · без сохранения");
   $("#tps").textContent = (s.replay && s.tick >= s.end ? `запись кончилась: прошло ${Math.round(s.end / DAY)} лет`
@@ -1444,9 +1479,10 @@ const MULT = [
   { id: "people", title: "Люди", series: [["pop", "горожане"], ["adv", "авантюристы"], ["down", "под землёй"]] },
   { id: "money", title: "Деньги", series: [["m_houses", "у домов"], ["m_town", "у горожан"], ["m_adv", "у отрядов"], ["treasury", "казна"]] },
   { id: "depth", title: "Глубина, ярус", series: [["frontier", "фронтир"], ["trip_d", "средний поход"]] },
-  { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза"], ["known", "известная совету"], ["guard", "гарнизон"]] },
+  // угроза — тем же цветом, что в полосе угрозы; гарнизон — цветом «держит»
+  { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза", "--critical"], ["known", "известная совету", "--warn"], ["guard", "гарнизон", "--good"]] },
   { id: "loss", title: "Потери за 45 дней", series: [["@fallen", "погибли"], ["@wounded", "ранены"], ["@bankrupt", "разорились дома"]] },
-  { id: "hunger", title: "Голод, %", series: [["%hunger", "голод"]], range: [0, 85] },
+  { id: "hunger", title: "Голод, %", series: [["%hunger", "голод"]], range: [0, 85], hideFlat: true },
 ];
 const PLOTS = {};
 function seriesData(key) {
@@ -1467,9 +1503,12 @@ function buildMultiples() {
   if (!META.full) {
     // режим игрока: настоящей угрозы город не знает — только вести вернувшихся
     const th = MULT.find(m => m.id === "threat");
-    th.series = [["known", "известная совету"], ["guard", "гарнизон"]];
+    th.series = [["known", "известная совету", "--critical"], ["guard", "гарнизон", "--good"]];
   }
-  host.innerHTML = MULT.map(m => `<div class="mult"><h3>${m.title}</h3><div class="plot" id="plot-${m.id}"></div></div>`).join("");
+  // ряд, который за всю историю не сдвинулся с нуля (голода не было), — не график, а строка
+  const flat = m => m.hideFlat && m.series.every(([k]) => seriesData(k).every(v => !v));
+  host.innerHTML = MULT.map(m => flat(m) ? `<div class="mult flat"><h3>${m.title}</h3><p class="empty">за всю запись — ни дня голода</p></div>`
+    : `<div class="mult"><h3>${m.title}</h3><div class="plot" id="plot-${m.id}"></div></div>`).join("");
   $("#plot-flows").innerHTML = "";
   const colors = ["--s1", "--s2", "--s3", "--s4"].map(css);
   const axis = {
@@ -1478,6 +1517,7 @@ function buildMultiples() {
   };
   for (const m of MULT.concat([FLOWS])) {
     const el = $("#plot-" + m.id);
+    if (!el) continue;
     const opts = {
       width: el.clientWidth || 300, height: 180,
       cursor: { drag: { x: true, y: false } },
@@ -1487,7 +1527,7 @@ function buildMultiples() {
         Object.assign({}, axis, { size: 56, values: (u, vals) => vals.map(compact) }),
       ],
       series: [{ label: "день", value: (u, v) => (v == null ? "—" : fmtDay(Math.round(v))) }]
-        .concat(m.series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
+        .concat(m.series.map(([, label, c], i) => ({ label, stroke: c ? css(c) : colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
       hooks: { setSelect: [u => { if (u.select.width > 0) PLOTS[m.id].zoomed = true; }] },
     };
     const u = new uPlot(opts, multData(m), el);
@@ -2297,6 +2337,7 @@ async function openAbout() {
 
 // ----------------------------------------------------------------- цикл
 async function fullReload() {
+  UI.hoverHouse = UI.hoverTable = false;          // после перемотки — новое состояние, даже если курсор над видом
   const h = await api(`/api/history?points=${MAX_POINTS}`);
   ST.cols = h.cols; ST.px = h.px; ST.vol = h.vol;
   ST.last = ST.cols.t[ST.cols.t.length - 1];
