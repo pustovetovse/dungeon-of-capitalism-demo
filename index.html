@@ -368,6 +368,8 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
 .th-sort { all: unset; cursor: pointer; font: inherit; color: inherit; }
 .th-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 .replaybar .rb-share { padding: 3px 10px; font-size: 13px; min-height: 28px; }
+.fatal { border-color: var(--critical); }
+.fatal p { margin: 6px 0 10px; }
 
 </style>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -579,10 +581,19 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   const R = { meta: null, hist: null, events: null, head: 0, speed: "3", epoch: 1,
     last: performance.now(), acc: 0, frames: new Map(), cards: new Map() };
 
-  const getJSON = p => fetch(BASE + p).then(r => {
-    if (!r.ok) throw new Error(p + ": " + r.status);
-    return r.json();
-  });
+  // данные записи — файлами рядом; на мобильной сети запрос может сорваться — три попытки
+  const getJSON = async p => {
+    let last;
+    for (const wait of [0, 600, 1800]) {
+      if (wait) await new Promise(r => setTimeout(r, wait));
+      try {
+        const r = await fetch(BASE + p);
+        if (r.ok) return await r.json();
+        last = new Error(`${p}: ответ ${r.status}`);
+      } catch (e) { last = new Error(`${p}: нет связи`); }
+    }
+    throw last;
+  };
   const ready = (async () => {
     [R.meta, R.hist, R.events] = await Promise.all([getJSON("meta.json"), getJSON("history.json"), getJSON("events.json")]);
     R.head = Math.min(R.meta.seat_at + 40, R.meta.ticks);   // с того, как игрок занял дом
@@ -1103,7 +1114,14 @@ function buildGoodSelect() {
     buildPxSeries();
   });
 }
+// библиотека графика не загрузилась (сбой сети) — без неё работает всё, кроме самого графика
+const libMissing = (name, el) => {
+  if (typeof window[name] !== "undefined") return false;
+  if (el) el.innerHTML = `<p class="empty">График не загрузился — обновите страницу. Остальное работает.</p>`;
+  return true;
+};
 function buildPxChart() {
+  if (libMissing("LightweightCharts", $("#pxChart"))) return;
   const LC = LightweightCharts;
   if (PX.chart) PX.chart.remove();
   PX.chart = LC.createChart($("#pxChart"), {
@@ -1142,6 +1160,7 @@ function pxData() {
   return { main: idx.map(i => ({ time: t[i] * SEC, value: px[i] })), vol: idx.map(i => ({ time: t[i] * SEC, value: vol[i] })) };
 }
 function buildPxSeries() {
+  if (!PX.chart) return;
   const LC = LightweightCharts, ch = PX.chart;
   if (PX.main) { ch.removeSeries(PX.main); PX.main = null; PX.refLine = null; }
   if (PX.vol) { ch.removeSeries(PX.vol); PX.vol = null; }
@@ -1163,9 +1182,9 @@ function buildPxSeries() {
   updateRefLine();
 }
 function updateRefLine() {
-  const LC = LightweightCharts;
   const row = UI.market && UI.market.find(r => r.g === UI.good);
   if (!PX.main || !row) return;
+  const LC = LightweightCharts;
   if (!PX.refLine) {
     PX.refLine = PX.main.createPriceLine({
       price: row.ref, color: css("--ink-3"), lineWidth: 1, lineStyle: LC.LineStyle.Dashed,
@@ -1234,6 +1253,7 @@ function multData(m) {
 }
 function buildMultiples() {
   const host = $("#multiples");
+  if (libMissing("uPlot", host)) return;
   if (!META.full) {
     // режим игрока: настоящей угрозы город не знает — только вести вернувшихся
     const th = MULT.find(m => m.id === "threat");
@@ -1638,6 +1658,7 @@ function axisStyle() {
   };
 }
 function housePlot(id, series, range) {
+  if (libMissing("uPlot", $("#plot-" + id))) return;
   const el = $("#plot-" + id), colors = ["--s1", "--s2", "--s3", "--s4"].map(css), ax = axisStyle();
   el.innerHTML = "";
   const u = new uPlot({
@@ -2122,7 +2143,16 @@ async function main() {
   if (!UI.seat) { const me = await api("/api/me"); UI.seat = me.seat; }
   poll();
 }
-main();
+// страница не собралась (данные не пришли) — сказать, что делать, а не оставлять пустой экран
+main().catch(err => {
+  console.error(err);
+  const box = document.createElement("section");
+  box.className = "card fatal"; box.setAttribute("role", "alert");
+  box.innerHTML = `<h2>Не удалось загрузить мир</h2><p>${esc(err && err.message || String(err))}. Обычно помогает обновить страницу.</p>` +
+    `<button type="button" onclick="location.reload()">Обновить</button>`;
+  const main = document.getElementById("viewWorld");
+  main.insertBefore(box, main.firstChild);
+});
 
 </script>
 </body></html>
