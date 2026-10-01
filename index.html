@@ -1,0 +1,1808 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image"></head><body>
+<title>Dungeon of Capitalism</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Alegreya:wght@400;700&display=swap">
+<style>
+.uplot, .uplot *, .uplot *::before, .uplot *::after {box-sizing: border-box;}.uplot {font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";line-height: 1.5;width: min-content;}.u-title {text-align: center;font-size: 18px;font-weight: bold;}.u-wrap {position: relative;user-select: none;}.u-over, .u-under {position: absolute;}.u-under {overflow: hidden;}.uplot canvas {display: block;position: relative;width: 100%;height: 100%;}.u-axis {position: absolute;}.u-legend {font-size: 14px;margin: auto;text-align: center;}.u-inline {display: block;}.u-inline * {display: inline-block;}.u-inline tr {margin-right: 16px;}.u-legend th {font-weight: 600;}.u-legend th > * {vertical-align: middle;display: inline-block;}.u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}.u-inline.u-live th::after {content: ":";vertical-align: middle;}.u-inline:not(.u-live) .u-value {display: none;}.u-series > * {padding: 4px;}.u-series th {cursor: pointer;}.u-legend .u-off > * {opacity: 0.3;}.u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}.u-cursor-x, .u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}.u-hz .u-cursor-x, .u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}.u-hz .u-cursor-y, .u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}.u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline "background" shorthand */background-clip: padding-box !important;}.u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off {display: none;}
+/* Смотровая. Цвета — только токенами; тёмная тема по умолчанию, светлая — по
+   системе или переключателю. Серии графиков — проверенная палитра (dataviz),
+   отдельные ступени для каждой темы. */
+:root {
+  color-scheme: dark;
+  --bg: #14110f;
+  --surface: #1d1916;
+  --surface-2: #26211c;
+  --line: #3a322a;
+  --grid: #2c2620;
+  --ink: #efe6d8;
+  --ink-2: #c9bba5;
+  --ink-3: #8f8170;
+  --accent: #c9a25a;
+  --accent-ink: #1b1508;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --down: #e66767;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --font-text: "Old Standard TT", "Alegreya", Georgia, serif;
+  --font-head: "Cormorant", "Alegreya", Georgia, serif;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
+  --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #8a6421; --accent-ink: #fff8ea;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
+    --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #8a6421; --accent-ink: #fff8ea;
+    --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
+  }
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--ink);
+  font: 15px/1.45 var(--font-text);
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3 { font-family: var(--font-head); font-weight: 600; margin: 0; letter-spacing: .01em; }
+h1 { font-size: 26px; line-height: 1.1; }
+h2 { font-size: 21px; }
+h3 { font-size: 17px; margin: 14px 0 6px; }
+a, .ref { color: var(--accent); text-decoration: none; cursor: pointer; }
+a:hover, .ref:hover { text-decoration: underline; }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+button, select, input {
+  font: inherit; font-size: 14px; color: var(--ink);
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 5px 10px; min-height: 32px;
+}
+button { cursor: pointer; }
+button:hover { border-color: var(--ink-3); }
+button:disabled { opacity: .45; cursor: default; }
+button.ghost { background: transparent; border-color: transparent; }
+input[type=number] { width: 78px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { white-space: nowrap; border: 0; border-radius: 0; background: var(--surface-2); border-right: 1px solid var(--line); }
+.seg button:last-child { border-right: 0; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); }
+.seg.small button { font-size: 13px; padding: 3px 9px; min-height: 28px; }
+
+/* ---------------------------------------------------------------- шапка */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px;
+  padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
+}
+.brand .sub { color: var(--ink-3); font-size: 13px; }
+.clock { min-width: 190px; }
+.clock .date { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
+.clock .tps { color: var(--ink-3); font-size: 12px; }
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1; }
+.newworld { display: inline-flex; gap: 4px; }
+.aux { display: flex; gap: 8px; align-items: center; }
+.ro { color: var(--ink-3); font-size: 13px; font-style: italic; }
+.skipbar {
+  display: flex; gap: 12px; align-items: center; justify-content: center;
+  padding: 6px 16px; background: var(--surface-2); border-bottom: 1px solid var(--line);
+  color: var(--ink-2); font-size: 14px;
+}
+
+main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-width: 1600px; margin: 0 auto; }
+
+/* --------------------------------------------------------------- плитки */
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
+.tile .k { color: var(--ink-3); font-size: 13px; }
+.tile .v { font-family: var(--font-head); font-size: 28px; font-weight: 700; line-height: 1.1; }
+.tile .n { color: var(--ink-2); font-size: 12.5px; min-height: 18px; }
+.tile .st { font-size: 12.5px; }
+.st.good { color: var(--good); } .st.warn { color: var(--warn); }
+.st.serious { color: var(--serious); } .st.critical { color: var(--critical); }
+
+/* ---------------------------------------------------------------- карты */
+.card { scroll-margin-top: 110px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.card-head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.card-tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.hint { color: var(--ink-3); font-size: 13px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; }
+.exchange .lwc { height: 380px; }
+.pxinfo { color: var(--ink-2); font-size: 14px; min-height: 21px; margin-bottom: 4px; }
+.pxinfo b { color: var(--ink); font-weight: 700; }
+
+.chronicle { display: flex; flex-direction: column; height: 500px; }
+.events { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; min-height: 0; }
+.events li { display: grid; grid-template-columns: 74px 1fr; gap: 8px; padding: 5px 2px; border-bottom: 1px solid var(--grid); font-size: 14px; }
+.events li .t { color: var(--ink-3); font-size: 12.5px; padding-top: 1px; }
+.events li.lv3 .x::before { content: "◆ "; color: var(--critical); }
+.events li.lv2 .x::before { content: "◇ "; color: var(--accent); }
+.events li.k-frontier .x::before { content: "▼ "; color: var(--accent); }
+.events li.fresh { animation: fresh 1.6s ease-out; }
+@keyframes fresh { from { background: var(--surface-2); } to { background: transparent; } }
+.empty { color: var(--ink-3); font-style: italic; padding: 10px 2px; }
+
+.multiples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 18px; }
+.mult h3 { margin: 0 0 2px; font-size: 16px; }
+.mult .plot { min-height: 230px; }
+.uplot { font-family: var(--font-text); }
+.u-legend { font-size: 12.5px; color: var(--ink-2); text-align: left; }
+.u-legend .u-marker { border-radius: 2px; }
+.u-legend th { font-weight: 400; }
+.u-legend .u-value { color: var(--ink); }
+
+/* ----------------------------------------------------------- подземелье */
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+.dg-legend { color: var(--ink-3); font-size: 12.5px; margin-bottom: 6px; }
+.dg-head, .lvl { display: grid; grid-template-columns: 38px minmax(90px, 1.1fr) minmax(0, 2fr) 56px 128px; gap: 8px; align-items: center; }
+.dg-head { color: var(--ink-3); font-size: 12.5px; padding: 0 4px 4px; border-bottom: 1px solid var(--line); }
+.dg-head .num, .lvl .num { text-align: right; }
+.shaft { height: 460px; overflow-y: auto; }
+.lvl { padding: 2px 4px; min-height: 26px; border-bottom: 1px solid var(--grid); font-size: 13.5px; }
+.lvl .d { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--ink-2); }
+.lvl.dark { opacity: .55; }
+.lvl.front { background: var(--surface-2); }
+.frontline { font-size: 12px; color: var(--accent); border-top: 1px dashed var(--accent); padding: 1px 4px 3px; text-align: right; }
+.sbar { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
+.sbar.rumor i { opacity: .55; }
+.sbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--s1); border-radius: 3px; }
+.sbar b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+.sq { display: flex; flex-wrap: wrap; gap: 1px 3px; line-height: 1; }
+.sqdot { font-size: 14px; color: var(--accent); text-decoration: none !important; }
+.sqdot.ph-lost { color: var(--critical); }
+.more { font-size: 12px; color: var(--ink-3); }
+
+.flows { display: flex; flex-direction: column; }
+.flows .plot { min-height: 220px; }
+.flowtables { overflow-y: auto; max-height: 300px; margin-top: 6px; }
+.flowtables h3 { margin: 10px 0 2px; font-size: 15px; color: var(--ink-2); }
+.flowtables table { font-size: 13.5px; }
+.flowtables td.cat { white-space: normal; }
+.share { display: inline-block; vertical-align: middle; width: 54px; height: 6px; margin-left: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.share i { display: block; height: 100%; background: var(--ink-3); border-radius: 3px; }
+
+/* -------------------------------------------------------------- мой дом */
+.views button { font-family: var(--font-head); font-size: 16px; font-weight: 600; }
+.linecards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.lc { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; background: var(--surface-2); }
+.lc h3 { margin: 0 0 4px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.lc .kv { font-size: 13.5px; }
+.lc .dim { color: var(--ink-3); font-size: 12px; }
+.lc .lev { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+.lev .tag.mine { border-color: var(--accent); color: var(--ink); }
+.empty-card { padding: 18px; color: var(--ink-2); }
+
+.lc-act { margin-top: 8px; text-align: right; }
+.pl { border-bottom: 1px solid var(--grid); padding: 8px 0; }
+.pl-head { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; }
+.pl-ctrl { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.pl-ctrl input { width: 96px; }
+.pl-prev { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); font-size: 13px; }
+.pl-res { font-size: 13px; margin-top: 4px; }
+.drawer-body .hint { margin: 4px 0 8px; }
+
+.choosebar { background: var(--accent); color: var(--accent-ink); }
+.choosebar button { background: var(--surface); }
+.cands { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 10px; }
+.cand { border: 1px solid var(--line); border-radius: 10px; padding: 14px; background: var(--surface-2); display: flex; flex-direction: column; gap: 6px; }
+.cand h3 { margin: 0; font-size: 22px; }
+.cand .type { font-style: italic; color: var(--ink-2); }
+.cand ul { margin: 2px 0; padding-left: 18px; font-size: 14px; }
+.cand button { margin-top: auto; align-self: flex-start; }
+
+.away { border-color: var(--accent); }
+.away .kv { margin: 6px 0 10px; }
+#hJournal { max-height: 360px; overflow-y: auto; }
+
+#toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%) translateY(20px);
+  max-width: min(560px, calc(100vw - 32px)); padding: 9px 14px; border-radius: 8px; z-index: 40;
+  background: var(--surface-2); color: var(--ink); border: 1px solid var(--accent); font-size: 14px;
+  opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; }
+#toast.on { opacity: 1; transform: translateX(-50%); }
+.replaybar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 16px;
+  background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--ink-2); }
+.replaybar .rb-k { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--accent); }
+.replaybar input[type=range] { flex: 1 1 260px; min-width: 0; accent-color: var(--accent); padding: 0; min-height: 24px; background: transparent; border: 0; }
+.replaybar .rb-t { min-width: 150px; color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } .drawer { transition: none; } }
+
+/* --------------------------------------------------------------- вводная */
+.intro { border-color: var(--accent); display: flex; flex-direction: column; gap: 8px; }
+.intro-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.intro-head h2 { font-size: 24px; text-wrap: balance; }
+.intro p { margin: 0; max-width: 72ch; color: var(--ink-2); }
+.intro .intro-mode { color: var(--ink); }
+.intro-steps { margin: 2px 0; padding-left: 22px; display: grid; gap: 4px; max-width: 80ch; }
+.intro-steps li { padding-left: 2px; }
+.intro-steps a { font-weight: 700; }
+.intro-ctl { font-size: 13.5px; }
+.intro-body { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 32px; }
+.intro-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (min-width: 1100px) { .intro-body { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+#btnHelp { min-width: 32px; font-weight: 700; }
+#tiles { scroll-margin-top: 110px; }
+
+/* -------------------------------------------------------------- таблицы */
+.tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.tabs button { font-family: var(--font-head); font-size: 19px; font-weight: 600; background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; color: var(--ink-3); padding: 2px 10px; }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tablewrap { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 5px 8px; border-bottom: 1px solid var(--grid); text-align: left; white-space: nowrap; }
+th { position: sticky; top: 0; background: var(--surface); color: var(--ink-3); font-weight: 400; font-size: 13px; cursor: pointer; user-select: none; }
+th.num, td.num { text-align: right; }
+th.sorted::after { content: " ▾"; } th.sorted.asc::after { content: " ▴"; }
+tbody tr:hover { background: var(--surface-2); }
+tbody tr.sel { background: var(--surface-2); box-shadow: inset 3px 0 0 var(--accent); }
+td.dim { color: var(--ink-3); }
+td.wrap { white-space: normal; min-width: 180px; }
+.up { color: var(--good); } .down { color: var(--critical); }
+.tag { display: inline-block; font-size: 12px; padding: 0 6px; border-radius: 4px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+
+/* -------------------------------------------------------------- карточка */
+.drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); z-index: 20;
+  background: var(--surface); border-left: 1px solid var(--line);
+  transform: translateX(100%); transition: transform .18s ease-out;
+  display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0, 0, 0, .35);
+}
+.drawer.open { transform: none; }
+.drawer-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.drawer-head h2 { flex: 1; font-size: 23px; }
+.drawer-body { padding: 10px 16px 30px; overflow-y: auto; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 3px 14px; font-size: 14px; }
+.kv dt { color: var(--ink-3); } .kv dd { margin: 0; }
+.bar { display: inline-block; vertical-align: middle; width: 90px; height: 6px; border-radius: 3px; background: var(--surface-2); margin-right: 6px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.hist { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+.hist li { display: grid; grid-template-columns: 74px 1fr; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--grid); }
+.hist li .t { color: var(--ink-3); font-size: 12.5px; }
+
+dialog { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; max-width: 640px; width: calc(100vw - 32px); padding: 18px 22px; }
+dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.about-body h2 { margin: 12px 0 4px; }
+.about-body ul { padding-left: 20px; margin: 4px 0; }
+.about-body p { margin: 6px 0; }
+dialog form { text-align: right; margin-top: 12px; }
+
+@media (max-width: 1100px) {
+  .grid, .grid2 { grid-template-columns: minmax(0, 1fr); }
+  .multiples { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .chronicle { height: 420px; }
+}
+@media (max-width: 680px) {
+  .top { position: static; padding: 8px 16px; }
+  .controls .seg { flex-wrap: wrap; }
+  h1 { font-size: 21px; }
+  .clock { min-width: 0; }
+  .multiples { grid-template-columns: minmax(0, 1fr); }
+  .exchange .lwc { height: 300px; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main { padding: 12px 16px; }
+  .dg-head, .lvl { grid-template-columns: 28px minmax(60px, 1fr) minmax(0, 1.4fr) 92px; }
+  .dg-head span:nth-child(4), .lvl > span:nth-child(4) { display: none; }
+}
+
+/* иконки game-icons.net: спрайт в index.html, заливка currentColor */
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+.ic { width: 1.05em; height: 1.05em; fill: currentColor; vertical-align: -0.16em; margin-right: 0.35em; flex: none; }
+h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0.1em; }
+.tile .k .ic { color: var(--accent); opacity: 0.85; }
+.views .ic { opacity: 0.8; }
+.views button.on .ic { opacity: 1; }
+
+</style>
+<!-- icons:begin (собирает icons/sprite.py) -->
+<svg xmlns="http://www.w3.org/2000/svg" class="sprite" aria-hidden="true"><symbol id="i-village" viewBox="0 0 512 512"><path d="M109.902 35.87l-71.14 59.284h142.28l-71.14-59.285zm288 32l-71.14 59.284h142.28l-71.14-59.285zM228.73 84.403l-108.9 90.75h217.8l-108.9-90.75zm-173.828 28.75v62h36.81l73.19-60.992v-1.008h-110zm23 14h16v18h-16v-18zm265 18v10.963l23 19.166v-16.13h16v18h-13.756l.104.087 19.098 15.914h-44.446v14h78v-39h18v39h14v-62h-110zm-194.345 48v20.08l24.095-20.08h-24.095zm28.158 0l105.1 87.582 27.087-22.574v-65.008H176.715zm74.683 14h35.735v34h-35.735v-34zm-76.714 7.74L30.37 335.153H319l-144.314-120.26zm198.046 13.51l-76.857 64.047 32.043 26.704H481.63l-108.9-90.75zm-23.214 108.75l.103.086 19.095 15.914h-72.248v77.467h60.435v-63.466h50v63.467h46v-93.466H349.516zm-278.614 16V476.13h126v-76.976h50v76.977h31.565V353.155H70.902zm30 30h50v50h-50v-50z"/></symbol><symbol id="i-bread" viewBox="0 0 512 512"><path d="M439.037 70.988c-.863.015-1.87.09-3.025.256-4.62.668-11.12 2.598-18.8 5.764-15.356 6.332-35.49 17.488-58.085 32.056-10.66 6.874-21.892 14.53-33.48 22.78 10.542 1.434 21.866 4.025 32.61 7.295 13.316 4.05 25.552 8.98 34.42 14.663 4.432 2.842 8.204 5.667 10.84 10.35 1.316 2.34 2.297 5.443 1.917 8.794-.38 3.352-2.178 6.43-4.3 8.51-8.985 8.797-21.99 10.87-35.734 10.88-13.745.01-28.705-2.57-42.283-6.702-13.578-4.132-25.66-9.55-34.033-16.967-1.918-1.698-3.696-3.562-5.182-5.647-12.937 10.092-26.03 20.69-39.058 31.636 13.723 1.595 30.11 5.017 45.906 9.217 15.972 4.247 31.2 9.237 42.393 14.174 5.595 2.468 10.117 4.77 13.834 7.762 1.858 1.494 3.706 3.09 5.08 6.24 1.373 3.147.824 8.837-1.67 11.794l-.063.074-.064.072c-9.658 10.965-24.988 14.673-41.48 15.645-16.493.97-34.706-1.22-51.31-5.46-16.602-4.24-31.486-10.272-41.71-18.745-3.056-2.533-5.797-5.367-7.832-8.655-11.588 10.454-22.92 21.07-33.858 31.705 3.804.238 7.784.764 11.934 1.514 13.726 2.48 29.222 7.414 43.584 13.4 14.362 5.984 27.44 12.87 36.582 20.155 4.57 3.642 8.357 7.21 10.637 12.444 1.14 2.617 1.822 5.92 1.12 9.33-.705 3.412-2.815 6.448-5.245 8.46-10.528 8.725-25.07 9.825-40.282 8.405-15.21-1.42-31.55-5.902-46.17-11.995-14.62-6.092-27.44-13.526-35.783-22.62-2.49-2.712-4.678-5.668-6.158-8.98-12.3 12.98-23.7 25.79-33.927 38.192 2.974 1.324 6.326 2.778 10.225 4.416 10.34 4.345 23.245 9.548 35.516 14.53 12.27 4.98 23.877 9.728 31.904 13.294 4.013 1.784 6.97 3.142 9.402 4.598.608.364 1.188.723 1.944 1.328.755.605 2.044.798 3.318 4.643.637 1.922.535 5.66-1.16 8.107-1.435 2.072-2.972 2.808-4.147 3.244-9.86 8.365-23.137 10.813-36.383 10.158-14.2-.7-28.93-4.89-41.896-10.94-12.967-6.05-24.194-13.735-31.11-23.372-.09-.125-.173-.257-.26-.383-1.19 1.71-2.36 3.41-3.484 5.092-13.493 20.18-22.052 38.325-24.396 51.848-2.266 13.074-.056 20.56 8.332 26.537 27.173 9.512 68.542-3.463 113.99-32.473 46-29.36 95.61-73.934 139.207-121.496 43.6-47.562 81.272-98.21 103.74-139.24 11.235-20.515 18.607-38.696 21.18-52.12 1.287-6.714 1.34-12.173.547-15.96-.76-3.624-2.037-5.587-4.006-7.15-.15-.068-.588-.24-1.63-.362-.577-.067-1.296-.112-2.16-.098zM309.3 148.638c-2.248.014-4.24.143-5.882.378-.615.087-1.15.2-1.645.318-1.166.877-2.333 1.76-3.503 2.646.392.687 1.174 1.82 2.746 3.213 4.83 4.278 15.34 9.57 27.34 13.223 12.003 3.652 25.61 5.93 37.03 5.922 8.56-.006 15.623-1.592 19.878-3.613-.705-.58-1.298-1.125-2.3-1.768-6.332-4.058-17.682-8.866-29.946-12.598-12.265-3.733-25.61-6.527-36.29-7.42-2.672-.22-5.178-.32-7.427-.303zm-79.116 63.08c-1.102.005-2.105.042-2.996.108-1.53.114-2.527.43-3.11.625l-1.197 1.05c-.515.858-.555 1.393-.413 2.023.225 1 1.515 3.343 4.78 6.047 6.526 5.41 19.736 11.35 34.677 15.166 14.94 3.816 31.724 5.76 45.797 4.93 9.23-.544 16.816-2.534 22.28-5.12-1.302-.668-2.52-1.323-4.12-2.03-9.73-4.29-24.446-9.178-39.755-13.248-15.31-4.07-31.336-7.372-43.785-8.788-3.113-.353-6.01-.583-8.574-.69-1.283-.055-2.48-.08-3.582-.073zm-60.93 64.622c-.52.004-1.02.02-1.496.043-3.812.194-5.854 1.242-5.852 1.24-2.023 1.676-1.628 1.627-1.578 2.225.05.597.81 2.758 3.38 5.558 5.14 5.6 16.37 12.726 29.444 18.174 13.074 5.448 28.073 9.49 40.92 10.688 10.977 1.024 19.784-.492 24.715-3.026-.896-1.007-2.168-2.29-3.834-3.617-6.77-5.395-18.957-12.064-32.29-17.62-13.33-5.555-27.958-10.148-39.86-12.298-5.208-.94-9.903-1.398-13.55-1.367zm-68.772 65.744c.314 1.124.86 2.463 2.116 4.21 3.898 5.432 13.047 12.403 24.097 17.56 11.05 5.156 23.983 8.722 35.176 9.275 4.2.206 7.93-.144 11.382-.755-7.07-3.01-14.585-6.175-23.92-9.965-12.24-4.97-25.176-10.182-35.717-14.61-5.057-2.126-9.463-4.037-13.133-5.716zm92.657 21.596c-.023 0-.1.026-.122.027l.625.033c-.062-.003-.165-.072-.504-.06z"/></symbol><symbol id="i-hooded-figure" viewBox="0 0 512 512"><path d="M355.102 21.097c-33.682.164-64.173 18.585-74.615 50.5 21.357-.79 23.203 53.922 23.203 53.922l41.619 6.262c-13.41 12.963-50.025 5.967-50.025 5.967-17.14 19.182-33.124 40.966-47.758 57.578-15.952 18.127-35.2 38.103-57.018 60.086-6.79 6.823 41.594-9.821 34.342-2.604-24.567 12.751-42.297 16.097-61.764 32.069-31.312 25.674-62.853 60.71-81.146 79.431-7.711 7.91-44.362 37.674 20.469 34.74 2.404 7.52-1.621 9.456-7.493 15.293-4.327 4.303-18.082.283-22.263 2.828-22.172 35.055-17.246 37.975-27.43 58.047-4.252 11.635 41.68-14.404 64.305-34.18 13.974-7.58 25.147-21.652 35.002-17.202 43.11 18.984 129.826 35.53 141.328 27.619 18.368-12.646-10.321-46.343 3.832-97.912 23.47 5.817 43.825 13.657 66.767 11.459-1.581 49.307 3.56 55.306-3.888 104.777l59.129 21.127 1.91-13.809-33.815-22.478c14.568-50.659 16.809-72.578 15.227-121.719-.16-5.372-45.168-24.325-74.492-33.133l18.593-30.412c30.393-44.788 124.141-62.055 127.932-88.258-13.02-19.676 3.022-27.384-25.092-21.912-6.295 1.318-13.771 24.346-18.023 27.213-7.843 5.276-40.655 24.477-51.951 18.377-1.9-1.026 7.246-33.441 6.85-44.78-.116-3.205-1.19-6.625-2.866-10.001.185-.64 15.24-52.482 54.809-94.016-43.978 25.134-65.332 79.925-65.354 79.98-2.207-2.134-4.476-3.983-6.639-5.423-1.916-14.7-4.819-73.02 68.598-78.776-21.427-21.177-47.704-30.78-72.283-30.66z"/></symbol><symbol id="i-three-friends" viewBox="0 0 512 512"><path d="M389 40.84c18.5 0 35 18.79 35 44.03 0 25.33-16.5 44.03-35 44.03s-35-18.7-35-44.03c0-25.24 16.5-44.03 35-44.03zm-132.9 0c18.4 0 35 18.79 35 44.03 0 25.33-16.6 44.03-35 44.03-18.5 0-35.1-18.7-35.1-44.03 0-25.24 16.6-44.03 35.1-44.03zm-133 0c18.5 0 35 18.79 35 44.03 0 25.33-16.5 44.03-35 44.03s-35.09-18.7-35.09-44.03c0-25.24 16.59-44.03 35.09-44.03zm133 109.06c64 2 118 2 182.8 4.2 30.9 17.8 45.2 109 44.3 140.7l-17.6 17.7c-7.7-42.8-17.4-99.9-33.5-112.6v87.6l4.1 183.7H414l-16.7-184.7h-18l-16.7 184.7h-22.3l4.2-183.7-8-88.5h-29.3l-7.2 88.2 4.2 183.7h-22.3l-16.8-184.7h-18l-16.8 184.7h-22.2l4.2-183.7L205 199h-29.3l-8 88.5 4.2 183.7h-22.3l-16.7-184.7h-18L98.01 471.2h-22.2l4.2-183.7v-87.6c-16.2 12.7-25.9 69.8-33.6 112.6l-17.6-17.7c-.9-31.7 13.5-122.9 44.3-140.7 64.99-2.2 118.99-2.2 182.99-4.2z"/></symbol><symbol id="i-anvil" viewBox="0 0 512 512"><path d="M128.688 115.594v147.75h285v-147.75h-285zm-111.844 20.47c17.374 47.14 54.372 80.413 94.906 93.81v-93.81H16.844zm414.375 12.31v88.657c21.457-9.083 42.92-25.257 64.374-47.374-21.52-22.562-42.633-35.173-64.375-41.28zm-226.25 132.47c-12.15 38.536-33.897 71.5-60.595 100.47l257.844-.002c-28.705-29.016-49.952-62.054-61.5-100.468H204.97zM101.843 400v43.78h337.562V400H101.844z"/></symbol><symbol id="i-stairs-goal" viewBox="0 0 512 512"><path d="M439 32v165h18V32h-18zm-18 12.99L327.6 80l93.4 35V44.99zM165.9 103c-5 0-10.2 2.3-15.3 7-6.2 5.8-11.5 15.1-13.8 26.3-2.3 11.3-1 22 2.5 29.7 3.5 7.8 8.6 12.3 14.6 13.5 6 1.3 12.4-.9 18.7-6.6 6.1-5.8 11.5-15.1 13.8-26.4 2.2-11.3.9-22-2.5-29.7-3.5-7.8-8.6-12.2-14.6-13.5-1.1-.2-2.3-.3-3.4-.3zm-38.4 78.5c-3.4 1.2-6.9 2.5-10.7 4.1-24.85 15.7-42.2 31.2-59.84 55.7-11.19 15.5-11.74 42-12.58 61.5l20.8 9.2c.87-27.8.36-39.3 13.27-55.3 9.83-12.2 19.33-25 37.55-28.9 1.6 28.9-2.6 73.7-14 119.6 20.5 2.8 37.6-.7 57-6.3 50.7-25.3 74.1-3.8 109.3 45.7l20.5-32.1c-24.6-28.9-48.5-75.1-117.2-57.3 5-27.3 5.6-45.4 8.6-72.6.6-12 .8-23.9 1.1-35.7-8.9 6.8-19.9 10.4-31 8.1-9.5-2-17.3-7.9-22.8-15.7zm144.2 7.3c-18.2 17.8-22.2 31-50.2 38.4l-22.5-24c-.4 12.8-.8 25.9-1.9 39.2 9.5 8.7 19.2 15.7 22.7 14.6 31.3-9.4 40.3-20.3 61.4-41.9l-9.5-26.3zM409 215v96h-96v96h-96v78.1c102.3.2 167.8 1.1 270 1.8V215h-78zM140.7 363.9c-13.6 2.5-27.8 3.3-43.44.9-10.89 37.5-26.76 74.3-48.51 102.5l38.63 15.3c27.02-37.9 36.82-70.6 53.32-118.7z"/></symbol><symbol id="i-guarded-tower" viewBox="0 0 512 512"><path d="M71.604 21.99v111.12l61.156 75.814v188.654H93.408l-28.7 92.836h151.1l-6.103-92.613h.043l-1.17-119.35-18.687.185.848 86.545h-22.92c-13.43-71.44 4.462-150.097 60.967-158.86-9.133-11.458-15.006-27.38-15.006-45.02 0-34.844 22.177-62.962 49.413-62.962 1.703 0 3.466-.262 5.123 0h.002c24.873 3.23 44.29 30.293 44.29 62.96 0 18.09-6.196 34.244-15.74 45.755 51.727 9.73 76.564 84.763 61.333 158.127h-24.616l.85-86.545-18.688-.184-1.115 113.64-7.323 98.324h146.54l-28.702-92.836H385.79V208.924l61.155-75.813V21.99H382.52v52.414h-39.213V21.99h-65.123v52.414H239.67V21.99h-65.125v52.414h-38.512V21.99h-64.43zm180.652 326.62v142.245h18.69V348.61h-18.69z"/></symbol><symbol id="i-two-coins" viewBox="0 0 512 512"><path d="M264.4 95.01c-35.6-.06-80.2 11.19-124.2 34.09C96.27 152 61.45 182 41.01 211.3c-20.45 29.2-25.98 56.4-15.92 75.8 10.07 19.3 35.53 30.4 71.22 30.4 35.69.1 80.29-11.2 124.19-34 44-22.9 78.8-53 99.2-82.2 20.5-29.2 25.9-56.4 15.9-75.8-10.1-19.3-35.5-30.49-71.2-30.49zm91.9 70.29c-3.5 15.3-11.1 31-21.8 46.3-22.6 32.3-59.5 63.8-105.7 87.8-46.2 24.1-93.1 36.2-132.5 36.2-18.6 0-35.84-2.8-50.37-8.7l10.59 20.4c10.08 19.4 35.47 30.5 71.18 30.5 35.7 0 80.3-11.2 124.2-34.1 44-22.8 78.8-52.9 99.2-82.2 20.4-29.2 26-56.4 15.9-75.7zm28.8 16.8c11.2 26.7 2.2 59.2-19.2 89.7-18.9 27.1-47.8 53.4-83.6 75.4 11.1 1.2 22.7 1.8 34.5 1.8 49.5 0 94.3-10.6 125.9-27.1 31.7-16.5 49.1-38.1 49.1-59.9 0-21.8-17.4-43.4-49.1-59.9-16.1-8.4-35.7-15.3-57.6-20zm106.7 124.8c-10.2 11.9-24.2 22.4-40.7 31-35 18.2-82.2 29.1-134.3 29.1-21.2 0-41.6-1.8-60.7-5.2-23.2 11.7-46.5 20.4-68.9 26.1 1.2.7 2.4 1.3 3.7 2 31.6 16.5 76.4 27.1 125.9 27.1s94.3-10.6 125.9-27.1c31.7-16.5 49.1-38.1 49.1-59.9z"/></symbol><symbol id="i-tombstone" viewBox="0 0 512 512"><path d="M253.75 18.906c-77.635.03-154.875 54.01-154.875 167.5v209.72c25.67 19.717 46.68 41.386 52.156 69.124-3.507-44.464-4.166-88.692 14.595-133.156 5.265 38.52 8.087 77.137 26.875 115.656 25.316-53.302 59.948-75.555 102.188-72.438-29.706 25.94-56.26 55.26-74.75 95.22 31.477-30.2 66.886-38.728 103.968-40.907-21.57 15.247-41.576 30.414-54.156 50.22h78.344c6.443-27.99-4.756-54.648-17.78-82.908 27.59 18.168 51.09 40.4 61.905 77.657 3.525-39-3.843-73.686-15.19-106.875 13.34 6.44 23.875 15.568 31.595 27.374V186.406c0-113.616-77.24-167.528-154.875-167.5zM150.156 144.594h114.938v18.687H150.156v-18.686zm152.438 0h56.125v18.687h-56.126v-18.686zm-152.438 42.75h36.5v18.687h-36.5v-18.686zm72.25 0H358.72v18.687H222.405v-18.686zm-72.28 40.312h95.81v18.688h-95.81v-18.688zm126.31 0h82.283v18.688h-82.283v-18.688zm-177.56 189.53v62.658h23.686c-4.638-21.58-13.086-42.375-23.687-62.656z"/></symbol><symbol id="i-scales" viewBox="0 0 512 512"><path d="M254.47 53.094s-4.808 37.12-49.5 49.5c-44.695 12.38-129.282 0-129.282 0L61.343 115.78l8.187 9.157-1.093 2.876-51.843 137.312L16 266.72v1.717c0 18.897 8.253 34.243 20.344 44 12.09 9.758 27.563 14.31 42.937 14.313 15.376.003 30.878-4.556 42.97-14.313 12.092-9.756 20.344-25.094 20.344-44v-1.843l-.688-1.688L86.97 130.28c23.946-3.003 80.866-8.54 115.5 1.532 23.064 6.71 36.151 20.345 43.436 31.97L210.78 354.468l21.407 30.31c-17.75 7.75-32.593 24.84-37.562 51.345-56.076 6.195-95.47 20.74-95.47 37.688h311.876c0-16.947-39.392-31.493-95.467-37.688-4.91-26.6-19.57-44.112-37.188-51.906l21-29.75L264 162.28c7.457-11.275 20.388-24.045 42.47-30.468 34.955-10.167 92.615-4.42 116.155-1.437l-50.875 134.75-.625 1.594v1.717c0 18.897 8.253 34.243 20.344 44 12.09 9.758 27.593 14.31 42.967 14.313 15.375.003 30.877-4.556 42.97-14.313 12.09-9.756 20.343-25.094 20.343-44v-1.843l-.688-1.688L441 127.562l-.938-2.28 8.782-8.438-15.594-14.25s-84.556 12.38-129.25 0-49.53-49.5-49.53-49.5zM77.53 156.656l44.22 108.375H36.594L77.53 156.657zm355.158 0l44.218 108.375H391.72l40.967-108.374z"/></symbol><symbol id="i-scroll-unfurled" viewBox="0 0 512 512"><path d="M103.432 17.844c-1.118.005-2.234.032-3.348.08-2.547.11-5.083.334-7.604.678-20.167 2.747-39.158 13.667-52.324 33.67-24.613 37.4 2.194 98.025 56.625 98.025.536 0 1.058-.012 1.583-.022v.704h60.565c-10.758 31.994-30.298 66.596-52.448 101.43-2.162 3.4-4.254 6.878-6.29 10.406l34.878 35.733-56.263 9.423c-32.728 85.966-27.42 182.074 48.277 182.074v-.002l9.31.066c23.83-.57 46.732-4.298 61.325-12.887 4.174-2.458 7.63-5.237 10.467-8.42h-32.446c-20.33 5.95-40.8-6.94-47.396-25.922-8.956-25.77 7.52-52.36 31.867-60.452 5.803-1.93 11.723-2.834 17.565-2.834v-.406h178.33c-.57-44.403 16.35-90.125 49.184-126 23.955-26.176 42.03-60.624 51.3-94.846l-41.225-24.932 38.272-6.906-43.37-25.807h-.005l.002-.002.002.002 52.127-8.85c-5.232-39.134-28.84-68.113-77.37-68.113C341.14 32.26 222.11 35.29 149.34 28.496c-14.888-6.763-30.547-10.723-45.908-10.652zm.464 18.703c13.137.043 27.407 3.804 41.247 10.63l.033-.07c4.667 4.735 8.542 9.737 11.68 14.985H82.92l10.574 14.78c10.608 14.83 19.803 31.99 21.09 42.024.643 5.017-.11 7.167-1.814 8.836-1.705 1.67-6.228 3.875-15.99 3.875-40.587 0-56.878-44.952-41.012-69.06C66.238 46.64 79.582 39.22 95.002 37.12c2.89-.395 5.863-.583 8.894-.573zM118.5 80.78h46.28c4.275 15.734 3.656 33.07-.544 51.51H131.52c1.9-5.027 2.268-10.574 1.6-15.77-1.527-11.913-7.405-24.065-14.62-35.74zm101.553 317.095c6.44 6.84 11.192 15.31 13.37 24.914 3.797 16.736 3.092 31.208-1.767 43.204-4.526 11.175-12.576 19.79-22.29 26h237.19c14.448 0 24.887-5.678 32.2-14.318 7.312-8.64 11.2-20.514 10.705-32.352-.186-4.473-.978-8.913-2.407-13.18l-69.91-8.205 42.017-20.528c-8.32-3.442-18.64-5.537-31.375-5.537H220.053zm-42.668.506c-1.152-.003-2.306.048-3.457.153-2.633.242-5.256.775-7.824 1.63-15.11 5.02-25.338 21.54-20.11 36.583 3.673 10.57 15.347 17.71 25.654 13.938l1.555-.57h43.354c.946-6.36.754-13.882-1.358-23.192-3.71-16.358-20.543-28.483-37.815-28.54z"/></symbol><symbol id="i-cave-entrance" viewBox="0 0 512 512"><path d="M346.951 24.582L299.193 72.34l-101.136-7.024-40.97 80.737 68.688 25.35 37.153-19.936 8.511 15.861-44.293 23.768-79.7-29.416-70.19 55.341 35.117 58.995-.375.2 13.014 21.585 29.134 2.361 55.06-35.123 9.679 15.176-60.16 38.377-44.364-3.596-18.23-30.234-56.8 30.586 33.712 61.804-33.713 40.735L18 444.177V494h170.62l-5.6-45.592a260.658 260.658 0 0 1-5.147-4.512c-4.186-3.761-5.89-5.444-8.027-7.484l-73.13 21.797-21.339-20.484 12.467-12.985 13.777 13.225 73.068-21.78 3.784 3.667s4.24 4.09 9.216 8.636l37.797-37.248 8.133 79.54 6.3-93.444 10.364 28.387 6.281-45.112 3.14-3.091-.29-.233 22.486-27.974.465-.907.188.096 11.453-14.248 14.03 11.277-9.122 11.348 67.803 34.715 27.008-9.489 22.478 17.71 22.924-12.036 8.367 15.938-33.262 17.46-23.875-18.81-24.964 8.772-9.584-4.907 39.04 87.842L383.923 494H494v-28.512L462.713 478.2l-6.776-16.678L494 446.06V211.176l-23.438-26.463-21.654-67.371-33.547 32.666-107.77-13.873-28.019-29.096 12.967-12.486 23.629 24.539 92.867 11.953 31.442-30.615-52.79-61.801zm27.53 177.74l34.177 41.428 28.863-6.56-4.136-13.59 17.22-5.243 9.77 32.098-58.543 13.307-31.377-38.033-33.086 19.853-9.262-15.436z"/></symbol><symbol id="i-coins-pile" viewBox="0 0 512 512"><path d="M431.1 23.53c-9.5 17.34-25.4 23.34-49.6 14.15 17.9 10.24 28.5 24.99 24.6 48.64 12.4-21.29 29.2-24.49 49.4-14.11-18.3-11.28-33.4-24.22-24.4-48.68zM206 45.39c-3.4 27.17-10.8 51.2-46.9 52.1 27.4 3.11 44.3 19.11 46.9 52.21 2.3-26.1 14.6-45.7 46.8-52.21-34.1-4.65-48-23.18-46.8-52.1zM85.7 101.2c-5.5 22-19 32.5-43.2 27.8 20.4 12.6 24.5 30.3 20.4 50.6 9-24.3 24-32.3 43.4-28-24.4-9.4-24.2-29.2-20.6-50.4zm310.4.8c3.6 21.2 3.8 41-20.5 50.4 19.3-4.3 34.3 3.7 43.3 28-4.1-20.2 0-38 20.4-50.6-24.2 4.7-37.7-5.8-43.2-27.8zm-139.4 52c-9.6 0-18.1 2.4-23.7 5.8-5.5 3.4-7.3 6.7-7.3 9.3 0 2.6 1.8 5.9 7.3 9.3 5.6 3.3 14.1 5.7 23.7 5.7 3.9 0 7.7-.4 11.1-1.1 5.5-6.1 12.5-10.2 19.7-12.6.6-4.9-4.7-9.1-7.1-10.6-5.6-3.4-14.1-5.8-23.7-5.8zm-45.1 28.2c-6.2.9-9.1 3.1-10.2 5.4-1.9 12.5 13 22.2 22.1 26.5 8.7 3.9 17.5 5.2 23.9 4.5 6.4-.7 9.4-3.1 10.5-5.4 1.1-2.4.8-6.1-2.6-11.1-12-.2-22.8-3.1-31.5-8.3-4.9-3-9.3-6.9-12.2-11.6zm98.6 2.6c-9.6 0-18.1 2.4-23.7 5.7-5.5 3.4-7.3 6.7-7.3 9.3 0 2.6 1.8 5.9 7.3 9.3 5.6 3.3 14.1 5.7 23.7 5.7s18.1-2.4 23.7-5.7c5.5-3.4 7.3-6.7 7.3-9.3 0-2.6-1.8-5.9-7.3-9.3-5.6-3.3-14.1-5.7-23.7-5.7zm48.8 12.3c5.1 10.4-10.3 23.8-17.6 28.4 1.4.7 3.2 1.3 5.5 1.8 6.4 1.2 15.2.6 24.2-2.7 7.7-2.8 14.1-7 18.4-11.3.4-5.7 1.2-11 4.7-15-10.5-6.9-24.8-5.1-35.2-1.2zm-202-1.5c-9.6 0-18.1 2.4-23.7 5.7 4.6 6.3 5.7 13.2 4.5 20.8 5.2 2.1 11.9 3.5 19.2 3.5 9.6 0 18.1-2.4 23.7-5.7 5.5-3.4 7.3-6.7 7.3-9.3 0-2.6-1.8-5.9-7.3-9.3-5.6-3.3-14.1-5.7-23.7-5.7zm251.1 14.2c-2.7 12.2 11.8 23 20.5 27.7 8.5 4.4 17.1 6.2 23.6 5.9 6.4-.4 9.6-2.5 10.8-4.8 1.2-2.3 1.2-6.1-2.2-11.6-3.4-5.5-9.8-11.6-18.3-16.1-6.5-3.1-28.9-11.1-34.4-1.1zm-302.5-.9c-5.9-.1-13.1 1.2-20.3 4.2-8.8 3.7-15.7 9.2-19.5 14.4-3.8 5.3-4.2 9-3.2 11.4 1 2.4 4 4.8 10.4 5.8 6.3.9 15.1-.2 24-4 8.9-3.7 15.8-9.2 19.6-14.4 3.8-5.3 4.2-9 3.2-11.4-4.3-4.9-8.5-6-14.2-6zm168 13.1c-3.1 5.8-8.3 9.8-14.4 12.1 6.4 3.9 11.5 9.7 13.1 17.2 2.2 10.5-3 20.4-10.7 27.5-7.7 7.2-18.2 12.4-30.5 14.9-12.2 2.6-24 2.1-33.9-1.3-9.9-3.4-18.6-10.4-20.8-20.8-2.2-10.5 2.9-20.4 10.6-27.5 7.1-6.6 16.7-11.6 27.7-14.3-4.4-2-8.4-4.4-12-7.1-2.9 5.2-7.5 9.4-12.8 12.6-9 5.4-20.4 8.3-32.9 8.3-9.9 0-19.1-1.8-27-5.3-6.1 7.9-15.2 14.5-26 19-10.5 4.4-21 6.3-30.6 5.5-3.8 7.5-11.4 12.4-19.6 15-10.1 3.1-21.9 3.2-34 .2-.3-.1-.6-.1-.8-.2V324c2.8-1.5 5.9-2.6 9-3.3 3.4-.8 7-1.2 10.7-1.3v-.2c-2.9-10.3 1.7-20.5 8.9-28.1 7.2-7.6 17.4-13.5 29.5-16.8 11.56-3 23.1-3.7 33.9-.8 10.1 2.8 19.3 9.2 22.1 19.5 2.9 10.3-1.6 20.5-8.9 28.1-7.2 7.6-17.4 13.4-29.5 16.8-1.8.5-3.7.9-5.6 1.3 7.46 8.4 11.8 21.7 9.3 30.2-3.3 10.1-12.7 16.1-22.9 18.5-10.3 2.4-22 1.6-33.9-2.2-8.7-2.8-16.4-6.9-22.6-12.1v113.9h77.2c-4-10.7 3.9-11.4-7.2-16.1-11.6-4.7-21-11.8-27.3-20.2-6.3-8.4-9.5-19.1-5.5-29 4.1-9.8 13.9-15.1 24.3-16.7 10.4-1.5 22.1.1 33.6 4.9 11.6 4.7 21 11.8 27.3 20.2 2.3 3.1 4.2 6.4 5.5 9.9 8.4-.6 16.4.4 23.5 2.8 9.9 3.4 18.6 10.4 20.8 20.8 1.8 8.6-1.3 16.8-6.7 23.4h256.1c-6.3-7.3-10-16.6-7.4-26.2 2.8-10.3 11.9-16.7 22-19.6 10.1-2.9 21.9-2.7 33.9.6 1.7.5 3.3 1 4.9 1.6V342.7c-11 1.8-21.6 1.1-30.6-2-9.9-3.4-18.6-10.4-20.8-20.8-2.2-10.5 2.9-20.4 10.6-27.5 13.2-10.1 25.8-15.4 40.8-16.3V275c-15 .2-35.9-5.5-44.9-13.6-9.3-.2-19.2-2.9-28.9-8-10.7-5.6-19.1-13.1-24.6-21.7-5.3 4-11.5 7.3-18.3 9.8-11.8 4.3-23.5 5.5-33.8 3.5-8.6-1.7-16.7-5.9-21.3-13.1-3.8.6-7.9.9-12 .9-12.5 0-23.9-2.9-32.9-8.3-1.3-.8-2.5-1.6-3.7-2.5zm207 5.9c1.9 11.1.3 19.9-8 26.7 7.8 2.2 14.2 2.9 21.4 2.4v-29.6c-4.5-.3-9.3-.2-13.4.5zM18 229.7v28.9c9.44 3.2 21.18 4.7 30.4 2 3.3-1 5.5-2.2 7-3.6-7.21-5.3-11.24-12.3-11.3-20.7-3.7-2-8-3.7-12.8-4.9-4.6-1.1-9.2-1.7-13.3-1.7zm203.2 17.1c-9.4 2-17.2 6.1-22 10.4-4.7 4.5-5.7 8.1-5.2 10.7.5 2.5 3 5.4 9.1 7.5 6.1 2.1 14.9 2.7 24.3.7s17.2-6.1 22-10.4c4.7-4.5 5.8-8.1 5.3-10.6-.6-2.6-3-5.4-9.1-7.6-8.3-2.4-16.6-2.4-24.4-.7zM81.9 291.6c-9.3 2.6-16.9 7.2-21.3 11.8-4.4 4.8-5.3 8.4-4.6 11 .7 2.5 3.3 5.1 9.6 7 6.1 1.7 15 1.7 24.3-.9 9.2-2.5 16.9-7.1 21.3-11.8 4.4-4.7 5.3-8.4 4.6-10.9-.7-2.5-3.4-5.2-9.6-7-7.91-2-16.83-1.3-24.3.8zm261 .1c6.5.1 12.6 1.1 18.2 3 10 3.5 18.7 10.4 20.9 20.9 1 4.9.4 9.8-1.4 14.3 9.9 3.4 18.3 8.6 24.6 15 7.2 7.6 11.8 17.8 9 28.1-2.8 10.3-11.9 16.8-22 19.6-10.1 2.9-21.8 2.7-33.9-.6-12.1-3.2-22.3-9-29.6-16.6-4.4-4.6-7.9-10.1-9.2-16.1-4.4-.4-8.7-1.3-12.6-2.7-9.9-3.4-18.6-10.3-20.8-20.8-2.2-10.5 3-20.3 10.7-27.5 7.6-7.1 18.2-12.3 30.4-14.9 5.4-1.1 10.6-1.7 15.7-1.7zm151.1 2.4c-2.2.2-4.4.5-6.6 1-9.4 2-17.2 6.1-22 10.4-4.7 4.5-5.7 8.1-5.2 10.7.5 2.5 3 5.4 9 7.5 6.2 2.1 15 2.7 24.4.7.1 0 .3-.1.4-.1zM330.9 311c-9.3 2-17.2 6.1-22 10.5-4.6 4.4-5.7 8-5.2 10.6.5 2.5 3 5.4 9.1 7.6 6.1 2.1 14.9 2.7 24.3.7s17.3-6.1 22-10.5c4.7-4.5 5.8-8.1 5.3-10.6-.6-2.5-3-5.4-9.1-7.6-8.3-2.4-16.6-2.4-24.4-.7zm-133.4 5.7c12.2 2.6 22.7 7.9 30.4 15.1 7.6 7.2 12.8 17.1 10.5 27.5-2.3 10.5-11 17.4-21 20.8-9.9 3.3-21.7 3.8-33.9 1.1-12.2-2.6-22.7-7.9-30.4-15-7.6-7.2-12.8-17.1-10.5-27.6 2.3-10.5 11-17.4 21-20.7 11.5-3.6 23-3.4 33.9-1.2zm-28.2 18.2c-6.1 2.1-8.6 5-9.1 7.5-.6 2.6.5 6.2 5.2 10.6 4.7 4.5 12.5 8.6 21.9 10.6 9.4 2.1 18.2 1.5 24.4-.5 6.1-2.2 8.5-5 9.1-7.6.5-2.5-.5-6.1-5.2-10.6-4.8-4.4-12.6-8.6-21.9-10.6-8-1.5-16.7-1.8-24.4.6zM32 338.2c-6.2 1.5-9 4.1-9.8 6.6-.8 2.5-.1 6.1 4.1 11.1 4.3 4.8 11.7 9.7 20.8 12.7 9.2 2.9 18 3.3 24.3 1.8 6.3-1.5 9-4.1 9.8-6.6.8-2.4.1-6.1-4.1-11.1-4.3-4.8-11.6-9.7-20.8-12.7-8.27-2.3-16.36-3.4-24.3-1.8zm336.9 7c-10.3 6.9-20.1 11.5-30.6 13.3 5.3 8.5 16.8 14 24.7 16.2 9.3 2.5 18.1 2.4 24.4.7 6.2-1.9 8.8-4.6 9.5-7.1.6-2.5-.2-6.2-4.7-10.9-7.7-6.2-15.2-10.4-23.3-12.2zm-53.7 34.9c9.9 3.4 18.6 10.3 20.8 20.8 2.2 10.5-3 20.4-10.7 27.5-7.6 7.1-18.2 12.3-30.4 14.9-12.3 2.6-24 2.1-33.9-1.3-10-3.5-18.7-10.4-20.9-20.9-2.2-10.4 3-20.3 10.7-27.5 7.7-7.1 18.2-12.3 30.4-14.9 11.1-2.3 23.6-2.2 34 1.4zM285 396.3c-9.4 2-17.3 6.1-22 10.5-4.7 4.5-5.8 8.1-5.3 10.6.6 2.6 3 5.4 9.1 7.6 6.1 2.1 15 2.7 24.4.7 9.3-2 17.2-6.1 22-10.5 4.6-4.4 5.7-8 5.2-10.6-.5-2.5-3-5.4-9.1-7.6-8.1-2.3-16.3-2.3-24.3-.7zm-201.8 27c-6.4 1-9.3 3.4-10.3 5.8s-.6 6.1 3.2 11.4c3.9 5.2 10.9 10.6 19.7 14.3 9 3.6 17.7 4.6 24.2 3.7 6.3-1 9.3-3.4 10.3-5.8.9-2.4.5-6.1-3.3-11.4-3.9-5.2-10.8-10.6-19.7-14.3-8.15-2.8-16.13-4.7-24.1-3.7zm387.9 34.5c-6.5.1-18.5 1-20.5 8.2-.1 12.5 16 19.8 25.6 22.5H494v-25.3c-7.3-3.4-15.2-5.2-22.9-5.4zm-323.8.8c-4.3 9.9-16.3 16.3-24.7 17.7-3 .4-6.1.6-9.3.5-1.9 6.1 5.6 10.3 9.7 11.7h25.2c8.6-2 15.7-6 20.1-10 4.7-4.5 5.9-8.1 5.3-10.6-.5-2.6-3-5.4-9.1-7.6-6.2-1.6-11.4-2.4-17.2-1.7z"/></symbol><symbol id="i-castle" viewBox="0 0 512 512"><path d="M254.25 15.344c-132.537 0-240.188 107.62-240.188 240.156 0 132.537 107.65 240.188 240.188 240.188 132.537 0 240.156-107.65 240.156-240.188 0-132.537-107.62-240.156-240.156-240.156zm0 18.687c122.436 0 221.47 99.034 221.47 221.47 0 65.65-28.465 124.583-73.75 165.125V238.75l14-22.78h-7.595L364 101.5l-43.813 114.47h-8.156l14.595 22.78v33.875h-36.813v-88.188l14.625-22.78h-7.593l-44.406-114.47-44.375 114.47h-7.594l14.03 22.78v123.22h-37.375v-18.094l14.594-22.782h-8.19l-43.78-114.467L95.344 266.78H87.75l14.03 22.783V416.25C59.25 375.9 32.75 318.83 32.75 255.5c0-122.436 99.064-221.47 221.5-221.47zm1.094 160.532h18.687v36.344h-18.686v-36.344zm110.156 87.97h18.688v36.312H365.5V282.53zm-246.656 22.03h18.687v36.344h-18.686v-36.344zm50.875 29.407h18.686v36.342H169.72V333.97zm170.81 30.5h18.69v36.342h-18.69V364.47z"/></symbol><symbol id="i-house" viewBox="0 0 512 512"><path d="M256 19.27L25.637 249.638 19.27 256 32 268.73l6.363-6.367L256 44.727l217.637 217.636L480 268.73 492.73 256l-6.367-6.363zM96 48v107.273l64-64.002V48zm160 20.727l-192 192V486h64V320h96v166h224V260.727zM288 320h96v80h-96z"/></symbol><symbol id="i-chest" viewBox="0 0 512 512"><path d="M58.553 89L42.27 211.8H79V89H58.553zM97 89v122.8h38V89H97zm56 0v122.8h56.666v-17.6h92.668v17.6H359V89H153zm224 0v122.8h38V89h-38zm56 0v122.8h36.73L453.446 89H433zM227.666 212.2v105.2h56.668V212.2h-56.668zM256 223.794a18.667 16.103 0 0 1 18.666 16.1 18.667 16.103 0 0 1-9.666 14.09v37.214h-18V254a18.667 16.103 0 0 1-9.666-14.106 18.667 16.103 0 0 1 18.666-16.1zM41 229.8v127.915l19.334 18.23V229.8H41zm37.334 0v158h355.332v-158H302.334v105.6h-92.668V229.8H78.334zm373.332 0v146.145L471 357.715V229.8h-19.334zM41 382.456V423h43.002L41 382.455zm430 0L427.998 423H471v-40.545zM92 405.8l18.24 17.2h291.52L420 405.8H92z"/></symbol><symbol id="i-podium-winner" viewBox="0 0 512 512"><path d="M256 25c-11.594 0-23 12.8-23 31s11.406 31 23 31 23-12.8 23-31-11.406-31-23-31zm-103.951 2.975l-16.098 8.05c15.092 30.185 51.37 56.81 82.188 74.442L232.334 295H247V192h18v103h14.666l14.195-184.533c30.818-17.632 67.096-44.257 82.188-74.442l-16.098-8.05c-19.91 29.9-44.891 49.148-71.334 57.77C281.311 97.28 269.75 105 256 105c-13.75 0-25.31-7.72-32.617-19.256-26.443-8.62-51.424-27.87-71.334-57.77zM169 313v96H25v78h462v-30H343V313H169z"/></symbol><symbol id="i-wooden-sign" viewBox="0 0 512 512"><path d="M240.03 35.938c-1.08.01-2.168.062-3.25.124-8.644.502-17.16 2.8-22.5 5.97-5.336 3.167-7.018 5.72-6.81 9.593v.25l.78 28.156 59.97-1.28-.876-31.844c-.148-3.014-1.806-5.15-7.47-7.593C255.63 37.48 249.63 36.27 243.25 36c-1.063-.045-2.138-.074-3.22-.063zm224.94 57.218L33.593 102.53l1.375 62 154.655 4.064-148.156 9.72-2.907 98.81 1.406.313 8.06 1.844-.843 8.22-6.906 67.47 429.533-9.283L464.219 283l-140.376-3.656 139.22-9.156-8.877-99.407-138.875-3.624 151.032-9.937-1.375-64.064zM276.31 368.562l-59.875 1.282L220 495.78h59.844l-3.53-127.217z"/></symbol><symbol id="i-anvil-impact" viewBox="0 0 512 512"><path d="M413.375 69.906L336.937 191.47l-8.25-32.69-30.218 88.97 62.655-29.375.22 29.438 127.03-50.938-70.813-1.97 47.782-68.686-73.47 39.25 21.5-95.564zM210.22 102.094l-32 14.406 16.874 55.656-177.813 80.03 12.564 27.876L207.656 200l30.406 49.47 49.313-22.19-21.344-70.343-55.81-54.843zM197.593 266.78v20.345h-88.906c15.994 38.807 51.225 65.43 88.906 74.28v32.97h58.562c-12.118 30.528-33.505 55.684-58.47 77.594H172.22v18.686H456.56V471.97h-27.406c-28.734-21.895-50.055-47.018-61.625-77.595h63.658v-29.188c19.748-6.995 39.5-19.51 59.25-36.687-19.812-17.523-39.23-27.25-59.25-31.938v-29.78H197.594z"/></symbol><symbol id="i-quill-ink" viewBox="0 0 512 512"><path d="M496.938 14.063c-95.14 3.496-172.297 24.08-231.282 55.812l-29.47 49.28-4.967-28.093c-10.535 7.402-20.314 15.222-29.314 23.407l-14.687 45.06-5.032-25.155c-40.65 45.507-60.41 99.864-58.938 155.906 47.273-93.667 132.404-172.727 211.97-221.155l9.717 15.97c-75.312 45.838-156.387 121.202-202.187 208.25h12.156c19.78-12.02 39.16-26.858 58.406-43.44l-30.28 1.595 54.218-23.094c46.875-43.637 93.465-94.974 143.313-138.28l-24.47-5.19 56.5-21.03c26.853-20.485 54.8-37.844 84.344-49.843zM59.53 312.03v30.408H194V312.03H59.53zm20.376 49.095L47.25 389.813 24.97 474.78l14.53 15.876h177.22l14.56-15.875L209 389.814l-30.906-28.688H79.906z"/></symbol></svg>
+<!-- icons:end -->
+<header class="top">
+  <div class="brand">
+    <h1>Dungeon of Capitalism</h1>
+    <div class="sub">смотровая · <span id="seedLabel">сид —</span></div>
+  </div>
+  <div class="seg views" id="views" role="tablist" aria-label="Вид">
+    <button type="button" data-view="world" class="on"><svg class="ic" aria-hidden="true"><use href="#i-castle"/></svg>Мир</button>
+    <button type="button" data-view="house"><svg class="ic" aria-hidden="true"><use href="#i-house"/></svg>Мой дом</button>
+  </div>
+  <div class="clock">
+    <div class="date" id="date">—</div>
+    <div class="tps" id="tps">—</div>
+  </div>
+  <nav class="controls" id="controls" aria-label="Управление временем">
+    <div class="seg" id="speeds" role="group" aria-label="Скорость"></div>
+    <button type="button" id="btnStep" title="Один тик (игровой день)">+1 день</button>
+    <button type="button" id="btnSkip45" title="Досчитать поход — 45 дней">+45 дней</button>
+    <button type="button" id="btnSkipYear" title="Досчитать игровой год — 360 дней">+1 год</button>
+    <span class="newworld">
+      <label for="seedInput" class="vh">Сид нового мира</label>
+      <input id="seedInput" type="number" inputmode="numeric" value="7" min="0" title="Сид нового мира">
+      <button type="button" id="btnNew">Новый мир</button>
+    </span>
+    <button type="button" id="btnSave" title="Записать снимок мира; сервер и сам сохраняет раз в несколько минут и при остановке">Сохранить</button>
+  </nav>
+  <div class="aux">
+    <span class="ro" id="readonly" hidden>только просмотр</span>
+    <button type="button" id="btnTheme" title="Сменить тему">Тема</button>
+    <button type="button" id="btnHelp" title="Как смотреть: короткая вводная">?</button>
+    <button type="button" id="btnAbout">Об игре</button>
+  </div>
+</header>
+
+<div class="skipbar choosebar" id="choosebar" hidden>
+  <span>Мир прогрет и ждёт: выберите дом, которым будете править.</span>
+  <button type="button" id="btnToChoose">К выбору</button>
+</div>
+<div class="skipbar" id="skipbar" hidden>
+  <span id="skipText">досчитываю…</span>
+  <button type="button" id="btnStopSkip">Стоп</button>
+</div>
+
+<main id="viewWorld">
+  <section class="card intro" id="intro" hidden aria-labelledby="introTitle">
+    <div class="intro-head">
+      <h2 id="introTitle">Город у входа в подземелье</h2>
+      <button type="button" id="introClose">Понятно</button>
+    </div>
+    <div class="intro-body">
+    <div class="intro-text">
+    <p class="intro-lead">Экономическая игра про город, который живёт за счёт подземелья.
+      Ремесленные дома делают оружие, доспехи и припасы, отряды авантюристов покупают их и
+      спускаются за добычей. Чем лучше город снабжает отряды, тем глубже они лезут и тем
+      сильнее будят подземелье: прибыль частная, риск общий. Все здесь — боты; игрок будет
+      главой одного торгового дома, а не героем.</p>
+    <p class="intro-mode" id="introMode"></p>
+    <p class="intro-ctl" id="introCtl"></p>
+    </div>
+    <ol class="intro-steps">
+      <li><a href="#tiles" data-go="tiles">Сводка</a> — сколько людей в городе и авантюристов внизу, до какого яруса дошли (фронтир), держит ли гарнизон угрозу.</li>
+      <li><a href="#secChronicle" data-go="secChronicle">Летопись</a> — что случилось: отряды уходят, возвращаются и гибнут, дома разоряются и открываются. Имена кликаются — откроется карточка.</li>
+      <li><a href="#secDungeon" data-go="secDungeon">Подземелье</a> — ярусы сверху вниз: где сейчас отряды, сколько добычи осталось на ярусе и что о нём говорят в городе.</li>
+      <li><a href="#secExchange" data-go="secExchange">Биржа</a> и <a href="#flowsCard" data-go="flowsCard">деньги</a> — цены сырья и изделий; откуда деньги приходят в город и куда уходят.</li>
+      <li><a href="#viewHouse" data-go="house">Мой дом</a> — экран игрока: капитал, место среди домов, мастерские и их настройки.</li>
+    </ol>
+    </div>
+  </section>
+  <section class="tiles" id="tiles" aria-label="Сводка"></section>
+
+  <div class="grid">
+    <section class="card exchange" id="secExchange">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-scales"/></svg>Биржа</h2>
+        <div class="card-tools">
+          <label for="goodSelect" class="vh">Товар</label>
+          <select id="goodSelect"></select>
+          <div class="seg small" id="pxMode" role="group" aria-label="Вид графика">
+            <button type="button" data-mode="line" class="on">линия</button>
+            <button type="button" data-mode="candle">свечи · 10 дн.</button>
+          </div>
+        </div>
+      </div>
+      <div class="pxinfo" id="pxInfo"></div>
+      <div id="pxChart" class="lwc"></div>
+    </section>
+
+    <section class="card chronicle" id="secChronicle">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-scroll-unfurled"/></svg>Летопись</h2>
+        <div class="seg small" id="evFilter" role="group" aria-label="Фильтр летописи">
+          <button type="button" data-lv="2" class="on">важное</button>
+          <button type="button" data-lv="1">всё</button>
+        </div>
+      </div>
+      <ol class="events" id="events" aria-live="polite"></ol>
+    </section>
+  </div>
+
+  <div class="grid2">
+    <section class="card dungeon" id="secDungeon">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-cave-entrance"/></svg>Подземелье</h2>
+        <div class="card-tools"><span class="hint" id="dgHint"></span></div>
+      </div>
+      <div class="dg-legend" id="dgLegend"></div>
+      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд">шансы: нов. · сильн.</span></div>
+      <div class="shaft" id="shaft"></div>
+    </section>
+    <section class="card flows" id="flowsCard">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-coins-pile"/></svg>Деньги: приток и отток</h2>
+        <div class="card-tools"><span class="hint" id="bookHint"></span></div>
+      </div>
+      <div class="mult"><div class="plot" id="plot-flows"></div></div>
+      <div class="flowtables" id="flowTables"></div>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="card-head"><h2><svg class="ic" aria-hidden="true"><use href="#i-castle"/></svg>Город и подземелье</h2></div>
+    <div class="multiples" id="multiples"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div class="tabs" role="tablist" id="tabs">
+        <button type="button" role="tab" data-tab="market" class="on">Рынок</button>
+        <button type="button" role="tab" data-tab="houses">Дома</button>
+        <button type="button" role="tab" data-tab="squads">Отряды</button>
+        <button type="button" role="tab" data-tab="fences">Скупщики</button>
+      </div>
+      <div class="card-tools"><span class="hint" id="tabHint"></span></div>
+    </div>
+    <div class="tablewrap" id="tableWrap"></div>
+  </section>
+</main>
+
+<main id="viewHouse" hidden>
+  <section class="card" id="houseEmpty" hidden></section>
+  <section class="card away" id="awayCard" hidden></section>
+  <div id="houseBody">
+    <section class="card">
+      <div class="card-head">
+        <h2 id="hName">—</h2>
+        <div class="card-tools"><span class="hint" id="hHint"></span></div>
+      </div>
+      <div class="tiles" id="hTiles"></div>
+    </section>
+    <div class="grid2">
+      <section class="card"><div class="card-head"><h2>Капитал</h2><div class="card-tools"><span class="hint">касса + мастерские + склад − долги</span></div></div><div class="mult"><div class="plot" id="plot-hwealth"></div></div></section>
+      <section class="card"><div class="card-head"><h2>Место среди домов</h2><div class="card-tools"><span class="hint">перцентиль капитала, 100 — богаче всех</span></div></div><div class="mult"><div class="plot" id="plot-hpctl"></div></div></section>
+    </div>
+    <section class="card">
+      <div class="card-head"><h2>Линии</h2><div class="card-tools"><span class="hint">рычаги политики дома; «Настроить» — панель рычагов с прикидкой</span></div></div>
+      <div class="linecards" id="hLines"></div>
+    </section>
+    <div class="grid2">
+      <section class="card"><div class="card-head"><h2>Склад</h2></div><div class="tablewrap" id="hStock"></div></section>
+      <section class="card"><div class="card-head"><h2>Мои заявки в стакане</h2></div><div class="tablewrap" id="hBook"></div></section>
+    </div>
+    <div class="grid2">
+      <section class="card"><div class="card-head"><h2>Слава у отрядов</h2><div class="card-tools"><span class="hint">растёт, когда вернулись отряды с моим снаряжением</span></div></div><div id="hBrand"></div></section>
+      <section class="card"><div class="card-head"><h2>Журнал приказов</h2></div><div class="tablewrap" id="hOrders"></div></section>
+    </div>
+    <section class="card"><div class="card-head"><h2>Журнал дома</h2><div class="card-tools"><span class="hint">что политика сделала сама и что случилось с домом</span></div></div><ul class="hist" id="hJournal"></ul></section>
+  </div>
+</main>
+
+<aside class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <button type="button" id="drawerBack" class="ghost" title="Назад" hidden>←</button>
+    <h2 id="drawerTitle">—</h2>
+    <button type="button" id="drawerClose" class="ghost" title="Закрыть">✕</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<dialog id="about">
+  <div class="about-body" id="aboutBody"></div>
+  <form method="dialog"><button>Закрыть</button></form>
+</dialog>
+<script src="vendor/lightweight-charts-5.2.1/lightweight-charts.standalone.production.js"></script>
+<script src="vendor/uplot-1.6.32/uPlot.iife.min.js"></script>
+<script>
+// Проигрыватель записи мира: отвечает странице на те же запросы, что и сервер
+// (Web/server.py), но по записи из data/ (Web/replay/record.py). Время — «головка»:
+// её двигают скорость, шаг, перемотка и ползунок. Приказы и новый мир в записи
+// недоступны: это запись, а не живая игра.
+"use strict";
+(function () {
+  const BASE = "data/";
+  const RATE = { pause: 0, "1": 1, "3": 3, "10": 10, "30": 30, max: 90 };
+  const R = { meta: null, hist: null, events: null, head: 0, speed: "3", epoch: 1,
+    last: performance.now(), acc: 0, frames: new Map(), cards: new Map() };
+
+  const getJSON = p => fetch(BASE + p).then(r => {
+    if (!r.ok) throw new Error(p + ": " + r.status);
+    return r.json();
+  });
+  const ready = (async () => {
+    [R.meta, R.hist, R.events] = await Promise.all([getJSON("meta.json"), getJSON("history.json"), getJSON("events.json")]);
+    R.head = Math.min(R.meta.seat_at + 40, R.meta.ticks);   // с того, как игрок занял дом
+  })();
+
+  function advance() {
+    const now = performance.now();
+    const rate = RATE[R.speed] || 0;
+    R.acc += rate * (now - R.last) / 1000;
+    R.last = now;
+    const n = Math.floor(R.acc);
+    if (n > 0) {
+      R.acc -= n;
+      R.head = Math.min(R.meta.ticks, R.head + n);
+      if (R.head >= R.meta.ticks) R.speed = "pause";
+    }
+  }
+  const DAY = () => R.meta.day;
+  const label = t => `год ${Math.floor(t / DAY()) + 1}, день ${(t % DAY()) + 1}`;
+  function state() {
+    const s = { tick: R.head, label: label(R.head), seed: R.meta.seed, speed: R.speed, skip: 0,
+      tps: RATE[R.speed] || 0, epoch: R.epoch, saved: null, can_save: false, choosing: false,
+      note: "запись мира", replay: true, end: R.meta.ticks };
+    for (const k in R.hist.summary) s[k] = R.hist.summary[k][R.head];
+    return s;
+  }
+  function slice(from, to, stride) {
+    const idx = [];
+    for (let i = from; i <= to; i += stride) idx.push(i);
+    if (idx.length && idx[idx.length - 1] !== to) idx.push(to);
+    const pick = a => idx.map(i => a[i]);
+    const out = { cols: {}, px: {}, vol: {} };
+    for (const k in R.hist.cols) out.cols[k] = pick(R.hist.cols[k]);
+    for (const g in R.hist.px) { out.px[g] = pick(R.hist.px[g]); out.vol[g] = pick(R.hist.vol[g]); }
+    return out;
+  }
+  const at = (list, t) => {           // последний кадр не позже t (или первый)
+    let best = list[0];
+    for (const x of list) if (x <= t) best = x; else break;
+    return best;
+  };
+  async function frame() {
+    const t = at(R.meta.frames, R.head);
+    if (!R.frames.has(t)) R.frames.set(t, getJSON(`frames/${String(t).padStart(5, "0")}.json`));
+    return R.frames.get(t);
+  }
+  async function cards() {
+    const t = at(R.meta.card_frames, R.head);
+    if (!R.cards.has(t)) R.cards.set(t, getJSON(`cards/${String(t).padStart(5, "0")}.json`));
+    return R.cards.get(t);
+  }
+  const q = path => Object.fromEntries(new URL(path, "http://x").searchParams);
+
+  async function get(path) {
+    await ready;
+    const p = path.split("?")[0], a = q(path);
+    switch (p) {
+      case "/api/meta": return Object.assign({}, R.meta);
+      case "/api/state": advance(); return state();
+      case "/api/history": {
+        const pts = parseInt(a.points || "4000", 10);
+        return Object.assign(slice(0, R.head, Math.max(1, Math.ceil((R.head + 1) / pts))), { state: state() });
+      }
+      case "/api/poll": {
+        if (a.epoch && a.epoch !== String(R.epoch)) return { reset: true, state: state() };
+        advance();
+        const since = parseInt(a.since || "-1", 10), seq = parseInt(a.seq || "0", 10);
+        if (since >= 0 && R.head - since > 3000) return { reload: true, state: state() };
+        const h = since + 1 <= R.head ? slice(since + 1, R.head, 1) : slice(1, 0, 1);
+        h.events = R.events.filter(e => e.seq > seq && e.t <= R.head).slice(-400);
+        h.state = state();
+        return h;
+      }
+      case "/api/events": {
+        const seq = parseInt(a.seq || "0", 10), lim = parseInt(a.limit || "400", 10);
+        return R.events.filter(e => e.seq > seq && e.t <= R.head).slice(-lim);
+      }
+      case "/api/market": return (await frame()).market;
+      case "/api/houses": return (await frame()).houses;
+      case "/api/squads": return (await frame()).squads;
+      case "/api/dungeon": return (await frame()).dungeon;
+      case "/api/flows": return (await frame()).flows;
+      case "/api/myhouse": {
+        const f = await frame();
+        return f.myhouse && R.head >= R.meta.seat_at ? f.myhouse : { error: "дом не занят" };
+      }
+      case "/api/entity": {
+        const c = (await cards())[a.id];
+        return c || { error: "в этом кадре записи карточки нет (карточки пишутся раз в 90 дней)" };
+      }
+      case "/api/me": {
+        const seated = R.meta.seat && R.head >= R.meta.seat_at + 1;
+        return { seat: seated ? R.meta.seat : null, name: seated ? R.meta.seat_name : null, mode: "auto",
+          after: R.meta.seat_at, tick: R.head, pending: [] };
+      }
+      case "/api/candidates": return { choosing: false, candidates: [] };
+      case "/api/since": return { error: "в записи сводки нет" };
+      case "/api/preview": return { lines: ["это запись мира: прикидки и приказы — в живой версии"] };
+      case "/api/credits": return getJSON("credits.json");
+      case "/api/orders": return { seats: {}, queue: [], log: [] };
+    }
+    return { error: "нет такого запроса: " + p };
+  }
+  async function control(action, value) {
+    await ready;
+    advance();
+    if (action === "speed" && value in RATE) R.speed = value;
+    else if (action === "step") R.head = Math.min(R.meta.ticks, R.head + 1);
+    else if (action === "skip") R.head = Math.min(R.meta.ticks, R.head + (parseInt(value, 10) || 0));
+    else if (action === "stop_skip") { /* в записи перемотка мгновенная */ }
+    else return Object.assign(state(), { error: "в записи мира это недоступно: здесь можно смотреть, но не играть" });
+    if (R.head >= R.meta.ticks && action === "speed" && value !== "pause") R.speed = "pause";
+    return state();
+  }
+  function seek(t) {
+    R.head = Math.max(0, Math.min(R.meta.ticks, Math.round(t)));
+    R.acc = 0;
+    R.epoch += 1;                      // страница перечитает историю с нуля
+  }
+  async function order() {
+    return { error: "это запись мира: приказы работают в живой версии" };
+  }
+
+  window.DOC_BACKEND = { get, control, order, seek, ready, R };
+
+  // полоса записи: ползунок времени под шапкой
+  document.addEventListener("DOMContentLoaded", async () => {
+    await ready;
+    for (const id of ["btnNew", "seedInput", "btnSave"]) { const el = document.getElementById(id); if (el) el.hidden = true; }
+    const bar = document.createElement("div");
+    bar.className = "replaybar";
+    bar.innerHTML = `<span class="rb-k">Запись мира</span>` +
+      `<span class="rb-n">сид ${R.meta.seed} · ${Math.round(R.meta.ticks / R.meta.day)} лет · игрок занял дом «${R.meta.seat_name || "—"}» на ${Math.round(R.meta.seat_at / R.meta.day)}-м году и рычагов не трогает</span>` +
+      `<label class="vh" for="rbSlider">Время записи</label>` +
+      `<input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
+      `<span class="rb-t" id="rbTime"></span>`;
+    const top = document.querySelector(".top");
+    top.after(bar);
+    const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime");
+    let drag = false;
+    sl.addEventListener("input", () => { drag = true; tm.textContent = label(+sl.value); });
+    sl.addEventListener("change", () => { drag = false; seek(+sl.value); });
+    const tickUI = () => {
+      if (!drag) { sl.value = R.head; tm.textContent = label(R.head); }
+      requestAnimationFrame(tickUI);
+    };
+    tickUI();
+  });
+})();
+
+</script>
+<script>
+// Смотровая: клиент. Мир считает сервер; здесь — опрос, ряды, графики, таблицы.
+// Библиотеки: TradingView Lightweight Charts 5.2.1 (биржа), uPlot 1.6.32 (прочее).
+"use strict";
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const TOKEN = new URLSearchParams(location.search).get("token");
+const AUTHOR = new URLSearchParams(location.search).get("author");   // полная смотровая при игроке
+const SPEED_RU = { pause: "пауза", real: "реальное", "1": "1/с", "3": "3/с", "10": "10/с", "30": "30/с", max: "макс" };
+const SEC = 86400;              // тик -> «секунды» для шкалы времени биржи
+const MAX_POINTS = 4000;        // точек на график (прореживание при отрисовке)
+
+let META = null;
+const ST = { cols: null, px: null, vol: null, last: -1, seq: 0, epoch: null, state: null, events: [] };
+const UI = { good: "iron_ore", pxMode: "line", evLevel: 2, tab: "market", sort: {}, drawer: [], market: null };
+
+// ------------------------------------------------------------- формат
+let DAY = 360;
+const fmtDay = t => `год ${Math.floor(t / DAY) + 1}, день ${(t % DAY) + 1}`;
+const shortDay = t => `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
+const evDay = t => `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
+const nf0 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
+const nf2 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+function num(v, d) {
+  if (v == null || Number.isNaN(v)) return "—";
+  if (d != null) return v.toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d });
+  return Math.abs(v) >= 100 ? nf0.format(v) : nf2.format(v);
+}
+function compact(v) {
+  if (v == null) return "—";
+  const a = Math.abs(v);
+  if (a >= 1e6) return nf2.format(v / 1e6) + " млн";
+  if (a >= 1e4) return nf0.format(v / 1e3) + " тыс";
+  return num(v);
+}
+const pct = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(d).replace(".", ",") + "%");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+// текст с метками {id} -> ссылки на карточки
+function linkText(text, refs) {
+  return esc(text).replace(/\{([PHSF]-\d+)\}/g, (_m, id) =>
+    `<a class="ref" data-id="${id}">${esc((refs && refs[id]) || id)}</a>`);
+}
+const ref = (id, name) => id ? `<a class="ref" data-id="${id}">${esc(name || id)}</a>` : "—";
+const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// всплывающая подсказка вместо alert(): в песочнице claude.ai диалоги не показываются
+function toast(msg) {
+  let el = document.getElementById("toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg;
+  el.classList.add("on");
+  clearTimeout(toast.t);
+  toast.t = setTimeout(() => el.classList.remove("on"), 4000);
+}
+
+// ---------------------------------------------------------------- сеть
+// window.DOC_BACKEND — проигрыватель записи (Web/replay/replay.js): те же запросы, но
+// без сервера. Без него — сервер (Web/server.py)
+async function api(path) {
+  if (window.DOC_BACKEND) return window.DOC_BACKEND.get(path);
+  const extra = [TOKEN && "token=" + encodeURIComponent(TOKEN), AUTHOR && "author=" + encodeURIComponent(AUTHOR)].filter(Boolean).join("&");
+  const r = await fetch(path + (extra ? (path.includes("?") ? "&" : "?") + extra : ""));
+  return r.json();
+}
+async function control(action, value, extra = {}) {
+  if (window.DOC_BACKEND) {
+    const s = await window.DOC_BACKEND.control(action, value, extra);
+    if (s.error) toast(s.error);
+    ST.state = Object.assign(ST.state || {}, s); renderHeader();
+    return s;
+  }
+  const r = await fetch("/api/control", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Object.assign({ action, value, token: TOKEN }, extra)),
+  });
+  const s = await r.json();
+  if (!s.error) { ST.state = Object.assign(ST.state || {}, s); renderHeader(); }
+  return s;
+}
+
+// ---------------------------------------------------------------- тема
+function savedTheme() { try { return localStorage.getItem("doc-theme"); } catch (e) { return null; } }
+function applyTheme(t) {
+  if (t) document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+function currentTheme() {
+  const t = document.documentElement.getAttribute("data-theme");
+  if (t) return t;
+  return matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+}
+
+// ---------------------------------------------------------------- ряды
+function lowerBound(a, x) {
+  let lo = 0, hi = a.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (a[m] < x) lo = m + 1; else hi = m; }
+  return lo;
+}
+// прирост накопительного счётчика за окно дней
+function windowed(key, days) {
+  const t = ST.cols.t, v = ST.cols[key], out = new Array(t.length);
+  let j = 0;
+  for (let i = 0; i < t.length; i++) {
+    while (t[j] < t[i] - days) j++;
+    out[i] = v[i] - v[j];
+  }
+  return out;
+}
+function thinIdx(n, from = 0) {
+  const k = Math.max(1, Math.ceil((n - from) / MAX_POINTS)), idx = [];
+  for (let i = from; i < n; i += k) idx.push(i);
+  if (idx.length && idx[idx.length - 1] !== n - 1) idx.push(n - 1);
+  return idx;
+}
+
+function appendHist(h) {
+  const n = h.cols.t.length;
+  if (!n) return 0;
+  for (const k in h.cols) ST.cols[k].push(...h.cols[k]);
+  for (const g in h.px) { ST.px[g].push(...h.px[g]); ST.vol[g].push(...h.vol[g]); }
+  ST.last = ST.cols.t[ST.cols.t.length - 1];
+  return n;
+}
+
+// -------------------------------------------------------------- плитки
+// иконка из спрайта в index.html (icons/sprite.py); цвет — от текста
+const ic = n => !n ? "" : `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const TILE_IC = { pop: "village", hunger: "bread", adv: "hooded-figure", squads: "three-friends", houses: "anvil",
+  frontier: "stairs-goal", threat: "guarded-tower", money: "two-coins", fallen: "tombstone" };
+const HTILE_IC = { "Капитал": "chest", "Место": "podium-winner", "Касса": "two-coins", "Долг": "wooden-sign",
+  "Мощность": "anvil-impact", "Политика": "quill-ink" };
+const TILES = [
+  ["pop", "Город", s => num(s.pop), s => `жильё ${num(s.housing)}`],
+  ["hunger", "Голод", s => (s.hunger * 100).toFixed(0) + "%", s => {
+    if (s.hunger <= 0.001) return `<span class="st good">● сыты</span>`;
+    if (s.hunger < 0.1) return `<span class="st warn">▲ недоедают</span>`;
+    return `<span class="st critical">■ голод</span>`;
+  }],
+  ["adv", "Авантюристы", s => num(s.adv), s => `в гильдии ${num(s.pool)}`],
+  ["squads", "Отряды", s => num(s.squads), s => `в походе ${num(s.out)}`],
+  ["houses", "Дома", s => num(s.houses), s => `разорились ${num(s.bankrupt)}`],
+  ["frontier", "Фронтир", s => s.frontier + "-й ярус", s => `рекорд ${s.front_max}`],
+  ["threat", "Угроза / гарнизон", s => `${compact(s.threat)} / ${compact(s.guard)}`, s =>
+    (s.guard >= s.threat ? `<span class="st good">● держим</span>` : `<span class="st serious">▲ перевес</span>`)
+      + ` · солдат ${s.soldiers}`],
+  ["money", "Деньги", s => compact(s.money), s => `казна ${compact(s.treasury)}`],
+  ["fallen", "Погибли", s => num(s.fallen), s => {
+    const f = ST.cols.fallen, t = ST.cols.t;
+    if (!f || !f.length) return "";
+    const j = lowerBound(t, t[t.length - 1] - 45);
+    return `за 45 дн. ${num(f[f.length - 1] - f[j])} · прорывов ${s.breaches}`;
+  }],
+];
+function buildTiles() {
+  $("#tiles").innerHTML = TILES.map(([k, label]) =>
+    `<div class="tile" id="tile-${k}"><div class="k">${ic(TILE_IC[k])}${label}</div><div class="v">—</div><div class="n"></div></div>`).join("");
+}
+function renderTiles() {
+  const s = ST.state;
+  if (!s) return;
+  for (const [k, , v, n] of TILES) {
+    const el = $("#tile-" + k);
+    $(".v", el).textContent = v(s);
+    $(".n", el).innerHTML = n(s);
+  }
+}
+
+// --------------------------------------------------------------- шапка
+function buildHeader() {
+  $("#speeds").innerHTML = META.speeds.map(s =>
+    `<button type="button" data-speed="${s}" title="${s === "real" ? "360 дней — реальные сутки: день в 4 минуты" : "игровых дней в секунду"}">${SPEED_RU[s] || s}</button>`).join("");
+  $("#speeds").addEventListener("click", e => {
+    const b = e.target.closest("button[data-speed]");
+    if (b) control("speed", b.dataset.speed);
+  });
+  $("#btnStep").onclick = () => control("step");
+  $("#btnSkip45").onclick = () => control("skip", 45);
+  $("#btnSkipYear").onclick = () => control("skip", 360);
+  $("#btnStopSkip").onclick = () => control("stop_skip");
+  $("#btnNew").onclick = async () => {
+    const seed = parseInt($("#seedInput").value, 10);
+    if (Number.isNaN(seed)) return;
+    if (!confirm(`Начать новый мир с сидом ${seed}? Нынешний мир не сохраняется.`)) return;
+    await control("new", null, { seed });
+    await fullReload();
+  };
+  $("#btnTheme").onclick = () => {
+    const t = currentTheme() === "dark" ? "light" : "dark";
+    applyTheme(t);
+    try { localStorage.setItem("doc-theme", t); } catch (e) { /* без памяти — тоже можно */ }
+    rebuildCharts();
+  };
+  $("#btnAbout").onclick = openAbout;
+  $("#btnSave").onclick = async () => {
+    const r = await control("save");
+    if (r.error) toast(r.error);
+  };
+  if (!META.control) {
+    $$("#controls button, #controls input, #btnStopSkip").forEach(b => (b.disabled = true));
+    $("#readonly").hidden = false;
+  }
+}
+function renderHeader() {
+  const s = ST.state;
+  if (!s) return;
+  $("#date").textContent = fmtDay(s.tick);
+  $("#seedLabel").textContent = `сид ${s.seed}`;
+  const saved = s.replay ? ` · запись до ${evDay(s.end)}` : s.saved ? ` · снимок ${evDay(s.saved.tick)} (${s.saved.at.slice(11, 16)})` : (s.can_save ? " · снимка ещё нет" : " · без сохранения");
+  $("#tps").textContent = (s.speed === "pause" && !s.skip ? "время стоит"
+    : `${num(s.tps, 1)} дн./с · поход — ${META.expedition} дн., год — ${DAY} дн.`) + saved;
+  $("#tps").title = s.note || "";
+  $("#btnSave").hidden = !s.can_save;
+  $$("#speeds button").forEach(b => b.classList.toggle("on", b.dataset.speed === s.speed));
+  $("#skipbar").hidden = !s.skip;
+  $("#choosebar").hidden = !s.choosing || UI.view === "house";
+  if (s.skip) $("#skipText").textContent = `досчитываю: осталось ${num(s.skip)} дн.`;
+  document.title = `${fmtDay(s.tick)} — Dungeon of Capitalism`;
+}
+
+// -------------------------------------------------------------- биржа
+const PX = { chart: null, main: null, vol: null, refLine: null };
+function buildGoodSelect() {
+  const groups = {};
+  for (const g of META.goods) (groups[META.kind[g]] ||= []).push(g);
+  $("#goodSelect").innerHTML = Object.entries(groups).map(([k, gs]) =>
+    `<optgroup label="${k}">${gs.map(g => `<option value="${g}">${esc(META.ru[g])}${META.loot.includes(g) ? " · добыча" : ""}</option>`).join("")}</optgroup>`).join("");
+  $("#goodSelect").value = UI.good;
+  $("#goodSelect").onchange = e => selectGood(e.target.value);
+  $("#pxMode").addEventListener("click", e => {
+    const b = e.target.closest("button[data-mode]");
+    if (!b) return;
+    UI.pxMode = b.dataset.mode;
+    $$("#pxMode button").forEach(x => x.classList.toggle("on", x === b));
+    buildPxSeries();
+  });
+}
+function buildPxChart() {
+  const LC = LightweightCharts;
+  if (PX.chart) PX.chart.remove();
+  PX.chart = LC.createChart($("#pxChart"), {
+    autoSize: true,
+    layout: {
+      background: { type: LC.ColorType.Solid, color: css("--surface") },
+      textColor: css("--ink-3"), fontSize: 12, fontFamily: css("--font-text"),
+      attributionLogo: true,      // логотип TradingView — атрибуция по лицензии, не отключать
+      panes: { separatorColor: css("--line") },
+    },
+    grid: { vertLines: { color: css("--grid") }, horzLines: { color: css("--grid") } },
+    rightPriceScale: { borderColor: css("--line") },
+    timeScale: { borderColor: css("--line"), tickMarkFormatter: t => shortDay(Math.round(t / SEC)) },
+    localization: { locale: "ru-RU", timeFormatter: t => fmtDay(Math.round(t / SEC)), priceFormatter: p => num(p, p >= 100 ? 0 : 2) },
+    crosshair: { mode: LC.CrosshairMode.Normal },
+  });
+  buildPxSeries();
+}
+function pxData() {
+  const t = ST.cols.t, px = ST.px[UI.good], vol = ST.vol[UI.good];
+  if (UI.pxMode === "candle") {
+    const cs = [], vs = [];
+    for (let i = 0; i < t.length; i++) {
+      const b = Math.floor(t[i] / 10) * 10, p = px[i], c = cs[cs.length - 1];
+      if (!c || c.time !== b * SEC) {
+        cs.push({ time: b * SEC, open: i ? px[i - 1] : p, high: p, low: p, close: p });
+        vs.push({ time: b * SEC, value: vol[i] });
+      } else {
+        c.high = Math.max(c.high, p); c.low = Math.min(c.low, p); c.close = p;
+        vs[vs.length - 1].value += vol[i];
+      }
+    }
+    return { main: cs, vol: vs };
+  }
+  const idx = thinIdx(t.length);
+  return { main: idx.map(i => ({ time: t[i] * SEC, value: px[i] })), vol: idx.map(i => ({ time: t[i] * SEC, value: vol[i] })) };
+}
+function buildPxSeries() {
+  const LC = LightweightCharts, ch = PX.chart;
+  if (PX.main) { ch.removeSeries(PX.main); PX.main = null; PX.refLine = null; }
+  if (PX.vol) { ch.removeSeries(PX.vol); PX.vol = null; }
+  if (UI.pxMode === "candle") {
+    PX.main = ch.addSeries(LC.CandlestickSeries, {
+      upColor: css("--s1"), downColor: css("--down"), borderVisible: false,
+      wickUpColor: css("--s1"), wickDownColor: css("--down"),
+    });
+  } else {
+    PX.main = ch.addSeries(LC.LineSeries, { color: css("--s1"), lineWidth: 2 });
+  }
+  PX.vol = ch.addSeries(LC.HistogramSeries, { color: css("--ink-3"), priceFormat: { type: "volume" }, priceLineVisible: false }, 1);
+  const panes = ch.panes();
+  if (panes[1]) { panes[0].setStretchFactor(3); panes[1].setStretchFactor(1); }
+  const d = pxData();
+  PX.main.setData(d.main);
+  PX.vol.setData(d.vol);
+  PX.chart.timeScale().fitContent();
+  updateRefLine();
+}
+function updateRefLine() {
+  const LC = LightweightCharts;
+  const row = UI.market && UI.market.find(r => r.g === UI.good);
+  if (!PX.main || !row) return;
+  if (!PX.refLine) {
+    PX.refLine = PX.main.createPriceLine({
+      price: row.ref, color: css("--ink-3"), lineWidth: 1, lineStyle: LC.LineStyle.Dashed,
+      axisLabelVisible: true, title: "опорная",
+    });
+  } else PX.refLine.applyOptions({ price: row.ref });
+}
+function pushPx(from) {
+  if (!PX.main) return;
+  if (UI.pxMode === "candle") { const d = pxData(); PX.main.setData(d.main); PX.vol.setData(d.vol); return; }
+  const t = ST.cols.t, px = ST.px[UI.good], vol = ST.vol[UI.good];
+  for (let i = from; i < t.length; i++) {
+    PX.main.update({ time: t[i] * SEC, value: px[i] });
+    PX.vol.update({ time: t[i] * SEC, value: vol[i] });
+  }
+}
+function renderPxInfo() {
+  const row = UI.market && UI.market.find(r => r.g === UI.good);
+  if (!row) { $("#pxInfo").textContent = ""; return; }
+  const k = row.ref ? row.px / row.ref : null;
+  const shop = META.kind[UI.good] === "лавка";
+  let s = `<b>${esc(row.ru)}</b> · цена <b>${num(row.px, 2)}</b> · опорная ${num(row.ref, 2)}`
+    + (k ? ` (×${num(k, 2)})` : "") + ` · за 30 дн. ${pct(row.d30)}`
+    + ` · ${shop ? "продажи лавок в день" : "объём за день"} ${num(row.vol, 1)}`;
+  if (!shop) s += ` · лучший бид ${num(row.bid, 2)} / аск ${row.ask ? num(row.ask, 2) : "—"}`;
+  $("#pxInfo").innerHTML = s;
+}
+function selectGood(g) {
+  UI.good = g;
+  $("#goodSelect").value = g;
+  PX.refLine = null;
+  buildPxSeries();
+  renderPxInfo();
+  if (UI.tab === "market") renderTable();
+}
+
+// ---------------------------------------------------- малые графики (uPlot)
+const MULT = [
+  { id: "people", title: "Люди", series: [["pop", "горожане"], ["adv", "авантюристы"], ["down", "под землёй"]] },
+  { id: "money", title: "Деньги", series: [["m_houses", "у домов"], ["m_town", "у горожан"], ["m_adv", "у отрядов"], ["treasury", "казна"]] },
+  { id: "depth", title: "Глубина, ярус", series: [["frontier", "фронтир"], ["trip_d", "средний поход"]] },
+  { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза"], ["known", "известная совету"], ["guard", "гарнизон"]] },
+  { id: "loss", title: "Потери за 45 дней", series: [["@fallen", "погибли"], ["@wounded", "ранены"], ["@bankrupt", "разорились дома"]] },
+  { id: "hunger", title: "Голод, %", series: [["%hunger", "голод"]], range: [0, 85] },
+];
+const PLOTS = {};
+function seriesData(key) {
+  if (key[0] === "@") return windowed(key.slice(1), 45);
+  if (key[0] === "%") return ST.cols[key.slice(1)].map(v => v * 100);
+  if (key[0] === "~") return windowed(key.slice(1), 30).map(v => v / 30);
+  return ST.cols[key];
+}
+function multData(m) {
+  const idx = thinIdx(ST.cols.t.length);
+  const out = [idx.map(i => ST.cols.t[i])];
+  for (const [k] of m.series) { const a = seriesData(k); out.push(idx.map(i => a[i])); }
+  return out;
+}
+function buildMultiples() {
+  const host = $("#multiples");
+  if (!META.full) {
+    // режим игрока: настоящей угрозы город не знает — только вести вернувшихся
+    const th = MULT.find(m => m.id === "threat");
+    th.series = [["known", "известная совету"], ["guard", "гарнизон"]];
+  }
+  host.innerHTML = MULT.map(m => `<div class="mult"><h3>${m.title}</h3><div class="plot" id="plot-${m.id}"></div></div>`).join("");
+  $("#plot-flows").innerHTML = "";
+  const colors = ["--s1", "--s2", "--s3", "--s4"].map(css);
+  const axis = {
+    stroke: css("--ink-3"), font: `12px ${css("--font-text")}`,
+    grid: { stroke: css("--grid"), width: 1 }, ticks: { stroke: css("--grid"), width: 1 },
+  };
+  for (const m of MULT.concat([FLOWS])) {
+    const el = $("#plot-" + m.id);
+    const opts = {
+      width: el.clientWidth || 300, height: 180,
+      cursor: { drag: { x: true, y: false } },
+      scales: { x: { time: false }, y: m.range ? { range: m.range } : { range: (u, lo, hi) => [Math.min(0, lo), hi > 0 ? hi * 1.08 : 1] } },
+      axes: [
+        Object.assign({}, axis, { space: 90, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
+        Object.assign({}, axis, { size: 56, values: (u, vals) => vals.map(compact) }),
+      ],
+      series: [{ label: "день", value: (u, v) => (v == null ? "—" : fmtDay(Math.round(v))) }]
+        .concat(m.series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
+      hooks: { setSelect: [u => { if (u.select.width > 0) PLOTS[m.id].zoomed = true; }] },
+    };
+    const u = new uPlot(opts, multData(m), el);
+    u.over.addEventListener("dblclick", () => { PLOTS[m.id].zoomed = false; u.setData(multData(m), true); });
+    // курсор ушёл — легенда показывает последние значения (подпись прямо у рядов)
+    u.over.addEventListener("mouseenter", () => { PLOTS[m.id].hover = true; });
+    u.over.addEventListener("mouseleave", () => { PLOTS[m.id].hover = false; legendLast(u); });
+    PLOTS[m.id] = { u, m, el, zoomed: false, hover: false };
+    legendLast(u);
+  }
+}
+function legendLast(u) { const n = u.data[0].length; if (n) u.setLegend({ idx: n - 1 }); }
+function renderMultiples() {
+  for (const id in PLOTS) {
+    const p = PLOTS[id];
+    p.u.setData(multData(p.m), !p.zoomed);
+    if (!p.hover) legendLast(p.u);
+  }
+}
+const ro = new ResizeObserver(() => {
+  for (const id in PLOTS) { const p = PLOTS[id]; if (p.el.clientWidth) p.u.setSize({ width: p.el.clientWidth, height: 180 }); }
+  for (const id in HP) { const p = HP[id]; if (p.el.clientWidth) p.u.setSize({ width: p.el.clientWidth, height: 180 }); }
+});
+function rebuildCharts() {
+  for (const id in HP) { HP[id].u.destroy(); delete HP[id]; }
+  if (UI.view === "house") loadHouse();
+  for (const id in PLOTS) { PLOTS[id].u.destroy(); delete PLOTS[id]; }
+  buildMultiples();
+  $$(".plot").forEach(el => ro.observe(el));
+  PX.main = PX.vol = PX.refLine = null;
+  buildPxChart();
+}
+
+// ------------------------------------------------------------ летопись
+function evItem(e, fresh) {
+  return `<li class="lv${e.lv} k-${e.k}${fresh ? " fresh" : ""}"><span class="t">${evDay(e.t)}</span><span class="x">${linkText(e.text, e.refs)}</span></li>`;
+}
+function renderEvents() {
+  const list = ST.events.filter(e => e.lv >= UI.evLevel).slice(-300).reverse();
+  $("#events").innerHTML = list.length ? list.map(e => evItem(e)).join("") : `<li class="empty">пока тихо</li>`;
+}
+function addEvents(evs) {
+  if (!evs.length) return;
+  ST.events.push(...evs);
+  if (ST.events.length > 2000) ST.events.splice(0, ST.events.length - 2000);
+  ST.seq = evs[evs.length - 1].seq;
+  const shown = evs.filter(e => e.lv >= UI.evLevel);
+  if (!shown.length) return;
+  const ol = $("#events");
+  const empty = $(".empty", ol);
+  if (empty) empty.remove();
+  ol.insertAdjacentHTML("afterbegin", shown.slice(-60).reverse().map(e => evItem(e, true)).join(""));
+  while (ol.children.length > 300) ol.lastElementChild.remove();
+}
+
+// ------------------------------------------------------------- таблицы
+const COLS = {
+  market: [
+    { k: "ru", l: "Товар" }, { k: "kind", l: "Вид", f: (v, r) => `<span class="tag">${META.kind[r.g]}</span>` },
+    { k: "px", l: "Цена", n: 1, f: v => num(v, 2) }, { k: "ref", l: "Опорная", n: 1, f: v => num(v, 2) },
+    { k: "x", l: "К опорной", n: 1, f: v => (v == null ? "—" : "×" + num(v, 2)) },
+    { k: "d30", l: "За 30 дн.", n: 1, f: v => `<span class="${v > 0.005 ? "up" : v < -0.005 ? "down" : ""}">${pct(v)}</span>` },
+    { k: "vol", l: "Объём/день", n: 1, f: v => num(v, 1) },
+    { k: "bid", l: "Бид", n: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Аск", n: 1, f: v => (v ? num(v, 2) : "—") },
+    { k: "depth_b", l: "Спрос в стакане", n: 1, f: v => (v == null ? "—" : num(v, 0)) },
+    { k: "depth_a", l: "Предложение", n: 1, f: v => (v == null ? "—" : num(v, 0)) },
+  ],
+  houses: [
+    { k: "name", l: "Дом", f: (v, r) => ref(r.id, v) + (r.player ? ' <span class="tag">игрок</span>' : "") },
+    { k: "ind", l: "Отрасль" },
+    { k: "lines", l: "Линии", w: 1, f: v => v.map(x => `${esc(x.n)} ${num(x.cap, 1)}`).join(", ") },
+    { k: "cap", l: "Мощность", n: 1, f: v => num(v, 1) }, { k: "cash", l: "Касса", n: 1, f: compact },
+    { k: "owed", l: "Долг", n: 1, f: v => (v ? compact(v) : "—") }, { k: "age", l: "Возраст, дн.", n: 1, f: v => num(v) },
+  ],
+  squads: [
+    { k: "name", l: "Отряд", f: (v, r) => ref(r.id, v) }, { k: "leader_name", l: "Вожак", f: (v, r) => ref(r.leader, v) },
+    { k: "size", l: "Людей", n: 1 }, { k: "rank", l: "Ранг", n: 1, f: v => ["новички", "ветераны", "мастера"][v] || v },
+    { k: "power", l: "Сила", n: 1, f: v => num(v, 2) }, { k: "cash", l: "Касса", n: 1, f: compact },
+    { k: "state", l: "Где", f: (v, r) => r.depth ? `${v}: ${r.depth}-й ярус, вернётся ${evDay(r.back)}` : v },
+  ],
+  fences: [
+    { k: "name", l: "Скупщик" }, { k: "cash", l: "Касса", n: 1, f: compact }, { k: "stock", l: "Склад по рынку", n: 1, f: compact },
+  ],
+};
+// режим игрока (И5): чужая касса и склад скрыты — вместо них то, что знает город
+const COLS_PLAYER = {
+  houses: [
+    COLS.houses[0], COLS.houses[1], COLS.houses[2], COLS.houses[3],
+    { k: "skill", l: "Мастерство" },
+    { k: "record", l: "Послужной список", w: 1, f: v => (v ? v.map(esc).join("; ") : "—") },
+    { k: "age", l: "Возраст, дн.", n: 1, f: v => num(v) },
+  ],
+  fences: [{ k: "name", l: "Скупщик" }],
+};
+const HINT = {
+  market: "строка — товар на графике биржи; лавочные цены — сглаженные продажи лавок",
+  houses: "живые дома, по кассе; имя — карточка дома", squads: "живые отряды; имя — карточка отряда и состав",
+  fences: "скупщики выкупают добычу у вернувшихся отрядов",
+};
+let TABLE_ROWS = [];
+async function loadTable() {
+  if (UI.tab === "market") {
+    const r = await api("/api/market");
+    UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+    TABLE_ROWS = UI.market;
+    UI.fences = r.fences;
+    renderPxInfo(); updateRefLine();
+  } else if (UI.tab === "fences") {
+    const r = await api("/api/market");
+    UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+    TABLE_ROWS = r.fences;
+    renderPxInfo();
+  } else {
+    TABLE_ROWS = await api("/api/" + UI.tab);
+    if (!UI.market) loadMarketQuiet();
+  }
+  renderTable();
+}
+async function loadMarketQuiet() {
+  const r = await api("/api/market");
+  UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+  renderPxInfo(); updateRefLine();
+}
+function renderTable() {
+  const cols = (!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab], srt = UI.sort[UI.tab];
+  let rows = TABLE_ROWS.slice();
+  if (srt) {
+    rows.sort((a, b) => {
+      const x = a[srt.k], y = b[srt.k];
+      const c = typeof x === "number" && typeof y === "number" ? x - y : String(x ?? "").localeCompare(String(y ?? ""), "ru");
+      return srt.asc ? c : -c;
+    });
+  }
+  const head = cols.map(c => `<th data-k="${c.k}" class="${c.n ? "num" : ""}${srt && srt.k === c.k ? " sorted" + (srt.asc ? " asc" : "") : ""}">${c.l}</th>`).join("");
+  const body = rows.map(r => `<tr data-g="${r.g || ""}"${UI.tab === "market" && r.g === UI.good ? ' class="sel"' : ""}>` +
+    cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
+  $("#tableWrap").innerHTML = rows.length ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`;
+  $("#tabHint").textContent = !META.full && UI.tab === "houses"
+    ? "живые дома, по мощности; касса чужих домов не видна — только послужной список"
+    : !META.full && UI.tab === "fences" ? "касса и склад скупщиков не видны" : HINT[UI.tab];
+}
+function bindTable() {
+  const tw = $("#tableWrap"), dr = $("#drawer");
+  tw.addEventListener("pointerenter", () => (UI.hoverTable = true));
+  tw.addEventListener("pointerleave", () => (UI.hoverTable = false));
+  dr.addEventListener("pointerenter", () => (UI.hoverDrawer = true));
+  dr.addEventListener("pointerleave", () => (UI.hoverDrawer = false));
+  $("#tabs").addEventListener("click", e => {
+    const b = e.target.closest("button[data-tab]");
+    if (!b) return;
+    UI.tab = b.dataset.tab;
+    $$("#tabs button").forEach(x => x.classList.toggle("on", x === b));
+    loadTable();
+  });
+  $("#tableWrap").addEventListener("click", e => {
+    const th = e.target.closest("th[data-k]");
+    if (th) {
+      const k = th.dataset.k, cur = UI.sort[UI.tab];
+      UI.sort[UI.tab] = cur && cur.k === k ? { k, asc: !cur.asc } : { k, asc: false };
+      return renderTable();
+    }
+    const tr = e.target.closest("tr[data-g]");
+    if (tr && tr.dataset.g && !e.target.closest(".ref")) selectGood(tr.dataset.g);
+  });
+}
+
+// ------------------------------------------------------------ карточки
+document.addEventListener("click", e => {
+  const a = e.target.closest(".ref[data-id]");
+  if (a) { e.preventDefault(); openEntity(a.dataset.id, true); }
+});
+$("#drawerClose").onclick = () => { UI.drawer = []; UI.panel = null; $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); };
+$("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
+
+async function openEntity(id, push) {
+  UI.panel = null;
+  if (push && UI.drawer[UI.drawer.length - 1] !== id) UI.drawer.push(id);
+  const e = await api("/api/entity?id=" + encodeURIComponent(id));
+  $("#drawer").classList.add("open");
+  $("#drawer").setAttribute("aria-hidden", "false");
+  $("#drawerBack").hidden = UI.drawer.length < 2;
+  if (e.error) { $("#drawerTitle").textContent = id; $("#drawerBody").innerHTML = `<p class="empty">${esc(e.error)}</p>`; return; }
+  $("#drawerTitle").textContent = e.name;
+  $("#drawerBody").innerHTML = ({ S: squadCard, H: houseCard, P: personCard }[e.kind] || (() => ""))(e);
+}
+function lifeLine(e) {
+  return `<dt>id</dt><dd>${e.id}</dd><dt>с</dt><dd>${evDay(e.born)}</dd>` +
+    (e.ended != null ? `<dt>конец</dt><dd>${evDay(e.ended)} — ${esc(e.why || "")}</dd>` : "");
+}
+function squadCard(e) {
+  let h = `<dl class="kv">${lifeLine(e)}`;
+  if (e.roster) h += `<dt>сила</dt><dd>${num(e.power, 2)}</dd><dt>сплочённость</dt><dd>${bar(e.cohesion)}${num(e.cohesion, 2)}</dd>`;
+  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн., шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
+  h += `</dl>`;
+  if (e.roster) {
+    h += `<h3>Состав</h3><table><thead><tr><th>Имя</th><th>Роль</th><th>Ранг</th><th class="num">Касса</th><th class="num">Походов</th></tr></thead><tbody>` +
+      e.roster.map(m => `<tr><td>${ref(m.id, m.short)}${m.id === e.leader ? ' <span class="tag">вожак</span>' : ""}${m.heal > 0 ? ' <span class="tag">ранен</span>' : ""}</td><td>${esc(m.role)}</td><td>${esc(m.rank)}</td><td class="num">${compact(m.cash)}</td><td class="num">${m.trips}</td></tr>`).join("") +
+      `</tbody></table>`;
+  }
+  if (e.names && e.names.length > 1) {
+    h += `<h3>Названия</h3><ul class="hist">` + e.names.slice().reverse().map(n =>
+      `<li><span class="t">${evDay(n.from)}</span><span>${esc(n.name)}</span></li>`).join("") + `</ul>`;
+  }
+  return h;
+}
+function houseCard(e) {
+  let h = `<dl class="kv"><dt>лавка</dt><dd>${esc(e.shop || "")}</dd>${lifeLine(e)}`;
+  if (e.lines) {
+    h += `<dt>отрасль</dt><dd>${esc(e.ind)}</dd>` +
+      (e.cash != null ? `<dt>касса</dt><dd>${num(e.cash)}</dd><dt>долг</dt><dd>${num(e.owed)}</dd>` : `<dt>касса</dt><dd class="dim">не видна — состояние чужого дома скрыто</dd>`) +
+      `<dt>возраст</dt><dd>${num(e.age)} дн.</dd><dt>мастерство</dt><dd>${typeof e.skill === "number" ? num(e.skill, 1) : esc(e.skill)}</dd>` +
+      (e.record ? `<dt>послужной список</dt><dd>${e.record.map(esc).join("; ")}</dd>` : "");
+    const br = Object.entries(e.brand || {});
+    if (br.length) h += `<dt>слава у отрядов</dt><dd>${br.map(([k, v]) => `${esc(k)} ${num(v, 1)}`).join(", ")}</dd>`;
+  }
+  h += `</dl>`;
+  if (e.lines) {
+    h += `<h3>Линии</h3><table><thead><tr><th>Линия</th><th>Выпуск</th><th class="num">Мощность</th><th class="num">Просит</th></tr></thead><tbody>` +
+      e.lines.map(l => `<tr><td>${esc(l.n)}${l.idle ? ' <span class="tag">стоит</span>' : ""}</td><td>${esc(l.good)}</td><td class="num">${num(l.cap, 2)}</td><td class="num">${num(l.ask, 2)}</td></tr>`).join("") + `</tbody></table>`;
+    if (e.stock && e.stock.length) {
+      h += `<h3>Склад</h3><table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">По рынку</th></tr></thead><tbody>` +
+        e.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td></tr>`).join("") + `</tbody></table>`;
+    }
+  }
+  return h;
+}
+const bar = v => `<span class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></i></span>`;
+function personCard(e) {
+  let h = `<dl class="kv">${lifeLine(e)}`;
+  if (e.role) {
+    h += `<dt>отряд</dt><dd>${e.squad ? ref(e.squad, e.refs && e.refs[e.squad]) : "в гильдии, без отряда"}</dd>` +
+      `<dt>роль</dt><dd>${esc(e.role)}</dd><dt>ранг</dt><dd>${esc(e.rank)}</dd><dt>касса</dt><dd>${num(e.cash)}</dd>` +
+      `<dt>походов</dt><dd>${e.trips}</dd>` + (e.heal > 0 ? `<dt>ранен</dt><dd>лечится ещё ${e.heal} дн.</dd>` : "") +
+      (e.nicks && e.nicks.length ? `<dt>прозвища</dt><dd>${e.nicks.map(esc).join("; ")}</dd>` : "");
+    h += Object.entries(e.traits).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${bar(v)}${num(v, 2)}</dd>`).join("");
+  } else if (e.ended == null) {
+    h += `<dt>где</dt><dd>не в отряде и не в гильдии</dd>`;
+  }
+  h += `</dl>`;
+  if (e.hist && e.hist.length) {
+    h += `<h3>История</h3><ul class="hist">` + e.hist.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${linkText(x.text, e.refs)}</span></li>`).join("") + `</ul>`;
+  } else if (e.ended != null) {
+    h += `<p class="empty">история ушедших не хранится — только в летописи</p>`;
+  }
+  return h;
+}
+
+// ------------------------------------------------------- денежные потоки
+// приток и отток в день, скользящее среднее за 30 дней (из накопленных счётчиков книги)
+const FLOWS = { id: "flows", title: "", series: [["~created", "приток: создано"], ["~destroyed", "отток: уничтожено"]] };
+async function loadFlows() {
+  if (UI.hoverFlows) return;
+  const f = await api("/api/flows");
+  const okBook = Math.abs(f.gap) <= 1e-6 * Math.max(1, f.cash) + 1;
+  $("#bookHint").innerHTML = `за ${f.days} дн.: наличность ${f.d_cash >= 0 ? "+" : ""}${num(f.d_cash)} = создано − уничтожено ` +
+    (okBook ? `<span class="st good">● книга сходится</span>` : `<span class="st critical">■ разрыв ${num(f.gap)}</span>`);
+  const sec = (title, rows, note) => {
+    const tot = rows.reduce((a, r) => a + Math.max(0, r.d30), 0) || 1;
+    return `<h3>${title}</h3><table><thead><tr><th>Статья</th><th class="num">30 дн.</th><th class="num">год</th><th class="num">всё время</th></tr></thead><tbody>` +
+      rows.map(r => `<tr><td class="cat">${esc(r.cat)}${note ? "" : `<span class="share"><i style="width:${Math.round(Math.max(0, r.d30) / tot * 100)}%"></i></span>`}</td>` +
+        `<td class="num">${compact(r.d30)}</td><td class="num">${compact(r.d360)}</td><td class="num">${compact(r.all)}</td></tr>`).join("") + `</tbody></table>`;
+  };
+  $("#flowTables").innerHTML = sec("Притоки — деньги приходят в город", f.src) +
+    sec("Стоки — деньги уходят из города", f.sink) +
+    sec("Справочно — внутри статей и между держателями", f.inner, true);
+}
+function bindFlows() {
+  const t = $("#flowTables");
+  t.addEventListener("pointerenter", () => (UI.hoverFlows = true));
+  t.addEventListener("pointerleave", () => (UI.hoverFlows = false));
+}
+
+// ---------------------------------------------------------- подземелье
+const PHASE = { "спуск": "▾", "промысел": "●", "подъём": "▴", "не вернулся": "✕" };
+async function loadDungeon() {
+  if (UI.hoverShaft) return;
+  const g = await api("/api/dungeon");
+  const pct0 = v => Math.round(v * 100) + "%";
+  $("#dgHint").innerHTML = `в походе ${g.out} отр., ${g.people} чел. · фронтир ${g.frontier}-й, рекорд ${g.front_max}-й` +
+    (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "");
+  $("#shaft").innerHTML = g.rows.map(r => {
+    const cls = ["lvl"];
+    if (r.d === g.frontier) cls.push("front");
+    if (r.d > g.frontier) cls.push("dark");
+    const hidden = r.stock === undefined;      // режим игрока: правды о ярусе у города нет
+    const stockT = (hidden ? `по слухам ${pct0(r.rumor || 1)} полного запаса` : `на деле ${pct0(r.stock)} полного запаса` + (r.rumor != null ? `, по слухам ${pct0(r.rumor)}` : "")) +
+      (r.seen != null ? ` · последний раз были ${r.seen} дн. назад` : " · здесь ещё не бывали");
+    const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
+    const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
+    const sq = r.squads.slice(0, 24).map(s =>
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      (r.squads.length > 24 ? `<span class="more">+${r.squads.length - 24}</span>` : "");
+    const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
+    return `<div class="${cls.join(" ")}">` +
+      `<span class="d" title="добыча: ${esc(r.goods.join(", "))}">${r.d}</span>` +
+      `<span class="stock" title="${stockT}"><span class="sbar${hidden ? " rumor" : ""}"><i style="width:${Math.min(100, fill * 100)}%"></i>${rumor}</span></span>` +
+      `<span class="sq">${sq}</span>` +
+      `<span class="num" title="вернувшихся походов (в 45-дневных) — знание троп и ловушек">${r.know ? num(r.know, 1) : "—"}</span>` +
+      `<span class="num" title="шансы вернуться за 45 дней с полным припасом; ниже ${pct0(g.min_odds)} не выходят">${odd(r.odds_new)} · ${odd(r.odds_best)}</span>` +
+      `</div>` + (r.d === g.frontier ? `<div class="frontline">фронтир — ${g.frontier}-й ярус</div>` : "");
+  }).join("");
+}
+function bindDungeon() {
+  if (!META.full) {
+    $("#dgStockHead").textContent = "запас: по слухам";
+    $("#tile-threat .k").textContent = "Угроза по вестям / гарнизон";
+  }
+  const sh = $("#shaft");
+  sh.addEventListener("pointerenter", () => (UI.hoverShaft = true));
+  sh.addEventListener("pointerleave", () => (UI.hoverShaft = false));
+  $("#dgLegend").innerHTML = !META.full ? "▾ спуск · ● промысел · ▴ подъём · ✕ не вернулся в срок — значок кликается · " +
+    "полоса — что о ярусе говорят в городе (правду знают только те, кто там был)" : "▾ спуск · ● промысел · ▴ подъём · ✕ не вернулся в срок — значок кликается · " +
+    "полоса — запас яруса на деле, черта — что о нём говорят в городе";
+}
+
+// ------------------------------------------------------------- мой дом (И2)
+const HP = {};                       // графики дома: капитал, место
+const LEVER_RU = {
+  markup: v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(Math.round(v * 100))}% к рынку`, cover: v => `запас ${num(v, 0)} дн.`,
+  stock: v => `закупка впрок ×${num(v, 1)}`, wtp_ref: v => `входы не дороже ×${num(v, 1)} опорной`,
+  quality: v => `разборчивость ${num(v, 2)}`, grow: v => ({ hold: "мощность не трогать", down: "мощность только вниз", auto: "мощность как у бота" }[v] || v),
+  switch: v => (v ? "менять отрасль в беде" : "отрасль не менять"), open: v => (v ? "открывать линии" : "линии не открывать"),
+};
+function bindViews() {
+  $("#views").addEventListener("click", e => {
+    const b = e.target.closest("button[data-view]");
+    if (b) setView(b.dataset.view);
+  });
+  let v = null;
+  try { v = localStorage.getItem("doc-view"); } catch (e) { /* без памяти */ }
+  if (v === "house") setView("house");
+}
+function setView(v) {
+  UI.view = v;
+  try { localStorage.setItem("doc-view", v); } catch (e) { /* без памяти */ }
+  $$("#views button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  $("#viewWorld").hidden = v !== "world";
+  $("#viewHouse").hidden = v !== "house";
+  if (v === "house") loadHouse();
+  else for (const id in PLOTS) { const p = PLOTS[id]; if (p.el.clientWidth) p.u.setSize({ width: p.el.clientWidth, height: 180 }); }
+}
+function axisStyle() {
+  return {
+    stroke: css("--ink-3"), font: `12px ${css("--font-text")}`,
+    grid: { stroke: css("--grid"), width: 1 }, ticks: { stroke: css("--grid"), width: 1 },
+  };
+}
+function housePlot(id, series, range) {
+  const el = $("#plot-" + id), colors = ["--s1", "--s2", "--s3", "--s4"].map(css), ax = axisStyle();
+  el.innerHTML = "";
+  const u = new uPlot({
+    width: el.clientWidth || 300, height: 180,
+    cursor: { drag: { x: true, y: false } },
+    scales: { x: { time: false }, y: range ? { range } : { range: (u, lo, hi) => [Math.min(0, lo), hi > 0 ? hi * 1.08 : 1] } },
+    axes: [Object.assign({}, ax, { space: 90, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
+           Object.assign({}, ax, { size: 56, values: (u, vals) => vals.map(compact) })],
+    series: [{ label: "день", value: (u, v) => (v == null ? "—" : fmtDay(Math.round(v))) }]
+      .concat(series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
+  }, [[]].concat(series.map(() => [])), el);
+  HP[id] = { u, el, series };
+  ro.observe(el);
+}
+function houseData(sr, series) {
+  const idx = thinIdx(sr.t.length);
+  return [idx.map(i => sr.t[i])].concat(series.map(([k]) => idx.map(i => sr[k][i])));
+}
+async function loadHouse() {
+  if (UI.hoverHouse) return;
+  const me = await api("/api/me");
+  if (!me.seat && me.mode === "choose" && !(me.pending && me.pending.length)) {
+    const c = await api("/api/candidates");
+    $("#houseBody").hidden = true;
+    $("#houseEmpty").hidden = false;
+    if (!c.candidates.length || !c.choosing) {
+      $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выбор дома</h2><p>Кандидаты появятся, когда мир прогреется — с ${me.after}-го дня (сейчас ${me.tick}-й).</p></div>`;
+      return;
+    }
+    $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выберите дом</h2><p>Три дома города, примерно равных по величине, но разных по ремеслу, мастерству и истории. ` +
+      `Точной кассы не видно — только то, что знает город. Время стоит, пока вы не выберете.</p><div class="cands">` +
+      c.candidates.map(x => `<div class="cand"><h3>${esc(x.name)}</h3><div class="type">${esc(x.type)}</div>` +
+        `<div><span class="tag">${esc(x.ind)}</span> ${x.lines.map(esc).join(", ")}</div>` +
+        `<dl class="kv"><dt>величина дела</dt><dd>${esc(x.size)}</dd><dt>мастерство</dt><dd>${esc(x.skill)}</dd>` +
+        `<dt>счета</dt><dd>${esc(x.debt)}</dd><dt>слава</dt><dd>${esc(x.fame)}</dd></dl>` +
+        `<b>Послужной список</b><ul>${x.record.map(r => `<li>${esc(r)}</li>`).join("")}</ul>` +
+        `<button type="button" data-choose="${x.id}"${META.control ? "" : " disabled"}>Взять этот дом</button></div>`).join("") + `</div></div>`;
+    return;
+  }
+  if (!me.seat) {
+    $("#houseBody").hidden = true;
+    $("#houseEmpty").hidden = false;
+    $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Дом не занят</h2><p>` +
+      (me.pending && me.pending.length ? "Приказ занять дом стоит в очереди — исполнится на следующем тике."
+        : me.mode ? `Игрок займёт дом после прогрева мира — с ${me.after}-го дня (сейчас ${me.tick}-й).`
+          : `Сервер запущен без игрока. Запустите <code>python server.py --seat choose</code>: после прогрева мира вы выберете дом из трёх кандидатов.`) + `</p></div>`;
+    return;
+  }
+  UI.seat = me.seat;
+  const h = await api("/api/myhouse");
+  $("#houseEmpty").hidden = true;
+  $("#houseBody").hidden = false;
+  renderHouse(h);
+}
+function renderHouse(h) {
+  $("#hName").innerHTML = `${esc(h.name)}` + (h.ind ? ` <span class="tag">${esc(h.ind)}</span>` : "");
+  if (!h.alive) {
+    $("#hHint").textContent = "дом разорился — место потеряно";
+    $("#hTiles").innerHTML = "";
+    $("#hLines").innerHTML = `<p class="empty">линий нет</p>`;
+  } else {
+    $("#hHint").textContent = `${h.id} · возраст дела ${num(h.age)} дн. · мастерство ${num(h.skill, 1)}`;
+    const tile = (k, v, n) => `<div class="tile"><div class="k">${ic(HTILE_IC[k])}${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`;
+    const cap = h.lines.reduce((a, l) => a + l.cap, 0);
+    $("#hTiles").innerHTML =
+      tile("Капитал", compact(h.wealth), `медиана домов ${compact(h.median)}`) +
+      tile("Место", `${num(h.pctl, 0)}`, `перцентиль из ${h.houses} домов`) +
+      tile("Касса", compact(h.cash), "наличные") +
+      tile("Долг", h.owed ? compact(h.owed) : "—", h.owed ? `<span class="st serious">▲ счета не оплачены</span>` : `<span class="st good">● нет</span>`) +
+      tile("Мощность", num(cap, 2), `линий ${h.lines.length}`) +
+      tile("Политика", h.player ? "игрок" : "бот", Object.keys(h.house_levers || {}).length
+        ? Object.entries(h.house_levers).map(([k, v]) => LEVER_RU[k] ? LEVER_RU[k](v) : k).join(", ") : "дом — как у бота");
+    $("#hLines").innerHTML = h.lines.map(l => {
+      const lev = Object.entries(l.levers || {});
+      return `<div class="lc"><h3><span>${esc(l.n)}</span><span class="tag">${l.idle ? "стоит" : "работает"}</span></h3>` +
+        `<dl class="kv"><dt>выпуск</dt><dd>${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})</dd>` +
+        `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
+        `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
+        `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? num(l.cost, 2) : "—"} <span class="dim">(по завтрашним входам)</span></dd>` +
+        `<dt>прибыль</dt><dd><span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (сглажено)</dd>` +
+        `<dt>входы завтра</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
+        `<div class="lev">${lev.length ? lev.map(([k, v]) => `<span class="tag mine">${LEVER_RU[k] ? LEVER_RU[k](v) : k}</span>`).join("")
+          : `<span class="tag">как у бота</span>`}</div>` +
+        (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">Настроить</button></div>` : "") + `</div>`;
+    }).join("");
+    $("#hStock").innerHTML = h.stock.length ? `<table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">По рынку</th><th class="num">Дней работы</th></tr></thead><tbody>` +
+      h.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td><td class="num">${s.days != null ? num(s.days, 1) : "—"}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">пусто</p>`;
+    $("#hBook").innerHTML = h.book.length ? `<table><thead><tr><th>Сторона</th><th>Товар</th><th class="num">Цена</th><th class="num">Кол-во</th></tr></thead><tbody>` +
+      h.book.map(b => `<tr><td>${b.side}</td><td>${esc(b.g)}</td><td class="num">${num(b.px, 2)}</td><td class="num">${num(b.q, 1)}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">заявок нет</p>`;
+    const br = Object.entries(h.brand || {});
+    $("#hBrand").innerHTML = br.length ? `<dl class="kv">${br.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${num(v, 1)}</dd>`).join("")}</dl>` : `<p class="empty">отряды пока не знают дом</p>`;
+  }
+  $("#hJournal").innerHTML = (h.journal || []).length ? h.journal.slice().reverse().map(([t, x]) =>
+    `<li><span class="t">${evDay(t)}</span><span>${esc(x)}</span></li>`).join("") : `<li class="empty">пока тихо</li>`;
+  const KIND = { seat: "занять дом", lever: "рычаг", build: "достроить", cut: "срезать" };
+  const TN = Object.fromEntries((h.lines || []).map(l => [l.t, l.n]));
+  const tn = t => esc(TN[t] || t);
+  $("#hOrders").innerHTML = h.orders.length ? `<table><thead><tr><th>День</th><th>Приказ</th><th>Итог</th></tr></thead><tbody>` +
+    h.orders.slice().reverse().map(o => {
+      const a = o.args || {};
+      const what = o.kind === "lever" ? `${a.trade ? tn(a.trade) + ": " : ""}${a.value == null ? `${esc(a.key)} — как у бота` : (LEVER_RU[a.key] ? LEVER_RU[a.key](a.value) : esc(a.key))}`
+        : o.kind === "build" ? `${tn(a.trade)} +${num(a.add, 2)}` : o.kind === "cut" ? `${tn(a.trade)} до ${num(a.cap, 2)}` : "";
+      return `<tr><td>${evDay(o.t)}</td><td>${KIND[o.kind] || o.kind}${what ? " · " + what : ""}</td><td>${o.ok ? `<span class="st good">● исполнен</span>` : `<span class="st serious">▲ ${esc(o.why)}</span>`}</td></tr>`;
+    }).join("") + `</tbody></table>` : `<p class="empty">приказов нет</p>`;
+  if (h.series) {
+    if (!HP.hwealth) housePlot("hwealth", [["wealth", "мой капитал"], ["median", "медиана домов"]]);
+    if (!HP.hpctl) housePlot("hpctl", [["pctl", "место, перцентиль"]], [0, 100]);
+    for (const id in HP) { HP[id].u.setData(houseData(h.series, HP[id].series), true); legendLast(HP[id].u); }
+  }
+}
+// --------------------------------------------- «пока вас не было» (И6)
+const seenKey = () => ST.state && UI.seat ? `doc-seen:${ST.state.seed}:${UI.seat}` : null;
+function readSeen() { try { const k = seenKey(); return k ? parseInt(localStorage.getItem(k), 10) : NaN; } catch (e) { return NaN; } }
+function writeSeen(t) { try { const k = seenKey(); if (k) localStorage.setItem(k, String(t)); } catch (e) { /* без памяти */ } }
+async function checkAway() {
+  if (UI.awayChecked) return;
+  const me = await api("/api/me");
+  if (!me.seat) return;
+  UI.seat = me.seat;
+  UI.awayChecked = true;
+  const last = readSeen();
+  if (Number.isNaN(last) || ST.state.tick - last < 7) return;
+  const r = await api(`/api/since?t=${last}`);
+  if (r.error) return;
+  const d = (a, b) => (b - a >= 0 ? "+" : "") + compact(b - a);
+  $("#awayCard").innerHTML = `<div class="card-head"><h2>Пока вас не было — ${num(r.days)} дн.</h2>` +
+    `<div class="card-tools"><button type="button" id="awayOk">Понятно</button></div></div>` +
+    `<dl class="kv"><dt>капитал</dt><dd>${compact(r.wealth0)} → ${compact(r.wealth1)} (${d(r.wealth0, r.wealth1)})</dd>` +
+    `<dt>место среди домов</dt><dd>${num(r.pctl0, 0)} → ${num(r.pctl1, 0)}</dd>` +
+    `<dt>касса</dt><dd>${compact(r.cash0)} → ${compact(r.cash1)}</dd>` +
+    ((r.goods || []).length ? `<dt>цены моих товаров</dt><dd>${r.goods.map(g => `${esc(g.g)} ${num(g.px0, 2)} → ${num(g.px1, 2)}`).join("; ")}</dd>` : "") +
+    (r.orders.length ? `<dt>приказов исполнено</dt><dd>${r.orders.filter(o => o.ok).length} из ${r.orders.length}</dd>` : "") + `</dl>` +
+    (r.journal.length ? `<h3>Что делала политика и что случилось</h3><ul class="hist">${r.journal.slice(-12).reverse().map(([t, x]) => `<li><span class="t">${evDay(t)}</span><span>${esc(x)}</span></li>`).join("")}</ul>` : "") +
+    (r.world.length ? `<h3>В мире</h3><ul class="hist">${r.world.slice().reverse().map(e => `<li><span class="t">${evDay(e.t)}</span><span>${linkText(e.text, e.refs)}</span></li>`).join("")}</ul>` : "");
+  $("#awayCard").hidden = false;
+  $("#awayOk").onclick = () => { $("#awayCard").hidden = true; writeSeen(ST.state.tick); };
+  if (UI.view !== "house") $("#choosebar").hidden = true;
+}
+
+function bindHouse() {
+  $("#houseEmpty").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-choose]");
+    if (!b) return;
+    b.disabled = true;
+    const r = await control("choose", null, { house: b.dataset.choose });
+    if (r.error) { toast(r.error); b.disabled = false; return; }
+    setTimeout(loadHouse, 1200);
+  });
+  $("#btnToChoose").onclick = () => setView("house");
+  const b = $("#houseBody");
+  b.addEventListener("pointerenter", () => (UI.hoverHouse = true));
+  b.addEventListener("pointerleave", () => (UI.hoverHouse = false));
+}
+
+// ---------------------------------------------------- панель политики (И3)
+const LEVERS = [
+  { key: "markup", label: "Цена к рынку (наценка, ±)", type: "num", min: -0.5, max: 1, step: 0.05, fmt: v => LEVER_RU.markup(v), bot: () => null, def: 0, botText: "цена по запасу, шагами" },
+  { key: "cover", label: "Целевой запас выпуска, дней продаж", type: "num", min: 1, max: 120, step: 1, fmt: v => `${num(v, 0)} дн.`, bot: h => h.bot.cover },
+  { key: "stock", label: "Закупка впрок при дешевизне, ×", type: "num", min: 1, max: 6, step: 0.5, fmt: v => `×${num(v, 1)}`, bot: h => h.bot.stock },
+  { key: "wtp_ref", label: "Потолок цены входов, × опорной", type: "num", min: 0.1, max: 20, step: 0.1, fmt: v => `×${num(v, 1)}`, bot: () => null, def: 3, botText: "по марже линии" },
+  { key: "quality", label: "Разборчивость к материалам", type: "num", min: 0, max: 1, step: 0.05, fmt: v => num(v, 2), bot: h => h.bot.quality },
+  { key: "grow", label: "Рост мощности", type: "sel", opts: [["auto", "как у бота"], ["hold", "не трогать"], ["down", "только срез"]], fmt: v => LEVER_RU.grow(v), bot: () => "auto" },
+];
+const HOUSE_LEVERS_UI = [
+  { key: "switch", label: "Смена отрасли в беде", opts: [[true, "менять, как бот"], [false, "не менять"]] },
+  { key: "open", label: "Новые линии своей отрасли", opts: [[true, "открывать, как бот"], [false, "не открывать"]] },
+];
+function openPolicy(h, t) {
+  const l = h.lines.find(x => x.t === t);
+  if (!l) return;
+  UI.drawer = [];                       // не карточка сущности: автообновление её не трогает
+  UI.panel = { house: h.id, trade: t };
+  $("#drawerTitle").textContent = `${l.n}: политика`;
+  $("#drawerBack").hidden = true;
+  const ro = !META.control;
+  const row = (lv, cur) => {
+    const mine = cur !== undefined && cur !== null;
+    const bv = lv.bot(h);
+    const shown = mine ? cur : (bv != null ? bv : (lv.def != null ? lv.def : ""));
+    const ctrl = lv.type === "sel"
+      ? `<select data-k="${lv.key}">${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>`
+      : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${shown}">`;
+    return `<div class="pl" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
+      `<span class="tag${mine ? " mine" : ""}">${mine ? "ваше: " + lv.fmt(cur) : "как у бота" + (bv != null ? ": " + lv.fmt(bv) : lv.botText ? ": " + lv.botText : "")}</span></div>` +
+      `<div class="pl-ctrl">${ctrl}<button type="button" data-act="set"${ro ? " disabled" : ""}>Приказать</button>` +
+      `<button type="button" data-act="bot" class="ghost"${ro || !mine ? " disabled" : ""}>Как у бота</button></div>` +
+      `<ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
+  };
+  const hrow = lv => {
+    const cur = (h.house_levers || {})[lv.key];
+    const shown = cur === undefined ? true : cur;
+    return `<div class="pl" data-hk="${lv.key}"><div class="pl-head"><b>${lv.label}</b><span class="tag${cur !== undefined ? " mine" : ""}">${cur !== undefined ? "ваше" : "как у бота"}</span></div>` +
+      `<div class="pl-ctrl"><select data-hk="${lv.key}">${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>` +
+      `<button type="button" data-act="hset"${ro ? " disabled" : ""}>Приказать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
+  };
+  $("#drawerBody").innerHTML =
+    `<p class="hint">Приказ исполнится в начале следующего дня. Нетронутый рычаг — правило бота. Прикидка — по выбору материалов на завтра; это оценка, а не обещание.</p>` +
+    `<h3>Рычаги линии</h3>` + LEVERS.map(lv => row(lv, (l.levers || {})[lv.key])).join("") +
+    `<h3>Разовые действия</h3>` +
+    `<div class="pl" data-k="build"><div class="pl-head"><b>Достроить мощность</b><span class="tag">сейчас ${num(l.cap, 2)}</span></div>` +
+    `<div class="pl-ctrl"><input type="number" data-k="build" min="0.05" max="5" step="0.05" value="0.2"><button type="button" data-act="build"${ro ? " disabled" : ""}>Строить</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
+    `<div class="pl" data-k="cut"><div class="pl-head"><b>Срезать мощность до</b><span class="tag">0 — закрыть линию</span></div>` +
+    `<div class="pl-ctrl"><input type="number" data-k="cut" min="0" max="${l.cap}" step="0.05" value="${Math.max(0, l.cap * 0.8).toFixed(2)}"><button type="button" data-act="cut"${ro ? " disabled" : ""}>Срезать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
+    `<h3>Рычаги дома</h3>` + HOUSE_LEVERS_UI.map(hrow).join("");
+  $("#drawer").classList.add("open");
+  $("#drawer").setAttribute("aria-hidden", "false");
+  $$("#drawerBody .pl").forEach(el => previewRow(el));
+}
+const parseVal = (el) => {
+  if (el.tagName === "SELECT") return el.value === "true" ? true : el.value === "false" ? false : el.value;
+  const v = parseFloat(el.value);
+  return Number.isNaN(v) ? null : v;
+};
+let prevTimer = null;
+async function previewRow(row) {
+  const P = UI.panel;
+  if (!P) return;
+  const k = row.dataset.k || row.dataset.hk;
+  const inp = $("input, select", row);
+  const val = parseVal(inp);
+  const q = `/api/preview?house=${encodeURIComponent(P.house)}&key=${k}&value=${encodeURIComponent(JSON.stringify(val))}` +
+    (row.dataset.hk ? "" : `&trade=${encodeURIComponent(P.trade)}`);
+  const r = await api(q);
+  $(".pl-prev", row).innerHTML = (r.lines || []).map(s => `<li>${esc(s)}</li>`).join("");
+}
+async function sendOrder(kind, args, row) {
+  const res = $(".pl-res", row);
+  const r = window.DOC_BACKEND ? await window.DOC_BACKEND.order() : await fetch("/api/orders", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ house: UI.panel.house, kind, args, token: TOKEN }),
+  }).then(x => x.json());
+  res.innerHTML = r.queued ? `<span class="st good">● в очереди, исполнится в начале дня ${evDay(r.at + 1)}</span>`
+    : `<span class="st serious">▲ ${esc(r.why || r.error || "отказ")}</span>`;
+  if (r.queued) setTimeout(async () => {
+    const h = await api("/api/myhouse");
+    renderHouse(h);
+    const last = (h.orders || []).find(o => o.n === r.n);
+    if (!last) return;                  // ещё в очереди (пауза) — итог покажет журнал
+    const key = row.dataset.k || row.dataset.hk, sel = row.dataset.k ? `.pl[data-k="${key}"]` : `.pl[data-hk="${key}"]`;
+    if (UI.panel && h.lines.some(l => l.t === UI.panel.trade)) openPolicy(h, UI.panel.trade);   // метки «ваше / как у бота»
+    const box = $(`#drawerBody ${sel} .pl-res`) || res;
+    box.innerHTML = last.ok ? `<span class="st good">● исполнен ${evDay(last.t)}</span>`
+      : `<span class="st serious">▲ не исполнен: ${esc(last.why)}</span>`;
+  }, 1500);
+}
+function bindPolicy() {
+  $("#hLines").addEventListener("click", async e => {
+    const b = e.target.closest("button[data-policy]");
+    if (!b) return;
+    const h = await api("/api/myhouse");
+    openPolicy(h, b.dataset.policy);
+  });
+  const body = $("#drawerBody");
+  body.addEventListener("input", e => {
+    const row = e.target.closest(".pl");
+    if (!row || !UI.panel) return;
+    clearTimeout(prevTimer);
+    prevTimer = setTimeout(() => previewRow(row), 250);
+  });
+  body.addEventListener("click", e => {
+    const b = e.target.closest("button[data-act]");
+    if (!b || !UI.panel) return;
+    const row = b.closest(".pl"), act = b.dataset.act;
+    const val = parseVal($("input, select", row));
+    if (act === "set") sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: val }, row);
+    if (act === "bot") sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: null }, row);
+    if (act === "hset") sendOrder("lever", { trade: null, key: row.dataset.hk, value: val }, row);
+    if (act === "build") sendOrder("build", { trade: UI.panel.trade, add: val }, row);
+    if (act === "cut") sendOrder("cut", { trade: UI.panel.trade, cap: val }, row);
+  });
+}
+
+// ------------------------------------------------------------ вводная для гостя
+const INTRO_KEY = "doc-intro-v1";
+function bindIntro() {
+  const replay = !!(window.DOC_BACKEND || META.replay);
+  $("#introMode").textContent = replay
+    ? `Перед вами запись первых ${Math.round((META.ticks || 3600) / DAY)} лет одного такого города. Нажимать ничего не обязательно: время идёт само.`
+    : "Мир живёт на сервере прямо сейчас: один день игры — один шаг расчёта.";
+  $("#introCtl").textContent = replay
+    ? "Скорость — кнопками в шапке. Ползунок под шапкой переносит в любой день записи (год — 360 дней). Таблицы и карточки в записи обновляются раз в 30 дней."
+    : META.control ? "Скорость, шаг и перемотка — кнопками в шапке. Год — 360 дней, поход отряда — 45."
+      : "Управлять временем может только хозяин мира; вы смотрите. Год — 360 дней, поход отряда — 45.";
+  let seen = false;
+  try { seen = localStorage.getItem(INTRO_KEY) === "1"; } catch (e) { /* без памяти — показываем */ }
+  $("#intro").hidden = seen;
+  $("#introClose").onclick = () => {
+    $("#intro").hidden = true;
+    try { localStorage.setItem(INTRO_KEY, "1"); } catch (e) { /* без памяти */ }
+  };
+  $("#btnHelp").onclick = () => {
+    setView("world");
+    $("#intro").hidden = false;
+    $("#intro").scrollIntoView({ block: "start" });
+  };
+  $("#intro").addEventListener("click", e => {
+    const a = e.target.closest("a[data-go]");
+    if (!a) return;
+    e.preventDefault();
+    if (a.dataset.go === "house") { setView("house"); window.scrollTo(0, 0); return; }
+    setView("world");
+    const el = document.getElementById(a.dataset.go);
+    if (el) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  });
+}
+
+// ---------------------------------------------------------------- «Об игре»
+async function openAbout() {
+  const r = await api("/api/credits");
+  const md = r.text.replace(/<!--[\s\S]*?-->/g, "");
+  const html = [];
+  let list = false;
+  for (const raw of md.split("\n")) {
+    const line = raw.trim();
+    const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/https?:\/\/[^\s<»]+/g, u => {
+      const tail = (u.match(/[.,;)]+$/) || [""])[0], url = u.slice(0, u.length - tail.length);
+      return `<a href="${url}" target="_blank" rel="noopener">${url}</a>${tail}`;
+    });
+    if (/^- /.test(line)) { if (!list) { html.push("<ul>"); list = true; } html.push(`<li>${inline(line.slice(2))}</li>`); continue; }
+    if (list) { html.push("</ul>"); list = false; }
+    if (/^## /.test(line)) html.push(`<h2>${inline(line.slice(3))}</h2>`);
+    else if (/^# /.test(line)) html.push(`<h2>${inline(line.slice(2))}</h2>`);
+    else if (line) html.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) html.push("</ul>");
+  // пустые разделы (заголовок, за которым сразу следующий) не показываем
+  for (let i = html.length - 1; i >= 0; i--)
+    if (html[i].startsWith("<h2>") && (i === html.length - 1 || html[i + 1].startsWith("<h2>"))) html.splice(i, 1);
+  $("#aboutBody").innerHTML = `<h2>Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. Сейчас — смотровая: мир живёт сам, без игрока.</p>` + html.join("");
+  $("#about").showModal();
+}
+
+// ----------------------------------------------------------------- цикл
+async function fullReload() {
+  const h = await api(`/api/history?points=${MAX_POINTS}`);
+  ST.cols = h.cols; ST.px = h.px; ST.vol = h.vol;
+  ST.last = ST.cols.t[ST.cols.t.length - 1];
+  ST.state = h.state; ST.epoch = h.state.epoch;
+  ST.events = []; ST.seq = 0;
+  addEvents(await api("/api/events?seq=0&limit=1000"));
+  renderEvents();
+  $("#seedInput").value = ST.state.seed;
+  renderHeader(); renderTiles();
+  buildPxSeries(); renderMultiples();
+  loadTable();
+  loadDungeon(); loadFlows();
+}
+let lastCharts = 0, lastTable = 0;
+async function poll() {
+  try {
+    const r = await api(`/api/poll?since=${ST.last}&seq=${ST.seq}&epoch=${ST.epoch}`);
+    if (r.reset || r.reload) { await fullReload(); return; }
+    const from = ST.cols.t.length;
+    const added = appendHist(r);
+    ST.state = r.state;
+    addEvents(r.events);
+    renderHeader(); renderTiles();
+    if (UI.seat && !document.hidden && $("#awayCard").hidden) writeSeen(ST.state.tick);
+    const now = performance.now();
+    if (added) {
+      pushPx(from);
+      if (now - lastCharts > 700) { renderMultiples(); lastCharts = now; }
+    }
+    // под курсором таблица и карточка не перерисовываются: иначе клик уходит в пустоту
+    if (now - lastTable > 2500) {
+      lastTable = now;
+      if (UI.view === "house") loadHouse();
+      else {
+        if (!UI.hoverTable) loadTable();
+        loadDungeon(); loadFlows();
+      }
+      if (!UI.hoverDrawer) refreshDrawer();
+    }
+  } catch (e) {
+    $("#tps").textContent = "нет связи с сервером…";
+  } finally {
+    setTimeout(poll, document.hidden ? 2000 : 400);
+  }
+}
+async function refreshDrawer() {
+  if (!$("#drawer").classList.contains("open") || !UI.drawer.length) return;
+  const id = UI.drawer[UI.drawer.length - 1];
+  const body = $("#drawerBody"), top = body.scrollTop;
+  await openEntity(id, false);
+  body.scrollTop = top;
+}
+
+async function main() {
+  applyTheme(savedTheme());
+  META = await api("/api/meta");
+  DAY = META.day;
+  buildHeader(); buildTiles(); buildGoodSelect(); bindTable(); bindHouse(); bindPolicy();
+  $("#evFilter").addEventListener("click", e => {
+    const b = e.target.closest("button[data-lv]");
+    if (!b) return;
+    UI.evLevel = +b.dataset.lv;
+    $$("#evFilter button").forEach(x => x.classList.toggle("on", x === b));
+    renderEvents();
+  });
+  const h = await api(`/api/history?points=${MAX_POINTS}`);
+  ST.cols = h.cols; ST.px = h.px; ST.vol = h.vol;
+  ST.last = ST.cols.t[ST.cols.t.length - 1];
+  ST.state = h.state; ST.epoch = h.state.epoch;
+  $("#seedInput").value = ST.state.seed;
+  addEvents(await api("/api/events?seq=0&limit=1000"));
+  renderEvents();
+  renderHeader(); renderTiles();
+  buildPxChart(); buildMultiples();
+  $$(".plot").forEach(el => ro.observe(el));
+  matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (!savedTheme()) rebuildCharts(); });
+  bindDungeon(); bindFlows();
+  await loadTable();
+  await loadDungeon(); await loadFlows();
+  bindViews();
+  bindIntro();
+  await checkAway();
+  if (!UI.seat) { const me = await api("/api/me"); UI.seat = me.seat; }
+  poll();
+}
+main();
+
+</script>
+</body></html>
