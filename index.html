@@ -109,7 +109,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .doom-k .ic { color: var(--accent); }
 .doom-v { display: flex; align-items: baseline; gap: 12px; font-family: var(--font-head); font-weight: 700; line-height: 1.05; margin: 2px 0 8px; }
 .doom-thr { font-size: 40px; color: var(--ink); }
-.doom[data-level=critical] .doom-thr { color: var(--critical); }
+.doom[data-level=critical][data-over=true] .doom-thr { color: var(--critical); }
 .doom[data-level=warn] .doom-thr { color: var(--serious); }
 .doom-gd { font-size: 40px; color: var(--ink); }
 .doom-vs { font-size: 16px; color: var(--ink-3); font-weight: 600; }
@@ -120,7 +120,8 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .doom[data-level=good] .doom-bar span { background: var(--good); }
 /* состояние полосы угрозы видно целиком, а не одной строкой: рамка, фон, полоса */
 .doom[data-level=critical] { border-color: var(--critical); background: color-mix(in srgb, var(--critical) 8%, var(--surface)); }
-.doom[data-level=warn] { border-color: var(--serious); background: color-mix(in srgb, var(--serious) 6%, var(--surface)); }
+.doom[data-level=warn] { border-color: color-mix(in srgb, var(--serious) 55%, var(--line)); }
+.doom.rising { border-color: var(--serious); background: color-mix(in srgb, var(--serious) 6%, var(--surface)); }
 .doom[data-level=good] { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
 .doom[data-level=critical] .doom-bar span { background: var(--critical); }
 .doom[data-level=warn] .doom-bar span { background: var(--serious); }
@@ -468,7 +469,14 @@ h1, h2, .clock .date, .tile .v, .doom-v, .doom-v2, #drawerTitle, .lvl .d, .verdi
 .lvl-fold { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 6px; color: var(--ink-3); font-size: 13px; border-bottom: 1px solid var(--grid); background: var(--surface-2); }
 button.small { padding: 2px 8px; min-height: 28px; font-size: 13px; }
 /* десктоп: полоса записи прилипает под шапкой — пауза и ползунок не уезжают при прокрутке */
-@media (min-width: 681px) { .replaybar { position: sticky; top: var(--toph, 70px); z-index: 4; } }
+/* запись на широких экранах: липнет только полоса записи (шапка уезжает), описание и легенда — ниже, без липкости */
+@media (min-width: 681px) {
+  .is-replay .top { position: static; }
+  .replaybar { position: sticky; top: 0; z-index: 4; }
+}
+.replayinfo { padding: 4px 16px 8px; color: var(--ink-3); font-size: 13px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+@media (max-width: 680px) { .replayinfo { display: none; } }
+@media (max-width: 1199px) { .rb-share .d-only { display: none; } .rb-share .m-only { display: inline; } }
 /* ровные цифры во всём тексте: старостильные «0» и «о» путаются («прорывов 0») */
 body { font-variant-numeric: lining-nums; }
 td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums; }
@@ -481,6 +489,12 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
   .chapters li { flex: 0 0 auto; scroll-snap-align: start; max-width: 78%; }
   .intro .chapter { min-height: 52px; }
 }
+/* разгон мира (до места игрока) — тонкой подложкой под началом дорожки */
+.rb-warm { position: absolute; left: 8px; top: 2px; height: 20px; border-radius: 3px; background: color-mix(in srgb, var(--ink-3) 14%, transparent); pointer-events: none; }
+.rb-warm span { position: absolute; left: 4px; top: -15px; font-size: 11px; color: var(--ink-3); }
+.verdict-line:first-of-type { font-weight: 700; }
+.pl.ro .pl-head { align-items: baseline; }
+.pl-val { color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
 
 </style>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -661,7 +675,7 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
   </div>
 </main>
 
-<aside class="drawer" id="drawer" role="dialog" aria-labelledby="drawerTitle" aria-hidden="true" inert>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true" inert>
   <div class="drawer-head">
     <button type="button" id="drawerBack" class="ghost" title="Назад" hidden>←</button>
     <h2 id="drawerTitle" tabindex="-1">—</h2>
@@ -787,14 +801,14 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
     if (c && !(L && L[1] != null && L[1] <= R.head)) return Object.assign({ asof: t }, c);
     if (!L) return { error: "В записи такого нет" };
     const [born, ended, name] = L;
-    if (born > R.head) return { name, error: `${name} появится позже — ${short(born)}.`, seek: born + 1 };
+    if (born > R.head) return { name, error: `Появится позже — ${short(born)}.`, seek: born + 1 };
     if (ended != null && ended <= R.head) {
       const g = GONE[id];
       return g ? Object.assign({ asof: g.seen, gone: true }, g, { name: g.name || name })
         : { id, kind: id[0], name, born, ended, why: "", gone: true };
     }
     const next = R.meta.card_frames.find(f => f > R.head);
-    return next != null ? { name, error: `${name} появился после последнего кадра записи; карточка — с ${short(next)}.`, seek: next }
+    return next != null ? { name, error: `Подробная карточка появится в записи с ${short(next)}; пока — только строки летописи.`, seek: next }
       : { name, error: "Карточки этой сущности в записи нет." };
   }
   const q = path => Object.fromEntries(new URL(path, "http://x").searchParams);
@@ -987,7 +1001,7 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
     const S = R.hist.summary, T = R.meta.ticks, f = k => S[k][T], z = k => S[k][0];
     const years = Math.round(T / R.meta.day);
     const ratio = f("guard") > 0 ? f("threat") / f("guard") : Infinity;
-    const fmt = v => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1).replace(".", ",") + " млн" : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + " тыс" : String(Math.round(v));
+    const fmt = v => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1).replace(".", ",") + " млн" : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + " тыс" : Math.round(v).toLocaleString("ru-RU");
     const verdict = f("pop") <= 0 ? "Город не пережил подземелье."
       : ratio > 1 ? `Город выстоял ${years} лет, но к концу угроза сильнее гарнизона в ${ratio.toFixed(1).replace(".", ",")} раза: отряды ушли до ${f("front_max")}-го яруса и разбудили глубину.`
         : `Город выстоял ${years} лет, и гарнизон пока держит угрозу.`;
@@ -1003,7 +1017,7 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
       `<dt>погибли внизу</dt><dd>${fmt(f("fallen"))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
       `<dt>разорились домов</dt><dd>${f("bankrupt")}</dd><dt>денег в городе</dt><dd>${fmt(z("money"))} → ${fmt(f("money"))}</dd></dl>` +
       `<p class="verdict-line" id="verdictRich"></p>` +
-      `<div class="verdict-go"><button type="button" data-go="0">Смотреть с начала</button>` +
+      `<div class="verdict-go"><button type="button" class="primary" data-go="0">Смотреть с начала</button>` +
       `<button type="button" data-go="${R.meta.seat_at}">С момента, когда игрок занял дом</button></div>`;
     el.hidden = false;
     const an = document.getElementById("announce");
@@ -1037,6 +1051,7 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
         .map(([k, l]) => `<span><i class="rb-m rb-${k}"></i>${l}</span>`).join("") + `</span></span>` +
       `<label class="vh" for="rbSlider">Время записи</label>` +
       `<div class="rb-track"><input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
+      `<div class="rb-warm" style="width:${(R.meta.seat_at / R.meta.ticks * 100).toFixed(2)}%" title="первые ${Math.round(R.meta.seat_at / R.meta.day)} года мир разгоняется сам"><span>разгон</span></div>` +
       `<div class="rb-marks" id="rbMarks" role="group" aria-label="Вехи записи: стрелками — между вехами, Enter — перейти"></div>` +
       `<div class="rb-tip" id="rbTip" hidden></div></div>` +
       `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
@@ -1048,6 +1063,11 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
       (window.self === window.top ? `<button type="button" class="rb-share" id="rbShare" aria-label="Ссылка на этот момент записи"><span class="d-only">Ссылка на момент</span><span class="m-only">Ссылка</span></button>` : "");
     const top = document.querySelector(".top");
     top.after(bar);
+    // описание записи и легенда вех — строкой под полосой, не в липкой части
+    const info = document.createElement("div");
+    info.className = "replayinfo";
+    info.appendChild(bar.querySelector(".rb-n"));
+    bar.after(info);
     new ResizeObserver(() => document.documentElement.style.setProperty("--toph", top.offsetHeight + "px")).observe(top);
     const sk = document.getElementById("skipLink");
     if (sk) sk.insertAdjacentHTML("afterend", `<a class="skip" id="skipBar" href="#rbSlider">К ползунку записи</a>`);
@@ -1275,22 +1295,27 @@ function renderDoom() {
   const bEv = fresh ? ST.events.slice().reverse().find(e => e.k === "breach") : null;
   const lost = bEv ? (bEv.text.match(/Погибли (\d+)/) || [])[1] : null;
   // цвет — опасность (во сколько раз угроза сильнее), а тренд — словами рядом
-  const level = fresh ? "critical" : gd >= thr ? "good" : r1 > 3 ? "critical" : "warn";
-  const head = fresh ? `<span class="st critical">■ прорыв ${num(since)} дн. назад${lost ? ` — погибли ${lost} человек` : ""}</span>`
+  // красный — только прорыв; угроза сильнее гарнизона — оранжевый (плотнее, если разрыв растёт)
+  const level = fresh ? "critical" : gd >= thr ? "good" : "warn";
+  const ago = d => d === 0 ? "сегодня" : `${num(d)} дн. назад`;
+  const over = r1 == null ? "гарнизона нет" : `угроза сильнее в ${num(r1, 1)} раза`;
+  const head = fresh ? `<span class="st critical">■ прорыв ${ago(since)}${lost ? ` — погибли ${lost} человек` : ""}</span>`
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : `<span class="st ${level === "critical" ? "critical" : "serious"}">${level === "critical" ? "■" : "▲"} угроза сильнее в ${num(r1, 1)} раза</span>`;
+      : `<span class="st serious">▲ ${over}</span>`;
   const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
-  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `угроза сильнее в ${num(r1, 1)} раза`)
-    : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${num(since)} дн. назад)` : ""}` : "прорывов не было";
+  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : over)
+    : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
   el.dataset.level = level;
+  el.dataset.over = String(thr > gd);
+  el.classList.toggle("rising", level === "warn" && trend === "up");
   if (fresh && UI.saidBreach !== lastBreach) {       // о прорыве — вслух, один раз
     UI.saidBreach = lastBreach;
     $("#announce").textContent = `Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""}.`;
   }
   el.classList.toggle("fresh", fresh);
   el.innerHTML =
-    (fresh ? `<div class="doom-alarm" role="status">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${num(since)} дн. назад</div>` : "") +
+    (fresh ? `<div class="doom-alarm" role="status">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
     `<div class="doom-main">` +
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-thr">${compact(thr)}</span><span class="doom-vs">против</span><span class="doom-gd">${compact(gd)}</span></div>` +
@@ -1303,8 +1328,11 @@ function renderDoom() {
       `<div class="doom-n">рекорд — ${s.front_max}-й</div>` +
     `</div>` +
     `<div class="doom-side">` +
-      `<div class="doom-k">${ic("tombstone")}Погибли</div><div class="doom-v2">${num(s.fallen)}</div>` +
-      `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f ? `за 45 дн. ${num(f.now - f.then)} · ` : ""; })()}прорывов ${s.breaches}</div>` +
+      `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}</div>` +
+      `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f ? `за 45 дн. ${num(f.now - f.then)}` : ""; })()}${(() => {
+        const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
+        return s.breaches ? ` · в прорывах — ${num(dead)} (${s.breaches})` : " · прорывов не было";
+      })()}</div>` +
     `</div>` +
     `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
 }
@@ -1679,7 +1707,7 @@ const COLS = {
     { k: "name", l: "Отряд", f: (v, r) => ref(r.id, v) }, { k: "leader_name", l: "Вожак", f: (v, r) => ref(r.leader, v) },
     { k: "size", l: "Людей", n: 1 }, { k: "rank", l: "Ранг", n: 1, f: v => ["новички", "ветераны", "мастера"][v] || v },
     { k: "power", l: "Сила", n: 1, f: v => num(v, 2) }, { k: "cash", l: "Касса", n: 1, f: compact },
-    { k: "state", l: "Где", f: (v, r) => r.depth ? `${v}: ${r.depth}-й ярус, вернётся ${evDay(r.back)}` : v },
+    { k: "state", l: "Где", f: (v, r) => r.depth ? `${v}: ${r.depth}-й ярус, ${ST.state && r.back < ST.state.tick ? "возвращения ждут" : "вернётся " + evDay(r.back)}` : v },
   ],
   fences: [
     { k: "name", l: "Скупщик" }, { k: "cash", l: "Касса", n: 1, f: compact }, { k: "stock", l: "Склад по рынку", n: 1, f: compact },
@@ -1785,7 +1813,7 @@ function bindTable() {
 // ------------------------------------------------------------ карточки
 document.addEventListener("click", e => {
   const a = e.target.closest(".ref[data-id]");
-  if (a) { e.preventDefault(); openEntity(a.dataset.id, true); }
+  if (a) { e.preventDefault(); UI.refLabel = a.textContent.trim(); openEntity(a.dataset.id, true); }
 });
 // ящик карточки: при открытии фокус — на заголовок, при закрытии — туда, откуда открыли;
 // закрытый ящик инертен (не ловит Tab и не читается)
@@ -1808,6 +1836,14 @@ function closeDrawer() {
   UI.drawerFrom = null;
 }
 $("#drawerClose").onclick = closeDrawer;
+$("#drawer").addEventListener("keydown", e => {   // Tab по кругу внутри карточки, пока она открыта
+  if (e.key !== "Tab") return;
+  const f = $$("#drawer button:not([hidden]):not([disabled]), #drawer a[href], #drawer select:not([disabled]), #drawer input:not([disabled]), #drawer summary").filter(x => x.offsetParent);
+  if (!f.length) return;
+  const i = f.indexOf(document.activeElement);
+  if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
+  else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+});
 $("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
 
@@ -1819,7 +1855,7 @@ async function openEntity(id, push) {
   UI.entity = id; writeHash();
   $("#drawerBack").hidden = UI.drawer.length < 2;
   if (e.error) {
-    $("#drawerTitle").textContent = e.name || id;
+    $("#drawerTitle").textContent = UI.refLabel || e.name || id;
     $("#drawerBody").innerHTML = `<p class="empty">${esc(e.error)}</p>` +
       (e.seek != null && window.DOC_BACKEND ? `<button type="button" id="btnEntSeek">Перейти к ${evDay(e.seek)}</button>` : "");
     const go = $("#btnEntSeek");
@@ -1827,10 +1863,12 @@ async function openEntity(id, push) {
     return;
   }
   $("#drawerTitle").textContent = e.name;
+  const renamed = UI.refLabel && UI.refLabel !== e.name && !e.name.includes(UI.refLabel) ? `<p class="hint">В летописи — «${esc(UI.refLabel)}»; позже названо «${esc(e.name)}».</p>` : "";
+  UI.refLabel = null;
   // в записи карточка — снимок на дату кадра (раз в 90 дней): сказать прямо, на какую
   const asof = e.gone ? `<p class="hint">${e.ended != null ? `Конец — ${evDay(e.ended)}${e.why ? ": " + esc(e.why) : ""}. ` : ""}${e.seen != null ? `Ниже — последняя записанная карточка, на ${evDay(e.seen)}.` : ""}</p>`
     : e.asof != null ? `<p class="hint">Так это выглядело на ${evDay(e.asof)}; что было дальше — в летописи.</p>` : "";
-  $("#drawerBody").innerHTML = asof + ({ S: squadCard, H: houseCard, P: personCard, F: fenceCard }[e.kind] || (e => `<dl class="kv">${lifeLine(e)}</dl>`))(e);
+  $("#drawerBody").innerHTML = renamed + asof + ({ S: squadCard, H: houseCard, P: personCard, F: fenceCard }[e.kind] || (e => `<dl class="kv">${lifeLine(e)}</dl>`))(e);
 }
 function lifeLine(e) {
   // номер сущности нужен автору (живая версия), гостю записи — нет
@@ -2218,6 +2256,9 @@ function openPolicy(h, t) {
     const ctrl = lv.type === "sel"
       ? `<select data-k="${lv.key}"${ro ? " disabled" : ""}>${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>`
       : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${typeof shown === "number" ? +shown.toFixed(2) : shown}"${ro ? " disabled" : ""}>`;
+    // запись: рычаг — значением, без полей и кнопок (менять нечего)
+    if (noOrders) return `<div class="pl ro" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
+      `<span class="pl-val">${mine ? lv.fmt(cur) : "как у бота" + (bv != null && !/как у бота/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : lv.botText ? ": " + lv.botText : "")}</span></div></div>`;
     return `<div class="pl" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
       `<span class="tag${mine ? " mine" : ""}">${mine ? "ваше: " + lv.fmt(cur) : "как у бота" + (bv != null && !/как у бота/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : bv == null && lv.botText ? ": " + lv.botText : "")}</span></div>` +
       `<div class="pl-ctrl">${ctrl}<button type="button" data-act="set"${ro ? " disabled" : ""}>Приказать</button>` +
@@ -2227,6 +2268,7 @@ function openPolicy(h, t) {
   const hrow = lv => {
     const cur = (h.house_levers || {})[lv.key];
     const shown = cur === undefined ? true : cur;
+    if (noOrders) return `<div class="pl ro"><div class="pl-head"><b>${lv.label}</b><span class="pl-val">${(lv.opts.find(([v]) => v === shown) || [0, "как у бота"])[1]}</span></div></div>`;
     return `<div class="pl" data-hk="${lv.key}"><div class="pl-head"><b>${lv.label}</b><span class="tag${cur !== undefined ? " mine" : ""}">${cur !== undefined ? "ваше" : "как у бота"}</span></div>` +
       `<div class="pl-ctrl"><select data-hk="${lv.key}"${ro ? " disabled" : ""}>${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>` +
       `<button type="button" data-act="hset"${ro ? " disabled" : ""}>Приказать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
@@ -2235,11 +2277,12 @@ function openPolicy(h, t) {
     (noOrders ? `<p class="hint notice">Это запись мира: рычаги показаны такими, какие они у дома, но приказы и прикидки работают только в живой версии.</p>`
       : `<p class="hint">Приказ исполнится в начале следующего дня. Нетронутый рычаг — правило бота. Прикидка — по выбору материалов на завтра; это оценка, а не обещание.</p>`) +
     `<h3>Рычаги линии</h3>` + LEVERS.map(lv => row(lv, (l.levers || {})[lv.key])).join("") +
+    (noOrders ? "" :
     `<h3>Разовые действия</h3>` +
     `<div class="pl" data-k="build"><div class="pl-head"><b>Достроить мощность</b><span class="tag">сейчас ${num(l.cap, 2)}</span></div>` +
     `<div class="pl-ctrl"><input type="number" data-k="build" min="0.05" max="5" step="0.05" value="0.2"${ro ? " disabled" : ""}><button type="button" data-act="build"${ro ? " disabled" : ""}>Строить</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
     `<div class="pl" data-k="cut"><div class="pl-head"><b>Срезать мощность до</b><span class="tag">0 — закрыть линию</span></div>` +
-    `<div class="pl-ctrl"><input type="number" data-k="cut" min="0" max="${l.cap}" step="0.05" value="${Math.max(0, l.cap * 0.8).toFixed(2)}"${ro ? " disabled" : ""}><button type="button" data-act="cut"${ro ? " disabled" : ""}>Срезать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
+    `<div class="pl-ctrl"><input type="number" data-k="cut" min="0" max="${l.cap}" step="0.05" value="${Math.max(0, l.cap * 0.8).toFixed(2)}"${ro ? " disabled" : ""}><button type="button" data-act="cut"${ro ? " disabled" : ""}>Срезать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`) +
     `<h3>Рычаги дома</h3>` + HOUSE_LEVERS_UI.map(hrow).join("");
   showDrawer();
   if (!noOrders) $$("#drawerBody .pl").forEach(el => previewRow(el));
@@ -2314,7 +2357,7 @@ function bindIntro() {
   const replay = !!(window.DOC_BACKEND || META.replay);
   const years = Math.round((META.ticks || 3600) / DAY);
   $("#introMode").textContent = replay
-    ? `Это запись ${years} лет одного города. Она начинается с 4-го года — дня, когда игрок занял дом; три года до этого мир разгонялся. Выберите главу или смотрите подряд.`
+    ? `Это запись ${years} лет одного города. Первые три года мир разгоняется сам; в начале 4-го игрок занимает дом — отсюда и смотрим. Выберите главу или смотрите подряд.`
     : "Мир живёт на сервере прямо сейчас: один день игры — один шаг расчёта.";
   $("#introCtl").textContent = replay
     ? "Клавиши: пробел — пауза, ← и → — день назад и вперёд (с Shift — 45 дней). Год — 360 дней."
@@ -2332,8 +2375,8 @@ function bindIntro() {
   // запись: в первый раз время стоит, пока гость не выберет главу или «Смотреть»
   if (B && replay) {
     const at = B.R.head;
-    $("#introClose").textContent = `Смотреть с ${evDay(at)}${Math.abs(at - B.R.meta.seat_at) <= 60 ? " — игрок только что занял дом" : ""}`;
-    $("#introChapters").after($("#introClose"));
+    $("#introClose").textContent = `Смотреть с ${evDay(at)}`;
+    $("#introChapters").before($("#introClose"));
     if (!seen && !readHash().t) B.R.speed = "pause";
     B.ready.then(() => {
       const ch = B.chapters ? B.chapters() : [];
