@@ -55,7 +55,8 @@ h2 { font-size: 21px; }
 h3 { font-size: 17px; margin: 14px 0 6px; }
 a, .ref { color: var(--accent); text-decoration: none; cursor: pointer; }
 a:hover, .ref:hover { text-decoration: underline; }
-.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+/* только для экранной читалки; margin −1px и nowrap — чтобы не выталкивать ширину страницы у правого края */
+.vh { position: absolute; left: 0; top: 0; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 button, select, input {
   font: inherit; font-size: 14px; color: var(--ink);
@@ -324,7 +325,7 @@ dialog form { text-align: right; margin-top: 12px; }
 @media (max-width: 680px) {
   /* телефон: название; вкладки и «Тема · ? · Об игре»; дата; одна строка управления —
      «пауза / пуск», скорость списком, шаги; ползунок записи — внизу, под большим пальцем */
-  .top { position: static; padding: 8px 16px; gap: 8px 10px; }
+  .top { position: relative; padding: 8px 16px; gap: 8px 10px; }
   .brand { flex: 1 1 100%; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .views { order: 1; }
   .aux { order: 2; margin-left: auto; gap: 6px; }
