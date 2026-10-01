@@ -101,16 +101,33 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 #houseBody { display: flex; flex-direction: column; gap: 16px; }  /* обёртка карточек дома: тот же зазор, что у main */
 
 /* --------------------------------------------------------------- плитки */
+/* полоса угрозы: стержень «Мира» — угроза против гарнизона, фронтир, потери */
+.doom { display: grid; grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 14px 28px; align-items: start; padding: 14px 18px; }
+.doom:focus { outline: none; }
+.doom-k { color: var(--ink-3); font-size: 13.5px; }
+.doom-k .ic { color: var(--accent); }
+.doom-v { display: flex; align-items: baseline; gap: 12px; font-family: var(--font-head); font-weight: 700; line-height: 1.05; margin: 2px 0 8px; }
+.doom-thr { font-size: 40px; color: var(--critical); }
+.doom-gd { font-size: 40px; color: var(--ink); }
+.doom-vs { font-size: 16px; color: var(--ink-3); font-weight: 600; }
+.doom-v2 { font-family: var(--font-head); font-size: 30px; font-weight: 700; line-height: 1.1; margin: 2px 0 6px; }
+.doom-bar { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--critical) 28%, var(--surface-2)); overflow: hidden; margin-bottom: 8px; }
+.doom-bar span { display: block; height: 100%; border-radius: 4px; background: var(--good); }
+.doom-bar span.bad { background: var(--ink-2); }
+.doom-n { color: var(--ink-2); font-size: 13px; }
+.doom-why { grid-column: 1 / -1; margin: 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13.5px; font-style: italic; }
+@media (max-width: 900px) { .doom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doom-main { grid-column: 1 / -1; } }
+@media (max-width: 680px) { .doom-thr, .doom-gd { font-size: 32px; } .doom-v2 { font-size: 24px; } .doom { padding: 12px 14px; } }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px; }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
 .tile .k { color: var(--ink-3); font-size: 13px; }
 .tile .v { font-family: var(--font-head); font-size: 28px; font-weight: 700; line-height: 1.1; }
 .tile .n { color: var(--ink-2); font-size: 12.5px; min-height: 18px; }
 .tile .st { font-size: 12.5px; }
-/* шесть плиток дома — ровными рядами (6, 3 + 3, 2 + 2 + 2), без одинокой последней */
-#hTiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-@media (max-width: 1100px) { #hTiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 680px) { #hTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* шесть плиток сводки и дома — ровными рядами (6, 3 + 3, 2 + 2 + 2), без одинокой последней */
+#tiles, #hTiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1100px) { #tiles, #hTiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 680px) { #tiles, #hTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .st.good { color: var(--good); } .st.warn { color: var(--warn); }
 .st.serious { color: var(--serious); } .st.critical { color: var(--critical); }
 
@@ -216,7 +233,22 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .replaybar { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; padding: 8px 16px;
   background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--ink-2); }
 .replaybar .rb-k { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--accent); }
-.replaybar input[type=range] { flex: 1 1 260px; min-width: 0; accent-color: var(--accent); padding: 0; min-height: 24px; background: transparent; border: 0; }
+.replaybar .rb-track { flex: 1 1 260px; min-width: 0; position: relative; padding-bottom: 12px; }
+.replaybar input[type=range] { width: 100%; min-width: 0; accent-color: var(--accent); padding: 0; min-height: 24px; background: transparent; border: 0; display: block; }
+/* вехи записи под ползунком: цвет — род события, клик переносит к нему */
+.rb-marks { position: absolute; left: 8px; right: 8px; bottom: 0; height: 12px; }
+.rb-m { position: absolute; bottom: 0; width: 14px; height: 12px; margin-left: -7px; padding: 0; min-height: 0; border: 0; background: transparent; cursor: pointer; }
+.rb-m::before { content: ""; position: absolute; left: 5px; bottom: 0; width: 4px; height: 10px; border-radius: 2px; background: var(--accent); }
+.rb-m.rb-bankrupt::before { background: var(--ink-3); }
+.rb-m.rb-wiped::before { background: var(--serious); }
+.rb-m.rb-breach::before { background: var(--critical); height: 12px; width: 5px; }
+.rb-m:hover::before, .rb-m:focus-visible::before { transform: scaleY(1.3); transform-origin: bottom; }
+.verdict { border-color: var(--accent); }
+.verdict h2 { margin-bottom: 6px; }
+.verdict-line { font-size: 17px; margin: 0 0 10px; }
+.kv.verdict-kv { grid-template-columns: max-content 1fr max-content 1fr; column-gap: 18px; }
+.verdict-go { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+@media (max-width: 680px) { .kv.verdict-kv { grid-template-columns: max-content 1fr; } }
 .replaybar .rb-t { min-width: 150px; color: var(--ink); }
 .replaybar .rb-f { color: var(--ink-3); font-size: 12.5px; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } .drawer { transition: none; } }
@@ -288,8 +320,25 @@ dialog form { text-align: right; margin-top: 12px; }
   .multiples { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .chronicle { height: 420px; }
 }
+.m-only { display: none; }
 @media (max-width: 680px) {
-  .top { position: static; padding: 8px 16px; }
+  /* телефон: название; вкладки и «Тема · ? · Об игре»; дата; одна строка управления —
+     «пауза / пуск», скорость списком, шаги; ползунок записи — внизу, под большим пальцем */
+  .top { position: static; padding: 8px 16px; gap: 8px 10px; }
+  .brand { flex: 1 1 100%; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .views { order: 1; }
+  .aux { order: 2; margin-left: auto; gap: 6px; }
+  .clock { order: 3; flex: 1 1 100%; }
+  .controls { order: 4; flex: 1 1 100%; flex-wrap: nowrap; gap: 6px; overflow-x: auto; }
+  .controls #speeds { display: none; }
+  .m-only { display: inline-block; }
+  .controls button, .controls select, .aux button, .views button { padding: 6px 9px; min-height: 44px; white-space: nowrap; }
+  .replaybar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; padding: 6px 16px calc(6px + env(safe-area-inset-bottom, 0px)); gap: 2px 10px; border-top: 1px solid var(--line); box-shadow: 0 -6px 18px rgba(0, 0, 0, .18); }
+  .replaybar .rb-k, .replaybar .rb-n { display: none; }
+  .replaybar .rb-track { flex: 1 1 100%; }
+  .replaybar .rb-t { min-width: 0; }
+  body:has(.replaybar) { padding-bottom: calc(var(--rbh, 86px) + 8px); }
+  body:has(.replaybar) #toast { bottom: calc(var(--rbh, 86px) + 10px); }
   .controls .seg { flex-wrap: wrap; }
   h1 { font-size: 21px; }
   .clock { width: auto; }
@@ -301,6 +350,11 @@ dialog form { text-align: right; margin-top: 12px; }
   .dg-head, .lvl { grid-template-columns: 28px minmax(60px, 1fr) minmax(0, 1.4fr) 92px; }
   .dg-head span:nth-child(4), .lvl > span:nth-child(4) { display: none; }
 }
+@media (max-width: 380px) {
+  .controls button, .controls select, .aux button, .views button { padding: 6px 7px; font-size: 14px; }
+  .controls, .aux { gap: 5px; }
+  h1 { font-size: 19px; }
+}
 
 /* иконки game-icons.net: спрайт в index.html, заливка currentColor */
 .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
@@ -309,6 +363,11 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
 .tile .k .ic { color: var(--accent); opacity: 0.85; }
 .views .ic { opacity: 0.8; }
 .views button.on .ic { opacity: 1; }
+
+/* заголовок-сортировка: кнопка без собственного вида, вид — от th */
+.th-sort { all: unset; cursor: pointer; font: inherit; color: inherit; }
+.th-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+.replaybar .rb-share { padding: 3px 10px; font-size: 13px; min-height: 28px; }
 
 </style>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -319,9 +378,9 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     <h1>Dungeon of Capitalism</h1>
     <div class="sub">смотровая · <span id="seedLabel">сид —</span></div>
   </div>
-  <div class="seg views" id="views" role="tablist" aria-label="Вид">
-    <button type="button" data-view="world" class="on"><svg class="ic" aria-hidden="true"><use href="#i-castle"/></svg>Мир</button>
-    <button type="button" data-view="house"><svg class="ic" aria-hidden="true"><use href="#i-house"/></svg>Мой дом</button>
+  <div class="seg views" id="views" role="group" aria-label="Вид">
+    <button type="button" data-view="world" class="on" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-castle"/></svg>Мир</button>
+    <button type="button" data-view="house" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-house"/></svg>Мой дом</button>
   </div>
   <div class="clock">
     <div class="date" id="date">—</div>
@@ -329,6 +388,8 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   </div>
   <nav class="controls" id="controls" aria-label="Управление временем">
     <div class="seg" id="speeds" role="group" aria-label="Скорость"></div>
+    <button type="button" id="btnPlay" class="m-only" aria-pressed="false">Пауза</button>
+    <label class="vh" for="speedSel">Скорость</label><select id="speedSel" class="m-only"></select>
     <button type="button" id="btnStep" title="Один тик (игровой день)">+1 день</button>
     <button type="button" id="btnSkip45" title="Досчитать поход — 45 дней">+45 дней</button>
     <button type="button" id="btnSkipYear" title="Досчитать игровой год — 360 дней">+1 год</button>
@@ -373,7 +434,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     <p class="intro-ctl" id="introCtl"></p>
     </div>
     <ol class="intro-steps">
-      <li><a href="#tiles" data-go="tiles">Сводка</a> — сколько людей в городе и авантюристов внизу, до какого яруса дошли (фронтир), держит ли гарнизон угрозу.</li>
+      <li><a href="#doom" data-go="doom">Угроза</a> — главный вопрос города: держит ли гарнизон то, что просыпается внизу, до какого яруса дошли отряды (фронтир) и сколько погибло. Под ней — сводка: люди, отряды, дома, деньги.</li>
       <li><a href="#secChronicle" data-go="secChronicle">Летопись</a> — что случилось: отряды уходят, возвращаются и гибнут, дома разоряются и открываются. Имена кликаются — откроется карточка.</li>
       <li><a href="#secDungeon" data-go="secDungeon">Подземелье</a> — ярусы сверху вниз: где сейчас отряды, сколько добычи осталось на ярусе и что о нём говорят в городе.</li>
       <li><a href="#secExchange" data-go="secExchange">Биржа</a> и <a href="#flowsCard" data-go="flowsCard">деньги</a> — цены сырья и изделий; откуда деньги приходят в город и куда уходят.</li>
@@ -381,6 +442,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     </ol>
     </div>
   </section>
+  <section class="card doom" id="doom" aria-label="Угроза городу" tabindex="-1"></section>
   <section class="tiles" id="tiles" aria-label="Сводка"></section>
 
   <div class="grid">
@@ -440,14 +502,14 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   <section class="card">
     <div class="card-head">
       <div class="tabs" role="tablist" id="tabs">
-        <button type="button" role="tab" data-tab="market" class="on">Рынок</button>
-        <button type="button" role="tab" data-tab="houses">Дома</button>
-        <button type="button" role="tab" data-tab="squads">Отряды</button>
-        <button type="button" role="tab" data-tab="fences">Скупщики</button>
+        <button type="button" role="tab" data-tab="market" class="on" aria-selected="true" aria-controls="tableWrap">Рынок</button>
+        <button type="button" role="tab" data-tab="houses" aria-selected="false" aria-controls="tableWrap" tabindex="-1">Дома</button>
+        <button type="button" role="tab" data-tab="squads" aria-selected="false" aria-controls="tableWrap" tabindex="-1">Отряды</button>
+        <button type="button" role="tab" data-tab="fences" aria-selected="false" aria-controls="tableWrap" tabindex="-1">Скупщики</button>
       </div>
       <div class="card-tools"><span class="hint" id="tabHint"></span></div>
     </div>
-    <div class="tablewrap" id="tableWrap"></div>
+    <div class="tablewrap" id="tableWrap" role="tabpanel" aria-label="Таблица"></div>
   </section>
 </main>
 
@@ -651,6 +713,75 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
 
   window.DOC_BACKEND = { get, control, order, seek, ready, R };
 
+  // вехи записи на ползунке: рекорды фронтира, разбитые отряды, прорывы, волны разорений;
+  // события ближе 30 дней друг к другу — одна веха; клик — за 5 дней до неё
+  function milestones() {
+    const raw = R.events.filter(e => e.lv >= 3).map(e => ({ t: e.t, k: e.k, text: e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id) }));
+    const bk = R.events.filter(e => e.k === "bankrupt").map(e => e.t);
+    for (let i = 0; i < bk.length; i++) {            // волна: 4 разорения за 60 дней
+      let j = i; while (j + 1 < bk.length && bk[j + 1] - bk[i] <= 60) j++;
+      if (j - i + 1 >= 4) { raw.push({ t: bk[i], k: "bankrupt", text: `волна разорений: ${j - i + 1} домов за ${bk[j] - bk[i] + 1} дн.` }); i = j; }
+    }
+    raw.sort((a, b) => a.t - b.t);
+    const out = [];
+    for (const e of raw) {
+      const last = out[out.length - 1];
+      if (last && e.t - last.t <= 30) { last.items.push(e); if (RANK[e.k] > RANK[last.k]) last.k = e.k; }
+      else out.push({ t: e.t, k: e.k, items: [e] });
+    }
+    return out;
+  }
+  const RANK = { frontier: 1, bankrupt: 2, wiped: 3, breach: 4 };
+  function buildMarks(box) {
+    box.innerHTML = milestones().map(m => {
+      const what = m.items.map(x => x.text).join("; ");
+      return `<button type="button" class="rb-m rb-${m.k}" style="left:${(m.t / R.meta.ticks * 100).toFixed(2)}%" data-t="${m.t}" ` +
+        `title="${short(m.t)}: ${what.replace(/"/g, "&quot;")}" aria-label="Веха ${short(m.t)}: ${what.replace(/"/g, "&quot;")}"></button>`;
+    }).join("");
+    box.addEventListener("click", e => {
+      const b = e.target.closest(".rb-m");
+      if (!b) return;
+      seek(Math.max(0, +b.dataset.t - 5));
+      if (R.speed === "pause") R.speed = "3";
+    });
+  }
+
+  // итог в конце записи: чем кончились десять лет — и откуда смотреть заново
+  let verdictShown = null;
+  function showVerdict(on) {
+    if (on === verdictShown) return;
+    verdictShown = on;
+    let el = document.getElementById("verdict");
+    if (!on) { if (el) el.hidden = true; return; }
+    const S = R.hist.summary, T = R.meta.ticks, f = k => S[k][T], z = k => S[k][0];
+    const years = Math.round(T / R.meta.day);
+    const ratio = f("guard") > 0 ? f("threat") / f("guard") : Infinity;
+    const fmt = v => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1).replace(".", ",") + " млн" : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + " тыс" : String(Math.round(v));
+    const verdict = f("pop") <= 0 ? "Город не пережил подземелье."
+      : ratio > 1 ? `Город выстоял ${years} лет, но к концу угроза сильнее гарнизона в ${ratio.toFixed(1).replace(".", ",")} раза: отряды ушли до ${f("front_max")}-го яруса и разбудили глубину.`
+        : `Город выстоял ${years} лет, и гарнизон пока держит угрозу.`;
+    if (!el) {
+      el = document.createElement("section");
+      el.id = "verdict"; el.className = "card verdict"; el.setAttribute("aria-labelledby", "verdictTitle");
+      const main = document.getElementById("viewWorld");
+      main.insertBefore(el, main.firstChild);
+    }
+    el.innerHTML = `<h2 id="verdictTitle">Итог ${years} лет</h2><p class="verdict-line">${verdict}</p>` +
+      `<dl class="kv verdict-kv"><dt>горожан</dt><dd>${fmt(z("pop"))} → ${fmt(f("pop"))}</dd>` +
+      `<dt>рекорд фронтира</dt><dd>${f("front_max")}-й ярус</dd>` +
+      `<dt>погибли внизу</dt><dd>${fmt(f("fallen"))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
+      `<dt>разорились домов</dt><dd>${f("bankrupt")}</dd><dt>денег в городе</dt><dd>${fmt(z("money"))} → ${fmt(f("money"))}</dd></dl>` +
+      `<div class="verdict-go"><button type="button" data-go="0">Смотреть с начала</button>` +
+      `<button type="button" data-go="${R.meta.seat_at}">С момента, когда игрок занял дом</button></div>`;
+    el.hidden = false;
+    el.onclick = e => {
+      const b = e.target.closest("button[data-go]");
+      if (!b) return;
+      seek(+b.dataset.go); R.speed = "3";
+      window.scrollTo(0, 0);
+    };
+  }
+
   // полоса записи: ползунок времени под шапкой
   document.addEventListener("DOMContentLoaded", async () => {
     await ready;
@@ -660,11 +791,26 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     bar.innerHTML = `<span class="rb-k">Запись мира</span>` +
       `<span class="rb-n">сид ${R.meta.seed} · ${Math.round(R.meta.ticks / R.meta.day)} лет · игрок занял дом «${R.meta.seat_name || "—"}» в начале ${Math.floor(R.meta.seat_at / R.meta.day) + 1}-го года и рычагов не трогает</span>` +
       `<label class="vh" for="rbSlider">Время записи</label>` +
-      `<input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
+      `<div class="rb-track"><input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
+      `<div class="rb-marks" id="rbMarks"></div></div>` +
       `<span class="rb-t" id="rbTime"></span>` +
-      `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>`;
+      `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>` +
+      // во вложенном окне (claude.ai) внешний адрес страницы неизвестен — делиться нечем
+      (window.self === window.top ? `<button type="button" class="rb-share" id="rbShare">Ссылка на момент</button>` : "");
     const top = document.querySelector(".top");
     top.after(bar);
+    buildMarks(bar.querySelector("#rbMarks"));
+    // на телефоне полоса прибита к низу: отступ страницы — по её настоящей высоте
+    new ResizeObserver(() => document.documentElement.style.setProperty("--rbh", bar.offsetHeight + "px")).observe(bar);
+    const sh = bar.querySelector("#rbShare");
+    if (sh) sh.onclick = async () => {
+      const h = window.docHash ? window.docHash() : new URLSearchParams();
+      h.set("t", R.head);
+      const url = location.origin + location.pathname + location.search + "#" + h.toString();
+      const say = m => (window.docToast ? window.docToast(m) : null);
+      try { await navigator.clipboard.writeText(url); say(`Ссылка на ${short(R.head)} скопирована: по ней запись откроется на этом дне`); }
+      catch (e) { say("Скопируйте ссылку из адресной строки"); try { history.replaceState(null, "", "#" + h.toString()); } catch (e2) { /* как есть */ } }
+    };
     const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime"), fr = bar.querySelector("#rbFrame");
     let drag = false;
     sl.addEventListener("input", () => { drag = true; tm.textContent = label(+sl.value); });
@@ -672,6 +818,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     const tickUI = () => {
       if (!drag) {
         sl.value = R.head; tm.textContent = label(R.head);
+        showVerdict(R.head >= R.meta.ticks);
         const f = `таблицы — на ${short(at(R.meta.frames, R.head))}`;
         if (fr.textContent !== f) fr.textContent = f;
       }
@@ -810,7 +957,7 @@ function appendHist(h) {
 // иконка из спрайта в index.html (icons/sprite.py); цвет — от текста
 const ic = n => !n ? "" : `<svg class="ic" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 const TILE_IC = { pop: "village", hunger: "bread", adv: "hooded-figure", squads: "three-friends", houses: "anvil",
-  frontier: "stairs-goal", threat: "guarded-tower", money: "two-coins", fallen: "tombstone" };
+  money: "two-coins" };
 const HTILE_IC = { "Капитал": "chest", "Место": "podium-winner", "Касса": "two-coins", "Долг": "wooden-sign",
   "Мощность": "anvil-impact", "Политика": "quill-ink" };
 const TILES = [
@@ -823,18 +970,46 @@ const TILES = [
   ["adv", "Авантюристы", s => num(s.adv), s => `в гильдии ${num(s.pool)}`],
   ["squads", "Отряды", s => num(s.squads), s => `в походе ${num(s.out)}`],
   ["houses", "Дома", s => num(s.houses), s => `разорились ${num(s.bankrupt)}`],
-  ["frontier", "Фронтир", s => s.frontier + "-й ярус", s => `рекорд ${s.front_max}`],
-  ["threat", "Угроза / гарнизон", s => `${compact(s.threat)} / ${compact(s.guard)}`, s =>
-    (s.guard >= s.threat ? `<span class="st good">● держим</span>` : `<span class="st serious">▲ перевес</span>`)
-      + ` · солдат ${s.soldiers}`],
   ["money", "Деньги", s => compact(s.money), s => `казна ${compact(s.treasury)}`],
-  ["fallen", "Погибли", s => num(s.fallen), s => {
-    const f = ST.cols.fallen, t = ST.cols.t;
-    if (!f || !f.length) return "";
-    const j = lowerBound(t, t[t.length - 1] - 45);
-    return `за 45 дн. ${num(f[f.length - 1] - f[j])} · прорывов ${s.breaches}`;
-  }],
 ];
+// изменение ряда за последние n дней (по рядам истории)
+function deltaCol(k, n) {
+  const c = ST.cols[k], t = ST.cols.t;
+  if (!c || !c.length) return null;
+  const j = lowerBound(t, t[t.length - 1] - n);
+  return { now: c[c.length - 1], then: c[j] };
+}
+// полоса угрозы — стержень «Мира»: чем лучше снабжены отряды, тем глубже они уходят
+// и тем сильнее подземелье; держит ли гарнизон — главный вопрос города
+function renderDoom() {
+  const s = ST.state, el = $("#doom");
+  if (!s || !el) return;
+  const known = !META.full;                     // игроку — угроза по вестям (известная совету)
+  const thr = s.threat, gd = s.guard;
+  const ratio = thr > 0 ? gd / thr : (gd > 0 ? 9 : 1);
+  const hold = gd >= thr;
+  const tk = deltaCol(known ? "known" : "threat", 45);
+  const tr = tk && tk.then > 0 ? (tk.now / tk.then - 1) : null;
+  const f45 = deltaCol("fallen", 45);
+  const fill = Math.max(2, Math.min(100, ratio * 100));
+  el.innerHTML =
+    `<div class="doom-main">` +
+      `<div class="doom-k">${ic("guarded-tower")}${known ? "Угроза по вестям" : "Угроза из подземелья"} и гарнизон</div>` +
+      `<div class="doom-v"><span class="doom-thr">${compact(thr)}</span><span class="doom-vs">против</span><span class="doom-gd">${compact(gd)}</span></div>` +
+      `<div class="doom-bar" role="img" aria-label="гарнизон покрывает ${Math.round(Math.min(ratio, 9) * 100)}% угрозы"><span class="${hold ? "ok" : "bad"}" style="width:${fill}%"></span></div>` +
+      `<div class="doom-n">${hold ? `<span class="st good">● гарнизон держит</span>` : `<span class="st critical">■ угроза сильнее в ${num(1 / Math.max(ratio, 0.01), 1)} раза</span>`}` +
+        ` · солдат ${s.soldiers}${tr != null ? ` · угроза за 45 дн. ${tr >= 0 ? "+" : "−"}${num(Math.abs(tr) * 100, 0)}%` : ""}</div>` +
+    `</div>` +
+    `<div class="doom-side">` +
+      `<div class="doom-k">${ic("stairs-goal")}Фронтир</div><div class="doom-v2">${s.frontier}-й ярус</div>` +
+      `<div class="doom-n">рекорд — ${s.front_max}-й</div>` +
+    `</div>` +
+    `<div class="doom-side">` +
+      `<div class="doom-k">${ic("tombstone")}Погибли</div><div class="doom-v2">${num(s.fallen)}</div>` +
+      `<div class="doom-n">${f45 ? `за 45 дн. ${num(f45.now - f45.then)} · ` : ""}прорывов ${s.breaches}</div>` +
+    `</div>` +
+    `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
+}
 function buildTiles() {
   $("#tiles").innerHTML = TILES.map(([k, label]) =>
     `<div class="tile" id="tile-${k}"><div class="k">${ic(TILE_IC[k])}${label}</div><div class="v">—</div><div class="n"></div></div>`).join("");
@@ -842,6 +1017,7 @@ function buildTiles() {
 function renderTiles() {
   const s = ST.state;
   if (!s) return;
+  renderDoom();
   for (const [k, , v, n] of TILES) {
     const el = $("#tile-" + k);
     $(".v", el).textContent = v(s);
@@ -857,6 +1033,10 @@ function buildHeader() {
     const b = e.target.closest("button[data-speed]");
     if (b) control("speed", b.dataset.speed);
   });
+  // на телефоне вместо шести кнопок — «пауза / пуск» и список скоростей
+  $("#speedSel").innerHTML = META.speeds.filter(x => x !== "pause").map(x => `<option value="${x}">${SPEED_RU[x] || x}</option>`).join("");
+  $("#speedSel").onchange = e => { UI.lastSpeed = e.target.value; control("speed", e.target.value); };
+  $("#btnPlay").onclick = () => control("speed", ST.state && ST.state.speed !== "pause" ? "pause" : (UI.lastSpeed || "3"));
   $("#btnStep").onclick = () => control("step");
   $("#btnSkip45").onclick = () => control("skip", 45);
   $("#btnSkipYear").onclick = () => control("skip", 360);
@@ -880,7 +1060,7 @@ function buildHeader() {
     if (r.error) toast(r.error);
   };
   if (!META.control) {
-    $$("#controls button, #controls input, #btnStopSkip").forEach(b => (b.disabled = true));
+    $$("#controls button, #controls input, #controls select, #btnStopSkip").forEach(b => (b.disabled = true));
     $("#readonly").hidden = false;
   }
 }
@@ -894,7 +1074,12 @@ function renderHeader() {
     : `${num(s.tps, 1)} дн./с · поход — ${META.expedition} дн., год — ${DAY} дн.`) + saved;
   $("#tps").title = s.note || "";
   $("#btnSave").hidden = !s.can_save;
-  $$("#speeds button").forEach(b => b.classList.toggle("on", b.dataset.speed === s.speed));
+  $$("#speeds button").forEach(b => { const on = b.dataset.speed === s.speed; b.classList.toggle("on", on); b.setAttribute("aria-pressed", on); });
+  if (s.speed !== "pause") UI.lastSpeed = s.speed;
+  const run = s.speed !== "pause";
+  $("#btnPlay").textContent = run ? "Пауза" : "Пуск";
+  $("#btnPlay").setAttribute("aria-pressed", String(!run));
+  if (UI.lastSpeed && $("#speedSel").value !== UI.lastSpeed) $("#speedSel").value = UI.lastSpeed;
   $("#skipbar").hidden = !s.skip;
   $("#choosebar").hidden = !s.choosing || UI.view === "house";
   if (s.skip) $("#skipText").textContent = `досчитываю: осталось ${num(s.skip)} дн.`;
@@ -1008,8 +1193,16 @@ function renderPxInfo() {
   if (!shop) s += ` · лучший бид ${num(row.bid, 2)} / аск ${row.ask ? num(row.ask, 2) : "—"}`;
   $("#pxInfo").innerHTML = s;
 }
+function setTab(t) {
+  if (!$(`#tabs button[data-tab="${t}"]`)) return;
+  UI.tab = t;
+  $$("#tabs button").forEach(x => { const on = x.dataset.tab === t; x.classList.toggle("on", on); x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; });
+  writeHash();
+  loadTable();
+}
 function selectGood(g) {
   UI.good = g;
+  writeHash();
   $("#goodSelect").value = g;
   PX.refLine = null;
   buildPxSeries();
@@ -1198,7 +1391,11 @@ function renderTable() {
       return srt.asc ? c : -c;
     });
   }
-  const head = cols.map(c => `<th data-k="${c.k}" class="${c.n ? "num" : ""}${srt && srt.k === c.k ? " sorted" + (srt.asc ? " asc" : "") : ""}">${c.l}</th>`).join("");
+  const head = cols.map(c => {
+    const on = srt && srt.k === c.k;
+    return `<th data-k="${c.k}" class="${c.n ? "num" : ""}${on ? " sorted" + (srt.asc ? " asc" : "") : ""}" aria-sort="${on ? (srt.asc ? "ascending" : "descending") : "none"}">` +
+      `<button type="button" class="th-sort">${c.l}</button></th>`;
+  }).join("");
   const body = rows.map(r => `<tr data-g="${r.g || ""}"${UI.tab === "market" && r.g === UI.good ? ' class="sel"' : ""}>` +
     cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
   $("#tableWrap").innerHTML = rows.length ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`;
@@ -1214,10 +1411,15 @@ function bindTable() {
   dr.addEventListener("pointerleave", () => (UI.hoverDrawer = false));
   $("#tabs").addEventListener("click", e => {
     const b = e.target.closest("button[data-tab]");
-    if (!b) return;
-    UI.tab = b.dataset.tab;
-    $$("#tabs button").forEach(x => x.classList.toggle("on", x === b));
-    loadTable();
+    if (b) setTab(b.dataset.tab);
+  });
+  $("#tabs").addEventListener("keydown", e => {        // вкладки по шаблону ARIA: стрелки, Home, End
+    const bs = $$("#tabs button"), i = bs.indexOf(document.activeElement);
+    if (i < 0) return;
+    const j = e.key === "ArrowRight" ? (i + 1) % bs.length : e.key === "ArrowLeft" ? (i - 1 + bs.length) % bs.length
+      : e.key === "Home" ? 0 : e.key === "End" ? bs.length - 1 : -1;
+    if (j < 0) return;
+    e.preventDefault(); bs[j].focus(); setTab(bs[j].dataset.tab);
   });
   $("#tableWrap").addEventListener("click", e => {
     const th = e.target.closest("th[data-k]");
@@ -1249,7 +1451,7 @@ function showDrawer() {
 }
 function closeDrawer() {
   const d = $("#drawer");
-  UI.drawer = []; UI.panel = null;
+  UI.drawer = []; UI.panel = null; UI.entity = null; writeHash();
   d.classList.remove("open");
   d.setAttribute("aria-hidden", "true");
   d.inert = true;
@@ -1265,6 +1467,7 @@ async function openEntity(id, push) {
   if (push && UI.drawer[UI.drawer.length - 1] !== id) UI.drawer.push(id);
   const e = await api("/api/entity?id=" + encodeURIComponent(id));
   showDrawer();
+  UI.entity = id; writeHash();
   $("#drawerBack").hidden = UI.drawer.length < 2;
   if (e.error) { $("#drawerTitle").textContent = id; $("#drawerBody").innerHTML = `<p class="empty">${esc(e.error)}</p>`; return; }
   $("#drawerTitle").textContent = e.name;
@@ -1392,7 +1595,6 @@ async function loadDungeon() {
 function bindDungeon() {
   if (!META.full) {
     $("#dgStockHead").textContent = "запас: по слухам";
-    $("#tile-threat .k").textContent = "Угроза по вестям / гарнизон";
   }
   const sh = $("#shaft");
   sh.addEventListener("pointerenter", () => (UI.hoverShaft = true));
@@ -1422,7 +1624,8 @@ function bindViews() {
 function setView(v) {
   UI.view = v;
   try { localStorage.setItem("doc-view", v); } catch (e) { /* без памяти */ }
-  $$("#views button").forEach(b => b.classList.toggle("on", b.dataset.view === v));
+  $$("#views button").forEach(b => { const on = b.dataset.view === v; b.classList.toggle("on", on); b.setAttribute("aria-pressed", String(on)); });
+  writeHash();
   $("#viewWorld").hidden = v !== "world";
   $("#viewHouse").hidden = v !== "house";
   if (v === "house") loadHouse();
@@ -1725,14 +1928,15 @@ function bindIntro() {
     ? `Перед вами запись первых ${Math.round((META.ticks || 3600) / DAY)} лет одного такого города. Нажимать ничего не обязательно: время идёт само.`
     : "Мир живёт на сервере прямо сейчас: один день игры — один шаг расчёта.";
   $("#introCtl").textContent = replay
-    ? "Скорость — кнопками в шапке. Ползунок под шапкой переносит в любой день записи (год — 360 дней). Таблицы и карточки в записи обновляются раз в 30 дней."
-    : META.control ? "Скорость, шаг и перемотка — кнопками в шапке. Год — 360 дней, поход отряда — 45."
+    ? "Скорость — кнопками в шапке; клавиши: пробел — пауза, ← и → — день назад и вперёд (с Shift — 45 дней). Ползунок записи переносит в любой день (год — 360 дней), чёрточки под ним — вехи: рекорды глубины, разбитые отряды, прорыв, волны разорений. Таблицы и карточки в записи обновляются раз в 30 дней."
+    : META.control ? "Скорость, шаг и перемотка — кнопками в шапке; клавиши: пробел — пауза, → — день вперёд (с Shift — 45 дней). Год — 360 дней, поход отряда — 45."
       : "Управлять временем может только хозяин мира; вы смотрите. Год — 360 дней, поход отряда — 45.";
   let seen = false;
   try { seen = localStorage.getItem(INTRO_KEY) === "1"; } catch (e) { /* без памяти — показываем */ }
   $("#intro").hidden = seen;
   $("#introClose").onclick = () => {
     $("#intro").hidden = true;
+    $("#doom").focus({ preventScroll: true });   // фокус не теряется на спрятанной кнопке
     try { localStorage.setItem(INTRO_KEY, "1"); } catch (e) { /* без памяти */ }
   };
   $("#btnHelp").onclick = () => {
@@ -1832,6 +2036,50 @@ async function refreshDrawer() {
   body.scrollTop = top;
 }
 
+// ------------------------------------------------- адрес и клавиши
+// состояние в адресе (#v=house&e=H-000004&tab=squads&g=steel&t=1500): ссылкой можно
+// поделиться; момент записи t — только из кнопки «Ссылка на момент» (иначе адрес менялся бы каждый день)
+function readHash() {
+  try { return Object.fromEntries(new URLSearchParams(location.hash.slice(1))); } catch (e) { return {}; }
+}
+function hashParams() {
+  const h = new URLSearchParams();
+  if (UI.view === "house") h.set("v", "house");
+  if (UI.entity) h.set("e", UI.entity);
+  if (UI.tab && UI.tab !== "market") h.set("tab", UI.tab);
+  if (UI.good && UI.good !== UI.defaultGood) h.set("g", UI.good);
+  return h;
+}
+window.docHash = hashParams;
+window.docToast = (m) => toast(m);
+function writeHash() {
+  if (!UI.hashReady) return;                       // пока страница собирается — адрес не трогать
+  const q = hashParams().toString();
+  try { history.replaceState(null, "", q ? "#" + q : location.pathname + location.search); } catch (e) { /* песочница */ }
+}
+async function applyHash(H) {
+  if (H.v === "house") setView("house");
+  if (H.tab) setTab(H.tab);
+  if (H.g && ST.px[H.g]) selectGood(H.g);
+  if (H.e && /^[PHSF]-\d+$/.test(H.e)) await openEntity(H.e, true);
+}
+// клавиши: пробел — пауза / пуск; → — день вперёд (Shift — 45 дней); в записи ← — назад; ? — вводная
+document.addEventListener("keydown", e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || !META || !ST.state) return;
+  const t = e.target;
+  if (t.closest && t.closest("input, select, textarea, [contenteditable], dialog[open]")) return;
+  if (e.key === " " && !(t.closest && t.closest("button, a"))) {
+    e.preventDefault();
+    if (META.control) control("speed", ST.state.speed !== "pause" ? "pause" : (UI.lastSpeed || "3"));
+  } else if (e.key === "ArrowRight" && META.control && !(t.closest && t.closest("#tabs"))) {
+    e.preventDefault(); e.shiftKey ? control("skip", 45) : control("step");
+  } else if (e.key === "ArrowLeft" && window.DOC_BACKEND && !(t.closest && t.closest("#tabs"))) {
+    e.preventDefault(); window.DOC_BACKEND.seek(ST.state.tick - (e.shiftKey ? 45 : 1));
+  } else if (e.key === "?") {
+    $("#btnHelp").click();
+  }
+});
+
 async function main() {
   applyTheme(savedTheme());
   META = await api("/api/meta");
@@ -1845,6 +2093,13 @@ async function main() {
     $$("#evFilter button").forEach(x => x.classList.toggle("on", x === b));
     renderEvents();
   });
+  const H = readHash();
+  UI.defaultGood = UI.good;
+  if (H.t && window.DOC_BACKEND) {                 // ссылка на момент записи: встать на него и ждать
+    await window.DOC_BACKEND.ready;
+    window.DOC_BACKEND.seek(+H.t);
+    window.DOC_BACKEND.R.speed = "pause";
+  }
   const h = await api(`/api/history?points=${MAX_POINTS}`);
   ST.cols = h.cols; ST.px = h.px; ST.vol = h.vol;
   ST.last = ST.cols.t[ST.cols.t.length - 1];
@@ -1860,6 +2115,9 @@ async function main() {
   await loadTable();
   await loadDungeon(); await loadFlows();
   bindViews();
+  UI.hashReady = true;
+  await applyHash(H);
+  writeHash();
   await checkAway();
   if (!UI.seat) { const me = await api("/api/me"); UI.seat = me.seat; }
   poll();
