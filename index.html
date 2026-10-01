@@ -1775,6 +1775,7 @@ async function main() {
   META = await api("/api/meta");
   DAY = META.day;
   buildHeader(); buildTiles(); buildGoodSelect(); bindTable(); bindHouse(); bindPolicy();
+  bindIntro();   // сразу: данные через сеть грузятся секунды, вводная не должна сдвигать страницу потом
   $("#evFilter").addEventListener("click", e => {
     const b = e.target.closest("button[data-lv]");
     if (!b) return;
@@ -1797,7 +1798,6 @@ async function main() {
   await loadTable();
   await loadDungeon(); await loadFlows();
   bindViews();
-  bindIntro();
   await checkAway();
   if (!UI.seat) { const me = await api("/api/me"); UI.seat = me.seat; }
   poll();
