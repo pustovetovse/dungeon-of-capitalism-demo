@@ -1,5 +1,4 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image"></head><body>
-<title>Dungeon of Capitalism</title>
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dungeon of Capitalism</title><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image"></head><body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Alegreya:wght@400;700&display=swap">
@@ -17,25 +16,27 @@
   --grid: #2c2620;
   --ink: #efe6d8;
   --ink-2: #c9bba5;
-  --ink-3: #8f8170;
+  --ink-3: #968979;
   --accent: #c9a25a;
   --accent-ink: #1b1508;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --down: #e66767;
-  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #da6666;
   --font-text: "Old Standard TT", "Alegreya", Georgia, serif;
   --font-head: "Cormorant", "Alegreya", Georgia, serif;
 }
 :root[data-theme="light"] {
   color-scheme: light;
   --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
-  --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #8a6421; --accent-ink: #fff8ea;
+  --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
+  --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
     --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
-    --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #8a6421; --accent-ink: #fff8ea;
+    --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
+    --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
     --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --down: #e34948;
   }
 }
@@ -81,9 +82,11 @@ input[type=number] { width: 78px; }
   padding: 10px 16px; background: var(--surface); border-bottom: 1px solid var(--line);
 }
 .brand .sub { color: var(--ink-3); font-size: 13px; }
-.clock { min-width: 190px; }
+/* ширина часов постоянна: строка скорости меняет длину каждую секунду и не должна
+   переносить кнопки шапки на второй ряд и обратно */
+.clock { width: 340px; min-width: 0; }
 .clock .date { font-family: var(--font-head); font-size: 22px; font-weight: 700; }
-.clock .tps { color: var(--ink-3); font-size: 12px; }
+.clock .tps { color: var(--ink-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; flex: 1; }
 .newworld { display: inline-flex; gap: 4px; }
 .aux { display: flex; gap: 8px; align-items: center; }
@@ -104,6 +107,10 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .tile .v { font-family: var(--font-head); font-size: 28px; font-weight: 700; line-height: 1.1; }
 .tile .n { color: var(--ink-2); font-size: 12.5px; min-height: 18px; }
 .tile .st { font-size: 12.5px; }
+/* шесть плиток дома — ровными рядами (6, 3 + 3, 2 + 2 + 2), без одинокой последней */
+#hTiles { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1100px) { #hTiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 680px) { #hTiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .st.good { color: var(--good); } .st.warn { color: var(--warn); }
 .st.serious { color: var(--serious); } .st.critical { color: var(--critical); }
 
@@ -211,6 +218,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .replaybar .rb-k { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--accent); }
 .replaybar input[type=range] { flex: 1 1 260px; min-width: 0; accent-color: var(--accent); padding: 0; min-height: 24px; background: transparent; border: 0; }
 .replaybar .rb-t { min-width: 150px; color: var(--ink); }
+.replaybar .rb-f { color: var(--ink-3); font-size: 12.5px; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } .drawer { transition: none; } }
 
 /* --------------------------------------------------------------- вводная */
@@ -250,10 +258,13 @@ td.wrap { white-space: normal; min-width: 180px; }
 .drawer {
   position: fixed; top: 0; right: 0; bottom: 0; width: min(480px, 100vw); z-index: 20;
   background: var(--surface); border-left: 1px solid var(--line);
-  transform: translateX(100%); transition: transform .18s ease-out;
+  transform: translateX(100%); visibility: hidden; transition: transform .18s ease-out, visibility 0s .18s;
   display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0, 0, 0, .35);
 }
-.drawer.open { transform: none; }
+/* закрытый ящик спрятан целиком: иначе его тень лежит полосой у правого края */
+.drawer.open { transform: none; visibility: visible; transition: transform .18s ease-out; }
+.drawer-head h2:focus { outline: none; }
+.hint.notice { color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; }
 .drawer-head { display: flex; align-items: center; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
 .drawer-head h2 { flex: 1; font-size: 23px; }
 .drawer-body { padding: 10px 16px 30px; overflow-y: auto; }
@@ -281,7 +292,8 @@ dialog form { text-align: right; margin-top: 12px; }
   .top { position: static; padding: 8px 16px; }
   .controls .seg { flex-wrap: wrap; }
   h1 { font-size: 21px; }
-  .clock { min-width: 0; }
+  .clock { width: auto; }
+  .clock .tps { white-space: normal; }
   .multiples { grid-template-columns: minmax(0, 1fr); }
   .exchange .lwc { height: 300px; }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -396,7 +408,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
           <button type="button" data-lv="1">всё</button>
         </div>
       </div>
-      <ol class="events" id="events" aria-live="polite"></ol>
+      <ol class="events" id="events"></ol>
     </section>
   </div>
 
@@ -470,10 +482,10 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   </div>
 </main>
 
-<aside class="drawer" id="drawer" aria-hidden="true">
+<aside class="drawer" id="drawer" role="dialog" aria-labelledby="drawerTitle" aria-hidden="true" inert>
   <div class="drawer-head">
     <button type="button" id="drawerBack" class="ghost" title="Назад" hidden>←</button>
-    <h2 id="drawerTitle">—</h2>
+    <h2 id="drawerTitle" tabindex="-1">—</h2>
     <button type="button" id="drawerClose" class="ghost" title="Закрыть">✕</button>
   </div>
   <div class="drawer-body" id="drawerBody"></div>
@@ -483,6 +495,14 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   <div class="about-body" id="aboutBody"></div>
   <form method="dialog"><button>Закрыть</button></form>
 </dialog>
+
+<script>
+  // uPlot при загрузке строит Intl.NumberFormat(navigator.language): у части браузеров язык
+  // записан нестандартно («en-US@posix») — тогда библиотека падает и с ней вся страница.
+  try { new Intl.NumberFormat(navigator.language); } catch (e) {
+    try { Object.defineProperty(navigator, "language", { get: () => "ru-RU" }); } catch (e2) { /* как есть */ }
+  }
+</script>
 <script src="vendor/lightweight-charts-5.2.1/lightweight-charts.standalone.production.js"></script>
 <script src="vendor/uplot-1.6.32/uPlot.iife.min.js"></script>
 <script>
@@ -520,6 +540,7 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
   }
   const DAY = () => R.meta.day;
   const label = t => `год ${Math.floor(t / DAY()) + 1}, день ${(t % DAY()) + 1}`;
+  const short = t => `г.${Math.floor(t / DAY()) + 1} д.${(t % DAY()) + 1}`;
   function state() {
     const s = { tick: R.head, label: label(R.head), seed: R.meta.seed, speed: R.speed, skip: 0,
       tps: RATE[R.speed] || 0, epoch: R.epoch, saved: null, can_save: false, choosing: false,
@@ -552,13 +573,16 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     if (!R.cards.has(t)) R.cards.set(t, getJSON(`cards/${String(t).padStart(5, "0")}.json`));
     return R.cards.get(t);
   }
+  // дом занят на seat_at, но «Мой дом» записан только в кадрах после этого: до первого
+  // такого кадра показывать нечего — дом в записи считается занятым с него
+  const seatShown = () => R.meta.frames.find(f => f > R.meta.seat_at) ?? R.meta.seat_at + 1;
   const q = path => Object.fromEntries(new URL(path, "http://x").searchParams);
 
   async function get(path) {
     await ready;
     const p = path.split("?")[0], a = q(path);
     switch (p) {
-      case "/api/meta": return Object.assign({}, R.meta);
+      case "/api/meta": return Object.assign({}, R.meta, { orders: false });   // смотреть можно, приказывать — нет
       case "/api/state": advance(); return state();
       case "/api/history": {
         const pts = parseInt(a.points || "4000", 10);
@@ -585,16 +609,17 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
       case "/api/flows": return (await frame()).flows;
       case "/api/myhouse": {
         const f = await frame();
-        return f.myhouse && R.head >= R.meta.seat_at ? f.myhouse : { error: "дом не занят" };
+        return f.myhouse && R.head >= seatShown() ? f.myhouse : { error: "дом не занят" };
       }
       case "/api/entity": {
-        const c = (await cards())[a.id];
-        return c || { error: "в этом кадре записи карточки нет (карточки пишутся раз в 90 дней)" };
+        const t = at(R.meta.card_frames, R.head), c = (await cards())[a.id];
+        return c ? Object.assign({ asof: t }, c)
+          : { error: `На ${short(t)} этой карточки в записи ещё нет: карточки сохраняются раз в 90 дней. Передвиньте время немного вперёд.` };
       }
       case "/api/me": {
-        const seated = R.meta.seat && R.head >= R.meta.seat_at + 1;
+        const seated = R.meta.seat && R.head >= seatShown();
         return { seat: seated ? R.meta.seat : null, name: seated ? R.meta.seat_name : null, mode: "auto",
-          after: R.meta.seat_at, tick: R.head, pending: [] };
+          after: seatShown() - 1, tick: R.head, pending: [] };
       }
       case "/api/candidates": return { choosing: false, candidates: [] };
       case "/api/since": return { error: "в записи сводки нет" };
@@ -633,18 +658,23 @@ h2 .ic { color: var(--accent); width: 0.95em; height: 0.95em; vertical-align: -0
     const bar = document.createElement("div");
     bar.className = "replaybar";
     bar.innerHTML = `<span class="rb-k">Запись мира</span>` +
-      `<span class="rb-n">сид ${R.meta.seed} · ${Math.round(R.meta.ticks / R.meta.day)} лет · игрок занял дом «${R.meta.seat_name || "—"}» на ${Math.round(R.meta.seat_at / R.meta.day)}-м году и рычагов не трогает</span>` +
+      `<span class="rb-n">сид ${R.meta.seed} · ${Math.round(R.meta.ticks / R.meta.day)} лет · игрок занял дом «${R.meta.seat_name || "—"}» в начале ${Math.floor(R.meta.seat_at / R.meta.day) + 1}-го года и рычагов не трогает</span>` +
       `<label class="vh" for="rbSlider">Время записи</label>` +
       `<input type="range" id="rbSlider" min="0" max="${R.meta.ticks}" step="1" value="${R.head}">` +
-      `<span class="rb-t" id="rbTime"></span>`;
+      `<span class="rb-t" id="rbTime"></span>` +
+      `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>`;
     const top = document.querySelector(".top");
     top.after(bar);
-    const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime");
+    const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime"), fr = bar.querySelector("#rbFrame");
     let drag = false;
     sl.addEventListener("input", () => { drag = true; tm.textContent = label(+sl.value); });
     sl.addEventListener("change", () => { drag = false; seek(+sl.value); });
     const tickUI = () => {
-      if (!drag) { sl.value = R.head; tm.textContent = label(R.head); }
+      if (!drag) {
+        sl.value = R.head; tm.textContent = label(R.head);
+        const f = `таблицы — на ${short(at(R.meta.frames, R.head))}`;
+        if (fr.textContent !== f) fr.textContent = f;
+      }
       requestAnimationFrame(tickUI);
     };
     tickUI();
@@ -693,9 +723,9 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 // текст с метками {id} -> ссылки на карточки
 function linkText(text, refs) {
   return esc(text).replace(/\{([PHSF]-\d+)\}/g, (_m, id) =>
-    `<a class="ref" data-id="${id}">${esc((refs && refs[id]) || id)}</a>`);
+    `<a class="ref" href="#${id}" data-id="${id}">${esc((refs && refs[id]) || id)}</a>`);
 }
-const ref = (id, name) => id ? `<a class="ref" data-id="${id}">${esc(name || id)}</a>` : "—";
+const ref = (id, name) => id ? `<a class="ref" href="#${id}" data-id="${id}">${esc(name || id)}</a>` : "—";
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 // всплывающая подсказка вместо alert(): в песочнице claude.ai диалоги не показываются
 function toast(msg) {
@@ -1206,7 +1236,27 @@ document.addEventListener("click", e => {
   const a = e.target.closest(".ref[data-id]");
   if (a) { e.preventDefault(); openEntity(a.dataset.id, true); }
 });
-$("#drawerClose").onclick = () => { UI.drawer = []; UI.panel = null; $("#drawer").classList.remove("open"); $("#drawer").setAttribute("aria-hidden", "true"); };
+// ящик карточки: при открытии фокус — на заголовок, при закрытии — туда, откуда открыли;
+// закрытый ящик инертен (не ловит Tab и не читается)
+function showDrawer() {
+  const d = $("#drawer");
+  if (d.classList.contains("open")) return;
+  UI.drawerFrom = document.activeElement;
+  d.inert = false;
+  d.classList.add("open");
+  d.setAttribute("aria-hidden", "false");
+  $("#drawerTitle").focus({ preventScroll: true });
+}
+function closeDrawer() {
+  const d = $("#drawer");
+  UI.drawer = []; UI.panel = null;
+  d.classList.remove("open");
+  d.setAttribute("aria-hidden", "true");
+  d.inert = true;
+  if (UI.drawerFrom && document.contains(UI.drawerFrom)) UI.drawerFrom.focus({ preventScroll: true });
+  UI.drawerFrom = null;
+}
+$("#drawerClose").onclick = closeDrawer;
 $("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
 
@@ -1214,12 +1264,13 @@ async function openEntity(id, push) {
   UI.panel = null;
   if (push && UI.drawer[UI.drawer.length - 1] !== id) UI.drawer.push(id);
   const e = await api("/api/entity?id=" + encodeURIComponent(id));
-  $("#drawer").classList.add("open");
-  $("#drawer").setAttribute("aria-hidden", "false");
+  showDrawer();
   $("#drawerBack").hidden = UI.drawer.length < 2;
   if (e.error) { $("#drawerTitle").textContent = id; $("#drawerBody").innerHTML = `<p class="empty">${esc(e.error)}</p>`; return; }
   $("#drawerTitle").textContent = e.name;
-  $("#drawerBody").innerHTML = ({ S: squadCard, H: houseCard, P: personCard }[e.kind] || (() => ""))(e);
+  // в записи карточка — снимок на дату кадра (раз в 90 дней): сказать прямо, на какую
+  const asof = e.asof != null ? `<p class="hint">Состояние на ${evDay(e.asof)} — карточки в записи сохраняются раз в 90 дней; что случилось позже, смотрите в летописи.</p>` : "";
+  $("#drawerBody").innerHTML = asof + ({ S: squadCard, H: houseCard, P: personCard }[e.kind] || (() => ""))(e);
 }
 function lifeLine(e) {
   return `<dt>id</dt><dd>${e.id}</dd><dt>с</dt><dd>${evDay(e.born)}</dd>` +
@@ -1326,7 +1377,7 @@ async function loadDungeon() {
     const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
     const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
     const sq = r.squads.slice(0, 24).map(s =>
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}">${PHASE[s.phase] || "●"}</a>`).join("") +
       (r.squads.length > 24 ? `<span class="more">+${r.squads.length - 24}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     return `<div class="${cls.join(" ")}">` +
@@ -1410,7 +1461,7 @@ async function loadHouse() {
     $("#houseBody").hidden = true;
     $("#houseEmpty").hidden = false;
     if (!c.candidates.length || !c.choosing) {
-      $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выбор дома</h2><p>Кандидаты появятся, когда мир прогреется — с ${me.after}-го дня (сейчас ${me.tick}-й).</p></div>`;
+      $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выбор дома</h2><p>Кандидаты появятся, когда мир прогреется — с ${evDay(me.after)} (сейчас ${evDay(me.tick)}).</p></div>`;
       return;
     }
     $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выберите дом</h2><p>Три дома города, примерно равных по величине, но разных по ремеслу, мастерству и истории. ` +
@@ -1428,12 +1479,21 @@ async function loadHouse() {
     $("#houseEmpty").hidden = false;
     $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Дом не занят</h2><p>` +
       (me.pending && me.pending.length ? "Приказ занять дом стоит в очереди — исполнится на следующем тике."
-        : me.mode ? `Игрок займёт дом после прогрева мира — с ${me.after}-го дня (сейчас ${me.tick}-й).`
+        : me.mode ? `Игрок займёт дом после прогрева мира — с ${evDay(me.after + 1)} (сейчас ${evDay(me.tick)}).` +
+          (window.DOC_BACKEND ? ` <button type="button" id="btnToSeat">Перейти к ${evDay(me.after + 1)}</button>` : "")
           : `Сервер запущен без игрока. Запустите <code>python server.py --seat choose</code>: после прогрева мира вы выберете дом из трёх кандидатов.`) + `</p></div>`;
+    const go = $("#btnToSeat");
+    if (go) go.onclick = () => { window.DOC_BACKEND.seek(me.after + 1); setTimeout(loadHouse, 600); };
     return;
   }
   UI.seat = me.seat;
   const h = await api("/api/myhouse");
+  if (h.error) {                         // дом есть, но его состояния пока нет — пустое состояние, а не сбой
+    $("#houseBody").hidden = true;
+    $("#houseEmpty").hidden = false;
+    $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>${esc(me.name || "Мой дом")}</h2><p>Состояние дома пока недоступно: ${esc(h.error)}.</p></div>`;
+    return;
+  }
   $("#houseEmpty").hidden = true;
   $("#houseBody").hidden = false;
   renderHouse(h);
@@ -1458,7 +1518,7 @@ function renderHouse(h) {
         ? Object.entries(h.house_levers).map(([k, v]) => LEVER_RU[k] ? LEVER_RU[k](v) : k).join(", ") : "дом — как у бота");
     $("#hLines").innerHTML = h.lines.map(l => {
       const lev = Object.entries(l.levers || {});
-      return `<div class="lc"><h3><span>${esc(l.n)}</span><span class="tag">${l.idle ? "стоит" : "работает"}</span></h3>` +
+      return `<div class="lc"><h3><span>${esc(l.n)}</span><span class="tag">${l.idle || !(l.rate > 0.005) ? "стоит" : "работает"}</span></h3>` +
         `<dl class="kv"><dt>выпуск</dt><dd>${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})</dd>` +
         `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
         `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
@@ -1558,7 +1618,8 @@ function openPolicy(h, t) {
   UI.panel = { house: h.id, trade: t };
   $("#drawerTitle").textContent = `${l.n}: политика`;
   $("#drawerBack").hidden = true;
-  const ro = !META.control;
+  const noOrders = META.orders === false;   // запись мира: смотреть можно, приказывать нельзя
+  const ro = !META.control || noOrders;
   const row = (lv, cur) => {
     const mine = cur !== undefined && cur !== null;
     const bv = lv.bot(h);
@@ -1580,7 +1641,8 @@ function openPolicy(h, t) {
       `<button type="button" data-act="hset"${ro ? " disabled" : ""}>Приказать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
   };
   $("#drawerBody").innerHTML =
-    `<p class="hint">Приказ исполнится в начале следующего дня. Нетронутый рычаг — правило бота. Прикидка — по выбору материалов на завтра; это оценка, а не обещание.</p>` +
+    (noOrders ? `<p class="hint notice">Это запись мира: рычаги показаны такими, какие они у дома, но приказы и прикидки работают только в живой версии.</p>`
+      : `<p class="hint">Приказ исполнится в начале следующего дня. Нетронутый рычаг — правило бота. Прикидка — по выбору материалов на завтра; это оценка, а не обещание.</p>`) +
     `<h3>Рычаги линии</h3>` + LEVERS.map(lv => row(lv, (l.levers || {})[lv.key])).join("") +
     `<h3>Разовые действия</h3>` +
     `<div class="pl" data-k="build"><div class="pl-head"><b>Достроить мощность</b><span class="tag">сейчас ${num(l.cap, 2)}</span></div>` +
@@ -1588,9 +1650,8 @@ function openPolicy(h, t) {
     `<div class="pl" data-k="cut"><div class="pl-head"><b>Срезать мощность до</b><span class="tag">0 — закрыть линию</span></div>` +
     `<div class="pl-ctrl"><input type="number" data-k="cut" min="0" max="${l.cap}" step="0.05" value="${Math.max(0, l.cap * 0.8).toFixed(2)}"><button type="button" data-act="cut"${ro ? " disabled" : ""}>Срезать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
     `<h3>Рычаги дома</h3>` + HOUSE_LEVERS_UI.map(hrow).join("");
-  $("#drawer").classList.add("open");
-  $("#drawer").setAttribute("aria-hidden", "false");
-  $$("#drawerBody .pl").forEach(el => previewRow(el));
+  showDrawer();
+  if (!noOrders) $$("#drawerBody .pl").forEach(el => previewRow(el));
 }
 const parseVal = (el) => {
   if (el.tagName === "SELECT") return el.value === "true" ? true : el.value === "false" ? false : el.value;
@@ -1712,7 +1773,7 @@ async function openAbout() {
   // пустые разделы (заголовок, за которым сразу следующий) не показываем
   for (let i = html.length - 1; i >= 0; i--)
     if (html[i].startsWith("<h2>") && (i === html.length - 1 || html[i + 1].startsWith("<h2>"))) html.splice(i, 1);
-  $("#aboutBody").innerHTML = `<h2>Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. Сейчас — смотровая: мир живёт сам, без игрока.</p>` + html.join("");
+  $("#aboutBody").innerHTML = `<h2>Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. ${window.DOC_BACKEND ? "Это запись одного мира: все — боты, а один дом занят местом игрока, который рычагов не трогает." : "Сейчас — смотровая: мир живёт сам; игрок, если он есть, правит одним домом через политику."}</p>` + html.join("");
   $("#about").showModal();
 }
 
