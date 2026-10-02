@@ -700,7 +700,8 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
   .story.dock { position: fixed; left: 8px; right: 8px; bottom: calc(var(--rbh, 108px) + 6px); z-index: 15; margin: 0;
     box-shadow: 0 3px 10px rgba(0, 0, 0, .28); padding: 8px 12px; }
   .story.dock h2 { font-size: 16px; margin: 0 0 4px; }
-  .story.dock p { font-size: 13.5px; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .story.dock p { font-size: 13.5px; margin: 0 0 6px; }   /* текст главы — целиком (его хвост и есть вывод) */
+  .story.dock { max-height: 46vh; overflow-y: auto; overscroll-behavior: contain; }
   body:has(.story.dock) { padding-bottom: calc(var(--rbh, 108px) + 200px); }
 }
 .rb-cx { font: 700 10.5px/1 var(--font-text); padding: 1px 3px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
@@ -772,7 +773,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 .intro.compact .intro-lead, .intro.compact .intro-chapters, .intro.compact .intro-where { display: none; }
 
 /* телефон: шахта — со своей прокруткой, как летопись; сама встаёт к фронтиру */
-@media (max-width: 680px) { .spine .shaft { max-height: 62vh; min-height: 0; } }
+@media (max-width: 680px) { .spine .shaft { max-height: none; min-height: 0; } }   /* v30: на телефоне без прокрутки внутри страницы */
 /* ровная угроза — нейтральным текстом */
 .st.quiet { color: var(--ink-2); }
 /* подпись главы — слева, когда цель справа */
@@ -809,7 +810,7 @@ input::placeholder { color: var(--ink-3); opacity: 1; }
 .verdict > .story-k { order: -1; }
 @media (max-width: 680px) {
   .verdict > h2 { order: 0; } .verdict > .verdict-line:first-of-type { order: 1; } .verdict > .verdict-me { order: 2; }
-  .verdict > .verdict-go { order: 3; margin-bottom: 10px; } .verdict > dl { order: 4; } .verdict > #verdictRich { order: 5; }
+  .verdict > #verdictRich { order: 3; } .verdict > .verdict-go { order: 4; margin-bottom: 10px; } .verdict > dl { order: 5; }   /* тезис — до кнопок */
 }
 /* шкала заголовков — шаги ≥ 1,25 (было 1,19–1,24 — «плоская иерархия» в каждом круге детектора) */
 h3 { font-size: 17.5px; }
@@ -913,6 +914,28 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 /* v29: 900 px — пять плиток в ряд, без пустой клетки; дата снимка в полосе записи — одной строкой */
 @media (min-width: 681px) and (max-width: 1100px) { #tiles:has(> .tile:nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .replaybar #rbFrame { white-space: nowrap; }
+/* v30: отряды со снаряжением дома игрока — в кольце (тезис прямо в шахте) */
+#shaft a.sqdot.mine { box-shadow: 0 0 0 1.5px var(--ink); border-radius: 50%; }
+.mine-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--ink); vertical-align: -1px; margin-right: 5px; }
+.mine-k { color: var(--ink-2); }
+/* v30: прорыв — крупно «перед прорывом», стрелкой — «сейчас» */
+.doom-v .doom-now { font-size: 0.5em; font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+
+/* v30: телефон — летопись листается вместе со страницей: последние 25 строк и «показать ещё» */
+@media (max-width: 680px) {
+  .spine .chronicle, .chronicle { height: auto; max-height: none; min-height: 0; }
+  .events { overflow: visible; }
+  #events:not(.all) > li:nth-child(n+26) { display: none; }
+  .shaft-up { display: none !important; }
+}
+.ev-more { margin-top: 8px; }
+@media (min-width: 681px) { .ev-more { display: none; } }
+.sp-cap .sp-v { color: var(--ink-2); font-variant-numeric: lining-nums tabular-nums; }
+.doom-verdict .st.serious, .doom-verdict .st.quiet { color: var(--ink); }
+.doom-verdict .st.serious .sg { color: var(--serious); }
+/* v30: журнал дома — дата группы и её сводка в одной строке */
+#hJournal > li.hj-more { display: grid !important; grid-template-columns: 74px 1fr; align-items: baseline; }
+#hJournal > li.hj-more:not(:has(> .t)) { display: block !important; }
 
 </style>
 </head><body>
@@ -1034,6 +1057,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       </div>
       <p class="ev-state hint" id="evState" hidden></p>
       <ol class="events" id="events" aria-label="Летопись: имена — стрелками вверх и вниз"></ol>
+      <button type="button" class="ghost small ev-more" id="evMore" hidden>Показать ещё</button>
     </section>
   </div>
 
@@ -1115,7 +1139,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       </div>
     </div>
     <div class="grid2">
-      <section class="card"><div class="card-head"><h2>Слава у отрядов</h2><div class="card-tools"><span class="hint">растёт, когда вернулись отряды с моим снаряжением</span></div></div><div id="hBrand"></div></section>
+      <section class="card"><div class="card-head"><h2>Слава у отрядов</h2><div class="card-tools"><span class="hint" id="hBrandHint">растёт, когда возвращаются отряды со снаряжением дома</span></div></div><div id="hBrand"></div></section>
       <section class="card"><div class="card-head"><h2>Журнал приказов</h2></div><div class="tablewrap" id="hOrders"></div></section>
     </div>
     <section class="card"><div class="card-head"><h2>Журнал дома</h2><div class="card-tools"><span class="hint">что политика сделала сама и что случилось с домом</span></div></div><ul class="hist" id="hJournal"></ul></section>
@@ -1376,12 +1400,18 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     const out = [];
     for (const e of raw) {
       const last = out[out.length - 1];
-      if (last && e.t - last.t <= 30) { last.items.push(e); if (RANK[e.k] > RANK[last.k]) last.k = e.k; }
+      if (last && e.t - last.t <= 30) { last.items.push(e); last.k = pickKind(last.items); }
       else out.push({ t: e.t, k: e.k, items: [e] });
     }
     return out;
   }
   const RANK = { frontier: 1, bankrupt: 2, wiped: 3, breach: 4 };
+  // знак слитой вехи: прорыв — всегда он; иначе — род большинства (5 рекордов и 2 разбитых — ▼, а не ✕)
+  const pickKind = items => {
+    if (items.some(x => x.k === "breach")) return "breach";
+    const n = {}; for (const x of items) n[x.k] = (n[x.k] || 0) + 1;
+    return Object.keys(n).sort((a, b) => n[b] - n[a] || RANK[b] - RANK[a])[0];
+  };
   const nf1 = x => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toLocaleString("ru-RU");   // числа повествования: 135, 29,8
   const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
   // главы для вводной: место игрока, прорывы, первая и последняя глубина, крупнейшая волна
@@ -1430,7 +1460,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     const base = milestones(), W = Math.max(1, (document.getElementById("rbMarks") || {}).clientWidth || 600), out = [];
     for (const m of base) {
       const last = out[out.length - 1];
-      if (last && (m.t - last.t) / R.meta.ticks * W < 22) { last.items.push(...m.items); if (RANK[m.k] > RANK[last.k]) last.k = m.k; }
+      if (last && (m.t - last.t) / R.meta.ticks * W < 22) { last.items.push(...m.items); last.k = pickKind(last.items); }
       else out.push({ t: m.t, k: m.k, items: [...m.items] });
     }
     return out;
@@ -1528,9 +1558,12 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     const years = Math.round(T / R.meta.day);
     const ratio = f("guard") > 0 ? f("threat") / f("guard") : Infinity;
     const fmt = v => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(1).replace(".", ",") + " млн" : Math.abs(v) >= 1e4 ? Math.round(v / 1e3) + " тыс" : Math.round(v).toLocaleString("ru-RU");
+    // первая фраза — цена, а не «выстоял»: прорывы и погибшие в городе, потом — к чему пришло
+    const cityDead = R.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0), nb = f("breaches");
+    const cost = nb ? `За ${years} лет — ${nb} ${plural(nb, "прорыв", "прорыва", "прорывов")} из подземелья: в городе ${cityDead % 10 === 1 && cityDead % 100 !== 11 ? "погиб" : "погибли"} ${cityDead} ${plural(cityDead, "человек", "человека", "человек")}, внизу — ${fmt(f("fallen"))}. ` : `За ${years} лет прорывов не было; внизу погибли ${fmt(f("fallen"))}. `;
     const verdict = f("pop") <= 0 ? "Город не пережил подземелье."
-      : ratio > 1 ? `Город выстоял ${years} лет, но к концу угроза сильнее гарнизона в ${ratio.toFixed(1).replace(".", ",")} раза: отряды ушли до ${f("front_max")}-го яруса и разбудили глубину.`
-        : `Город выстоял ${years} лет, и гарнизон пока держит угрозу.`;
+      : cost + (ratio > 1 ? `К концу угроза сильнее гарнизона в ${ratio.toFixed(1).replace(".", ",")} раза: отряды ушли до ${f("front_max")}-го яруса и разбудили глубину.`
+        : "К концу гарнизон держит угрозу.");
     if (!el) {
       el = document.createElement("section");
       el.id = "verdict"; el.className = "card verdict"; el.setAttribute("aria-labelledby", "verdictTitle");
@@ -1576,7 +1609,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         pm.hidden = false;
       }
       const mine = me && me.alive !== false && me.cash != null ? `, у дома игрока касса — ${fmt(me.cash)}` : "";   // касса с кассой; капитал — выше
-      if (p && hs.length) p.textContent = `Прибыль — частная: больше всех денег к концу у дома «${hs[0].name}» (касса ${fmt(hs[0].cash)})${mine}. Риск — общий: ${fmt(f("fallen"))} погибших внизу, ${f("bankrupt")} разорившихся домов.`;
+      if (p && hs.length) p.textContent = `Прибыль — частная: больше всех денег к концу у дома «${hs[0].name}» (касса ${fmt(hs[0].cash)})${mine}. Риск — общий: его несли погибшие внизу и в городе и ${f("bankrupt")} разорившихся домов.`;   // числа погибших — в первой фразе
     });
     el.onclick = e => {
       if (e.target.closest("button[data-house]")) { const v = document.querySelector('button[data-view="house"]'); if (v) v.click(); return; }
@@ -1714,17 +1747,27 @@ const shortDay = t => `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
 const evDay = t => (typeof META !== "undefined" && META && META.replay && META.ticks && t >= META.ticks) ? "конец записи" : `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
 const nf0 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const nf2 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
+const minus = x => x.replace(/^-/, "−");            // минус — знаком минуса, не дефисом
 function num(v, d) {
   if (v == null || Number.isNaN(v)) return "—";
-  if (d != null) return v.toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d });
-  return Math.abs(v) >= 100 ? nf0.format(v) : nf2.format(v);
+  if (d != null) return minus(v.toLocaleString("ru-RU", { minimumFractionDigits: d, maximumFractionDigits: d }));
+  return minus(Math.abs(v) >= 100 ? nf0.format(v) : nf2.format(v));
 }
 function compact(v) {
   if (v == null) return "—";
   const a = Math.abs(v);
-  if (a >= 1e6) return nf2.format(v / 1e6) + " млн";
-  if (a >= 1e4) return nf0.format(v / 1e3) + " тыс";
+  if (a >= 1e6) return minus(nf2.format(v / 1e6)) + " млн";
+  if (a >= 1e4) return minus(nf0.format(v / 1e3)) + " тыс";
   return num(v);
+}
+// пара чисел — в одном виде: «47 тыс против 7,7 тыс», а не «47 тыс против 7 695»
+function pair(a, b) {
+  if (a == null || b == null) return [compact(a), compact(b)];
+  const m = Math.max(Math.abs(a), Math.abs(b));
+  if (m < 1e4) return [num(Math.round(a)), num(Math.round(b))];
+  if (m >= 1e6) return [compact(a), compact(b)];
+  const k = v => (Math.abs(v) >= 1e4 ? num(Math.round(v / 1e3)) : num(Math.round(v / 100) / 10, 1)) + " тыс";
+  return [k(a), k(b)];
 }
 // числа в повествовании (главы, итог): до 100 — с десятой, дальше целым — как в подписях глав записи
 const f1n = x => { const v = x >= 100 ? Math.round(x) : Math.round(x * 10) / 10; return num(v, Number.isInteger(v) ? 0 : 1); };
@@ -1888,8 +1931,8 @@ function renderDoom() {
   // заголовок полосы — разрыв и его ход (меняется, когда меняется положение); цвет — по тому же числу
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : gd <= 0 ? `<span class="st serious">▲ гарнизона нет — прорыв возможен в любой день</span>`
-        : `<span class="st ${r1 >= 5 ? "serious" : "quiet"}">▲ угроза в ${times(r1)} сильнее гарнизона${way}</span>`;
+      : gd <= 0 ? `<span class="st serious"><span class="sg">▲</span> гарнизона нет — прорыв возможен в любой день</span>`
+        : `<span class="st ${r1 >= 5 ? "serious" : "quiet"}"><span class="sg">▲</span> угроза в ${times(r1)} сильнее гарнизона${way}</span>`;   // цвет — у знака, текст — чернилами: тревога не «кричит» годами
   const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : gd <= 0 ? "гарнизон погиб — держать угрозу некому" : `угроза в ${times(r1)} сильнее гарнизона${way}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
@@ -1904,14 +1947,15 @@ function renderDoom() {
   // насколько угроза сильнее гарнизона — ступенями: при ×5 и ×10 полоса заметно тяжелеет
   el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
   const fk = el.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.spark : null;
+  const pre = fresh ? (() => { const T = ST.cols[known ? "known" : "threat"] || ST.cols.threat, G = ST.cols.guard, i = lowerBound(ST.cols.t, lastBreach) - 1;
+    return T && G && i >= 0 ? { t: T[i], g: G[i] } : null; })() : null;
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
-    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: ${diedAgree(`погибли ${lost}`)} ${plural(+lost, "человек", "человека", "человек")}` : ""} — ${ago(since)}` +
-      (() => { const T = ST.cols[known ? "known" : "threat"] || ST.cols.threat, G = ST.cols.guard, i = lowerBound(ST.cols.t, lastBreach) - 1;
-        return T && G && i >= 0 ? `<span class="doom-pre">перед прорывом угроза ${compact(T[i])} против ${num(G[i], 1)} у гарнизона</span>` : ""; })() + `</div>` : "") +
+    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: ${diedAgree(`погибли ${lost}`)} ${plural(+lost, "человек", "человека", "человек")}` : ""} — ${ago(since)}</div>` : "") +
     `<div class="doom-main">` +
-      `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
-      `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
-        `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
+      `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона${pre ? " — перед прорывом и сейчас" : ""}</div>` +
+      // свежий прорыв: крупно — то, что прорвало (перед прорывом), стрелкой — что осталось; пик не читается как облегчение
+      `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${pre ? `${f1n(pre.t)}<span class="doom-now"> → ${compact(thr)}</span>` : compact(thr)}</span><small>угроза</small></span>` +
+        `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${pre ? `${f1n(pre.g)}<span class="doom-now"> → ${compact(gd)}</span>` : compact(gd)}</span><small>гарнизон</small></span></div>` +
       `<div class="doom-cap">${fresh && s.soldiers ? "после прорыва: " : ""}${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "в гарнизоне ни одного солдата"}</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${pct > 0 ? Math.max(2, pct) : 0}%"></span></div>` +
       `<div class="doom-n">${head ? `<div class="doom-verdict">${head}</div>` : ""}<div class="doom-n2">${[fresh ? br : "", gd > 0 ? risk : "", fresh ? "" : br].filter(Boolean).join(" · ")}</div></div>` +
@@ -1951,7 +1995,8 @@ function doomSpark() {
   if (UI.sparkAll && seat != null && seat > t[j0] && seat < t[t.length - 1]) { const i = lowerBound(t, seat); marks += `<line class="sp-s" x1="${x(i)}" x2="${x(i)}" y1="0" y2="${H}"></line>`; }
   return `<div class="doom-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${marks}` +
     `<polyline class="sp-t" points="${line(T)}"></polyline><polyline class="sp-g" points="${line(G)}"></polyline></svg>` +
-    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${/sp-b/.test(marks) ? ` <i class="sp-kb"></i>прорыв` : ""}${/sp-s/.test(marks) ? ` <i class="sp-ks"></i>игрок занял дом` : ""} ` +
+    // числа на искре: пик угрозы за период и сейчас — без них «вся запись» читается как ровная линия
+    `<span class="sp-cap"><i class="sp-kt"></i>угроза <span class="sp-v">(пик ${f1n(Math.max(...T.slice(j0).filter(v => v != null)))}, сейчас ${f1n(T[t.length - 1])})</span> <i class="sp-kg"></i>гарнизон <span class="sp-v">(сейчас ${f1n(G[t.length - 1])})</span>${/sp-b/.test(marks) ? ` <i class="sp-kb"></i>прорыв` : ""}${/sp-s/.test(marks) ? ` <i class="sp-ks"></i>игрок занял дом` : ""} ` +
     `<span class="sp-sw" role="group" aria-label="Период графика"><button type="button" data-spark="year" aria-pressed="${!UI.sparkAll}">за год</button>` +
     `<button type="button" data-spark="all" aria-pressed="${!!UI.sparkAll}">вся запись</button></span></span></div>`;
 }
@@ -2307,6 +2352,13 @@ function evPass(e) {
   if (UI.evQuery && !evPlain(e).includes(UI.evQuery)) return false;
   if (!evFiltered()) return e.lv >= UI.evLevel;
   return true;
+}
+// телефон: «показать ещё» под летописью, когда строк больше 25 (летопись — без своей прокрутки)
+function evMoreBtn() {
+  const b = $("#evMore"), ol = $("#events");
+  if (!b || !ol) return;
+  const n = ol.children.length, all = ol.classList.contains("all");
+  b.hidden = all || n <= 25; b.textContent = `Показать ещё ${num(n - 25)}`;
 }
 function evStateLine(n) {
   const el = $("#evState"), chip = $("#evRefChip");
@@ -2876,8 +2928,12 @@ async function loadDungeon() {
   const lag = g.asof != null && ST.state && window.DOC_BACKEND ? ST.state.tick - g.asof : 0;
   $("#dgLag").innerHTML = lag > 5 ? `снимок ярусов — ${num(lag)} дн. назад, на ${evDay(g.asof)}${g.frontier !== fl ? ` (тогда фронтир — ${g.frontier}-й)` : ""}` : "";
   $("#dgLag").hidden = !(lag > 5);
+  // тезис в шахте: чьё снаряжение внизу — отряды с товаром дома игрока обведены
+  const mine = g.rows.flatMap(r => r.squads.filter(q => q.mine).map(q => r.d)), allSq = g.rows.reduce((a, r) => a + r.squads.length, 0);
+  UI.mineDown = mine.length ? { n: mine.length, of: allSq, deep: Math.max(...mine) } : null;
   $("#dgHint").innerHTML = `в походе ${g.out} отр., ${g.people} чел. · фронтир ${fl}-й, рекорд ${fm}-й` +
-    (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "");
+    (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "") +
+    (mine.length && window.DOC_BACKEND ? `<br><span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>снаряжение дома игрока — у ${mine.length} из ${allSq} ${plural(allSq, "отряда", "отрядов", "отрядов")} внизу, глубже всех — на ${Math.max(...mine)}-м ярусе</span>` : "");
   const safe = r => r.odds_new >= 0.95 && r.odds_best >= 0.95;
   const one = r => {
     const cls = ["lvl"];
@@ -2889,7 +2945,7 @@ async function loadDungeon() {
     const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
     const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
     const sq = r.squads.slice(0, 12).map(s =>
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}${s.mine ? " · со снаряжением дома игрока" : ""}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}${s.mine ? ", со снаряжением дома игрока" : ""}">${PHASE[s.phase] || "●"}</a>`).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     // глубже — темнее: шахта читается как спуск, а не как таблица
@@ -2948,6 +3004,7 @@ function bindDungeon() {
   const bar = (w, r) => `<span class="sbar${r == null ? "" : ""}"><i style="width:${w}%"></i>${r != null ? `<b style="left:${r}%"></b>` : ""}</span>`;
   $("#dgLegend").innerHTML = `<div class="dg-key">` +
     `<span><b class="g">↓ ● ↑</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">?</b> не вернулся в срок</span>` +
+    (window.DOC_BACKEND ? `<span><i class="mine-dot" aria-hidden="true"></i> в кольце — несёт снаряжение дома игрока</span>` : "") +
     (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
     `<span><b class="g">«шансы» пусто</b> — надёжно: у обоих ≥ 95%</span><span><b class="g">знание</b> — сколько походов вернулось с яруса</span><span>значки и имена кликаются</span></div>`;
   $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}<p class="hint gloss-go">Что значат <button type="button" class="linkish" data-gloss="Знание">знание</button>, <button type="button" class="linkish" data-gloss="Шансы">шансы</button>, <button type="button" class="linkish" data-gloss="Запас">слух</button>, <button type="button" class="linkish" data-gloss="Фронтир">фронтир</button> — в словаре.</p></details>`;
@@ -3085,7 +3142,7 @@ function renderHouse(h) {
     const tile = (k, v, n) => `<div class="tile"><div class="k">${ic(HTILE_IC[k])}${k}</div><div class="v">${v}</div><div class="n">${n}</div></div>`;
     const cap = h.lines.reduce((a, l) => a + l.cap, 0);
     $("#hTiles").innerHTML =
-      tile("Капитал", compact(h.wealth), `медиана домов ${compact(h.median)}`) +
+      tile("Капитал", pair(h.wealth, h.median)[0], `медиана домов ${pair(h.wealth, h.median)[1]}`) +
       tile("Место", `${num(h.pctl, 0)}%`, `домов беднее (всего ${h.houses})`) +
       tile("Касса", compact(h.cash), "наличные") +
       tile("Долг", h.owed ? compact(h.owed) : "0", h.owed ? `<span class="st serious">▲ счета не оплачены</span>` : `<span class="st good">● долгов нет</span>`) +
@@ -3140,7 +3197,7 @@ function renderHouse(h) {
       return `<tr><td>${evDay(o.t)}</td><td>${KIND[o.kind] || o.kind}${what ? " · " + what : ""}</td><td>${o.ok ? `<span class="st good">● исполнен</span>` : `<span class="st serious">▲ ${esc(o.why)}</span>`}</td></tr>`;
     }).join("") + `</tbody></table>` : `<p class="empty">приказов нет</p>`;
   if (h.series) {
-    if (!HP.hwealth) housePlot("hwealth", [["wealth", "мой капитал"], ["median", "медиана домов"]]);
+    if (!HP.hwealth) housePlot("hwealth", [["wealth", window.DOC_BACKEND ? "капитал дома" : "мой капитал"], ["median", "медиана домов"]]);   // запись — о доме игрока, а не «мой»
     if (!HP.hpctl) housePlot("hpctl", [["pctl", "домов беднее, %"]], [0, 100]);
     for (const id in HP) { HP[id].u.setData(houseData(h.series, HP[id].series), true); legendLast(HP[id].u); }
   }
@@ -3475,6 +3532,7 @@ addEventListener("scroll", () => {
   if (STORY.sideId && !$("#story").hidden && !STORY.sideRaf) STORY.sideRaf = requestAnimationFrame(() => { STORY.sideRaf = 0; storySide(); });
 }, { passive: true });
 async function storyHouse(c) {
+  try { await loadDungeon(); } catch (e) { /* без шахты — без числа отрядов */ }   // свежий счёт «чьё снаряжение внизу»
   setView("house"); window.scrollTo(0, 0);
   await loadHouse();
   const h = UI.houseData;
@@ -3484,8 +3542,9 @@ async function storyHouse(c) {
     const who = Object.entries(h.brand || {}).filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).map(([k]) => ({ "новичок": "новички", "ветеран": "ветераны", "мастер": "мастера" })[k] || k);
     const S = ST.cols, i0 = S && S.t ? lowerBound(S.t, META.seat_at) : -1, ta = i0 >= 0 && S.threat ? S.threat[i0] : null;
     c.noteNow = `${c.note} Сейчас он богаче ${Math.round(h.pctl)}% домов${q0 != null ? ` (когда игрок занял его — ${q0}%)` : ""}: ` +
-      `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома.` +
-      (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (ta != null && ST.state ? ` — а угроза у ворот за это время ${f1n(ta)} → ${f1n(ST.state.threat)}.` : ".") : "");
+      `капитал ${pair(h.wealth, h.median).join(" против ")} у медианного дома.` +
+      (UI.mineDown ? ` Сейчас его снаряжение — у ${UI.mineDown.n} из ${UI.mineDown.of} отрядов внизу, глубже всех — на ${UI.mineDown.deep}-м ярусе (в шахте они в кольце)` : who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` : "") +
+      (ta != null && ST.state && (UI.mineDown || who.length) ? `; а угроза у ворот за это время ${f1n(ta)} → ${f1n(ST.state.threat)}.` : ".");
     storyRender("here");
     // телефон: графики и «Слава» — далеко внизу; подсветить плитки капитала и места и показать их
     const narrow = matchMedia("(max-width: 680px)").matches;
@@ -3521,6 +3580,7 @@ function storyFocus(c) {
   els.forEach(x => x.classList.add("story-focus"));
   // строки летописи — первую подсвеченную в окно (внутренняя прокрутка летописи тоже)
   const li = els.find(x => x.tagName === "LI"), box = $("#events");
+  if (li && [...box.children].indexOf(li) >= 25) box.classList.add("all");   // телефон: подсвеченная строка — не под «показать ещё»
   if (li && box.scrollHeight > box.clientHeight) box.scrollTop = Math.max(0, li.offsetTop - box.offsetTop - box.clientHeight / 3);
 }
 function storyRender(state) {
@@ -3810,6 +3870,8 @@ async function main() {
   // новый поиск заменяет «всё про X» (иначе два условия складываются в «ничего»)
   $("#evQuery").addEventListener("input", e => { clearTimeout(qT); qT = setTimeout(() => { UI.evQuery = e.target.value.trim().toLowerCase(); if (UI.evQuery) UI.evRef = null; renderEvents(); }, 180); });
   $("#evRefChip").addEventListener("click", () => { UI.evRef = null; renderEvents(); $("#evQuery").focus(); });
+  $("#evMore").addEventListener("click", () => { $("#events").classList.add("all"); evMoreBtn(); });
+  new MutationObserver(evMoreBtn).observe($("#events"), { childList: true });
   $("#evFilter").addEventListener("click", e => {
     const b = e.target.closest("button[data-lv]");
     if (!b) return;
