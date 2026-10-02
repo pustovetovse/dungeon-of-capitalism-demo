@@ -948,7 +948,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 .thesis .th-row { position: relative; }
 .thesis .th-k { position: absolute; left: 52px; top: 2px; z-index: 2; font-size: 12.5px; color: var(--ink-2); background: color-mix(in srgb, var(--surface) 85%, transparent); padding: 0 4px; border-radius: 3px; pointer-events: none; }
 .thesis .th-k i { display: inline-block; width: 14px; height: 2px; vertical-align: 3px; margin: 0 4px 0 2px; }
-.thesis .th-kf { background: var(--ink-2); } .thesis .th-km { background: var(--accent); }
+.thesis .th-kf { background: var(--c-adv); }   /* v34: фронтир — цвет авантюристов, как линия */ .thesis .th-km { background: var(--accent); }
 .thesis .th-note { margin: 4px 0 0; }
 .thesis [data-th][aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .thesis .sp-sw button { font: inherit; font-size: 12.5px; padding: 2px 8px; min-height: 26px; border-radius: 6px; background: transparent; border: 1px solid var(--line); color: var(--ink-2); }
@@ -1006,6 +1006,32 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
   .story-min { display: inline-block; float: right; font: inherit; font-size: 12.5px; color: var(--accent); background: transparent; border: 0; padding: 0 2px; min-height: 28px; }
   .story.min p { display: none; }
 }
+/* v33: цвет графика — «кто» (круг 24: синий/оранжевый по умолчанию значил разное в разных графиках).
+   Авантюристы (и их фронтир, походы, гибели) — индиго, дома — пурпур, горожане — чернила, совет (казна,
+   гарнизон) — бирюза, угроза — своим, дом игрока — золото. Проверено validate_palette.js --pairs all в обеих темах. */
+:root { --c-adv: #5f7bce; --c-house: #b2468a; --c-town: var(--ink-2); }
+:root[data-theme="light"] { --c-adv: #415cb2; --c-house: #ca5b9f; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --c-adv: #415cb2; --c-house: #ca5b9f; } }
+/* v33: вводная без пустоты посередине (круг 24: ~350 px между текстом и главами) — текст своей
+   ширины чтения, главы забирают остаток и на просторе идут в два столбца (вводная ниже) */
+@media (min-width: 1100px) {
+  .intro-text { grid-template-columns: minmax(0, 66ch) minmax(320px, 1fr); }
+  .intro-chapters .chapters { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 4px 8px; }
+}
+/* v33: соучастие — метка у гибели в летописи и в списке павших */
+.mine-tag { color: var(--ink-2); font-size: 0.92em; white-space: nowrap; }
+.verdict-q { margin: 6px 0 0; color: var(--ink); }
+/* v34: третий ряд тезиса до игрока — словами; «↑ к верхним ярусам» поверх точек шахты, не под ними */
+.thesis .th-none { position: absolute; left: 56px; top: 50%; transform: translateY(-50%); color: var(--ink-3); font-size: 13px; font-style: italic; pointer-events: none; }
+.shaft-up { z-index: 6; box-shadow: 0 2px 0 var(--surface-2); }
+.rb-go .tip-t { white-space: nowrap; flex: none; }   /* v34: дата вехи — одной строкой («г.1 / д.197» — круг 24) */
+.about-body dl.gloss { grid-template-columns: minmax(7em, 13em) 1fr; }   /* v34: столбец слов — не по самому длинному */
+body:has(#story:not([hidden])) #houseNote { display: none; }   /* v34: глава о доме уже говорит то же — без повтора подряд */
+/* v34: состав отряда на 360 px — «Походов» не обрезан (круг 24): плотнее, а при нехватке — своя прокрутка */
+.roster-wrap { max-width: 100%; overflow-x: auto; }
+@media (max-width: 420px) { table.roster th, table.roster td { padding-left: 4px; padding-right: 4px; font-size: 13px; } }
+/* v34: точка отряда на касании — цель 24×32 без роста строк шахты (круг 24: 24×24 мало) */
+@media (pointer: coarse) { #shaft a.sqdot { position: relative; } #shaft a.sqdot::after { content: ""; position: absolute; inset: -4px 0; } }
 
 </style>
 </head><body>
@@ -1090,7 +1116,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
   <section class="follow" id="follow" aria-label="За кем вы следите" hidden></section>
   <!-- картина тезиса: угроза и гарнизон, глубина, снаряжение дома игрока внизу — на одной оси времени -->
   <section class="card thesis" id="thesis" aria-labelledby="thesisTitle">
-    <div class="card-head"><h2 id="thesisTitle">Чем глубже отряды — тем сильнее угроза</h2>
+    <div class="card-head"><h2 id="thesisTitle">Глубже отряды — сильнее угроза?</h2>
       <div class="card-tools"><span class="sp-sw" role="group" aria-label="Период графика"><button type="button" data-th="year" aria-pressed="true">за год</button><button type="button" data-th="all" aria-pressed="false">вся запись</button></span></div></div>
     <p class="th-val" id="thesisVal" aria-live="off"></p>
     <div class="th-row"><div class="th-k"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон</div><div class="plot th-plot" id="th-a"></div></div>
@@ -1427,7 +1453,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         const out = [];
         for (const id in GONE) { const g = GONE[id]; if (id[0] === "P" && g.why === "погиб" && g.ended != null && (g.died ? g.died.t : g.ended + 1) <= R.head) {
           const sq = (g.died && g.died.squad) || g.squad;
-          out.push({ id, name: g.name, t: g.died ? g.died.t : g.ended + 1, d: g.died ? g.died.d : null, squad: sq, sq: sq && g.refs ? g.refs[sq] : null, rank: g.rank, trips: g.trips }); } }
+          out.push({ id, name: g.name, t: g.died ? g.died.t : g.ended + 1, d: g.died ? g.died.d : null, squad: sq, sq: sq && g.refs ? g.refs[sq] : null, rank: g.rank, trips: g.trips, mine: !!(g.died && g.died.mine) }); } }
         return out.sort((a, b) => b.t - a.t);
       }
       case "/api/me": {
@@ -1520,7 +1546,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     const deep = fr.filter(e => e.t > R.meta.seat_at);
     const lvl = e => +(e.text.match(/(\d+)-й ярус/) || [0, 0])[1];
     if (deep.length) add(deep[0].t, `Отряды впервые вернулись с ${lvl(deep[0])}-го яруса`, "first",
-      `Хорошо снабжённые отряды уходят глубже — фронтир, ярус, откуда возвращаются, теперь ${lvl(deep[0])}-й.` +
+      `Хорошо снабжённые отряды уходят глубже: фронтир — ярус, откуда возвращаются, — теперь ${lvl(deep[0])}-й.` +
       (() => { const a = sv("threat", R.meta.seat_at), b = sv("threat", deep[0].t); return a != null && b != null ? ` Угроза у ворот с тех пор, как игрок занял дом: ${f1(a)} → ${f1(b)}.` : ""; })(), "doom");
     const waves = ms.flatMap(m => m.items.filter(x => x.k === "bankrupt"));
     if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
@@ -1530,7 +1556,9 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       const fa = sv("frontier", s0), ta = sv("threat", s0), tb = sv("threat", e.t), ga = sv("guard", s0), gb = sv("guard", e.t);
       add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
         `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали.` +
-        (fa != null && ta != null && tb != null ? ` С тех пор как игрок занял дом, фронтир ${Math.round(fa)} → ${lvl(e)}, угроза ${f1(ta)} → ${f1(tb)}, гарнизон ${f1(ga)} → ${f1(gb)}.` : ""), "doom"); }
+        (fa != null && ta != null && tb != null ? ` С тех пор как игрок занял дом, фронтир ${Math.round(fa)} → ${lvl(e)}, угроза ${f1(ta)} → ${f1(tb)}, гарнизон ${f1(ga)} → ${f1(gb)}.` +
+          // по ядру угрозу будит не рекорд, а добыча: поход прибавляет «глубина × взятое», за поход она стихает
+          (tb < ta ? " Угроза растёт не от рекорда, а от добычи, вынесенной с глубины, и за поход стихает — поэтому она ходит волнами вслед за походами." : "") : ""), "doom"); }
     // дом игрока — посреди записи: кузня, чьё снаряжение берут в поход (числа — при прибытии, из «Мой дом»)
     if (R.meta.seat) add(Math.round(R.meta.seat_at + (R.meta.ticks - R.meta.seat_at) * 0.55), `Дом игрока «${R.meta.seat_name || "—"}»`, "house",
       "Дом игрока снабжает отряды: его снаряжение уходит с ними вниз. Рычагов никто не трогает — дом живёт как бот.", "house");
@@ -1647,6 +1675,11 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     // первая фраза — цена, а не «выстоял»: прорывы и погибшие в городе, потом — к чему пришло
     const cityDead = R.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0), nb = f("breaches");
     const cost = nb ? `За ${years} лет — ${nb} ${plural(nb, "прорыв", "прорыва", "прорывов")} из подземелья: в городе ${cityDead % 10 === 1 && cityDead % 100 !== 11 ? "погиб" : "погибли"} ${cityDead} ${plural(cityDead, "человек", "человека", "человек")}, внизу — ${fmt(f("fallen"))}. ` : `За ${years} лет прорывов не было; внизу погибли ${fmt(f("fallen"))}. `;
+    // ответ на вопрос картины тезиса «Глубже отряды — сильнее угроза?» — числами записи, с момента, когда игрок занял дом
+    const sa = R.meta.seat_at, ta0 = S.threat[sa], fa0 = S.frontier[sa], pk = Math.max(...S.threat.slice(sa));
+    const answer = ta0 > 0 && f("front_max") > fa0 ? (pk > ta0 * 1.3
+      ? ` Глубже отряды — сильнее угроза? Да: с тех пор как игрок занял дом, отряды ушли с ${Math.round(fa0)}-го до ${f("front_max")}-го яруса, а угроза поднималась с ${nf1(ta0)} до ${nf1(pk)} — волнами, вслед за добычей.`
+      : ` Глубже отряды — сильнее угроза? Не прямо: отряды ушли с ${Math.round(fa0)}-го до ${f("front_max")}-го яруса, а угроза не выросла — её будит добыча, а не рекорд.`) : "";
     const verdict = f("pop") <= 0 ? "Город не пережил подземелье."
       : cost + (ratio > 1 ? `К концу угроза сильнее гарнизона в ${ratio.toFixed(1).replace(".", ",")} раза: отряды ушли до ${f("front_max")}-го яруса и разбудили глубину.`
         : "К концу гарнизон держит угрозу.");
@@ -1657,6 +1690,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       main.insertBefore(el, main.firstChild);
     }
     el.innerHTML = `<h2 id="verdictTitle">Итог ${years} лет</h2><p class="verdict-line">${verdict}</p>` +
+      (answer ? `<p class="verdict-q">${answer.trim()}</p>` : "") +
       `<p class="verdict-me" id="verdictMe" hidden></p>` +
       `<dl class="kv verdict-kv"><dt>горожан</dt><dd>${fmt(z("pop"))} → ${fmt(f("pop"))}</dd>` +
       `<dt>рекорд фронтира</dt><dd>${f("front_max")}-й ярус</dd>` +
@@ -1669,7 +1703,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       `<button type="button" data-house="1">Дом игрока к концу</button></div>`;
     el.hidden = false;
     const an = document.getElementById("announce");
-    if (an) an.textContent = `Запись кончилась. ${verdict}`;
+    if (an) an.textContent = `Запись кончилась. ${verdict}${answer}`;
     // «прибыль частная, риск общий»: кто разбогател — рядом с теми, кто погиб
     frame().then(fr => {
       const hs = (fr.houses || []).filter(h => h.cash != null).sort((a, b) => b.cash - a.cash);
@@ -1690,7 +1724,10 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
           `Капитал ${w0 != null ? `${cap(w0)} → ` : ""}${cap(me.wealth)}` +
           (up ? "" : m0 != null && me.median ? `, но город богател быстрее (у медианного дома ${cap(m0)} → ${cap(me.median)})` : "") +
           (q0 != null ? `: был богаче ${Math.round(q0)}% домов, стал богаче ${Math.round(q1)}%.` : `: богаче ${Math.round(q1)}% домов.`) +
-          (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (fa != null ? ` — и за эти годы отряды ушли с ${Math.round(fa)}-го до ${f("front_max")}-го яруса, а угроза у ворот выросла с ${nf1(ta)} до ${nf1(f("threat"))}${(pk => pk > f("threat") * 1.3 ? ` (на пике — ${nf1(pk)})` : "")(Math.max(...S.threat.slice(R.meta.seat_at)))}.` : ".") : "") +
+          // глубина и угроза — в ответе на вопрос тезиса выше; здесь — соучастие: чьё снаряжение было на погибших
+          (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}.` : "") +
+          ((md, fd) => md > 0 ? ` С тех пор как игрок занял дом, внизу ${fd % 10 === 1 && fd % 100 !== 11 ? "погиб" : "погибли"} ${fd} — ${md} из них ${md % 10 === 1 && md % 100 !== 11 ? "нёс" : "несли"} его снаряжение.` : "")(
+            S.mine_dead ? S.mine_dead[T] : 0, f("fallen") - S.fallen[R.meta.seat_at]) +
           (sw.length ? ` ${sw.length === 1 ? "Сменил отрасль" : `Менял отрасль ${sw.length} ${plural(sw.length, "раз", "раза", "раз")}`}: теперь «${sw[sw.length - 1]}».` : ""));
         pm.hidden = false;
       }
@@ -1735,7 +1772,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       `<div class="rb-marks" id="rbMarks" role="group" aria-label="Вехи записи: стрелками — между вехами, Enter — перейти"></div>` +
       `<div class="rb-tip" id="rbTip" hidden></div></div>` +
       `<span class="rb-t" id="rbTime" aria-hidden="true"></span>` +
-      `<button type="button" class="rb-key" id="rbKey" aria-expanded="false" aria-controls="rbInfo">Знаки</button>` +
+      `<button type="button" class="rb-key" id="rbKey" aria-expanded="false" aria-controls="rbInfo">Вехи</button>` +
       `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и дом игрока записаны раз в 30 дней, карточки — раз в 90"></span>` +
       // во вложенном окне (claude.ai) внешний адрес страницы неизвестен — делиться нечем
       (window.self === window.top ? `<button type="button" class="rb-share" id="rbShare" aria-label="Ссылка на этот момент записи"><span class="d-only">Ссылка на момент</span><span class="m-only">Ссылка</span></button>` : "");
@@ -1773,7 +1810,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     let drag = false;
     const narrowBar = matchMedia("(max-width: 400px)");   // узкий телефон: «Заново» короче «С начала» — полоса в один ряд
     const narrow = matchMedia("(max-width: 680px)");
-    // телефон: легенда вех — по кнопке «Знаки» (строка описания под полосой там не показывается)
+    // телефон: легенда вех — по кнопке «Вехи» (строка описания под полосой там не показывается)
     const key = bar.querySelector("#rbKey");
     // телефон: вехи на дорожке — только знаки (палец — ползунку); переход — из списка в «Вехах»
     const narrowKey = matchMedia("(max-width: 680px)");
@@ -1781,9 +1818,18 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       let box = info.querySelector(".rb-list");
       if (!box) { box = document.createElement("div"); box.className = "rb-list"; info.prepend(box); }
       const esc2 = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-      const all = MS.flatMap(m => m.items).sort((a, b) => a.t - b.t);
+      // рекорды глубины подряд (5-й, 6-й, 8-й за три дня) — одной строкой «5-й → 9-й», переход — к последнему (круг 24)
+      const all = [];
+      for (const x of MS.flatMap(m => m.items).sort((a, b) => a.t - b.t)) {
+        const g = all[all.length - 1], lv = y => (y.text.match(/(\d+)-й ярус/) || [])[1];
+        if (g && x.k === "frontier" && g.k === "frontier" && x.t - g.t <= 30 && lv(x) && lv(g)) { g.from = g.from || lv(g); g.t = x.t; g.text = `${g.from}-й → ${lv(x)}-й ярус`; g.n = (g.n || 1) + 1; }
+        else all.push(Object.assign({}, x));
+      }
       box.innerHTML = `<b class="rb-list-h">Вехи записи — коснитесь, чтобы перейти</b>` + all.map((x, j) =>
-        `<button type="button" class="rb-go${x.t <= R.head ? " past" : ""}" data-t="${x.t}" data-k="${x.k}"><i class="rb-m rb-${x.k}" aria-hidden="true"></i><span class="tip-t">${short(x.t)}</span> ${esc2(KIND_RU[x.k])}: ${esc2(x.text)}</button>`).join("");
+        `<button type="button" class="rb-go${x.t <= R.head ? " past" : ""}" data-t="${x.t}" data-k="${x.k}"><i class="rb-m rb-${x.k}" aria-hidden="true"></i><span class="tip-t">${short(x.t)}</span> <span>${esc2(x.n ? "рекорды глубины" : KIND_RU[x.k])}: ${esc2(x.text)}</span></button>`).join("");
+      // открыть у сегодняшнего дня: последняя прошедшая веха — на виду, а не начало записи
+      const last = [...box.querySelectorAll(".rb-go.past")].pop();
+      if (last) requestAnimationFrame(() => { const sc = box.closest(".replayinfo") || box; if (sc.scrollHeight > sc.clientHeight) sc.scrollTop = Math.max(0, last.offsetTop - sc.clientHeight / 2); });
       box.onclick = e => { const g = e.target.closest(".rb-go"); if (!g) return; const t = +g.dataset.t, title = KIND_RU[g.dataset.k];
         if (R.speed !== "pause") R.lastSpeed = R.speed; seek(t, true); R.speed = "pause"; R.stopAt = null; keyShow(false);
         setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t, title } })), 0); };
@@ -1809,7 +1855,8 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         const tt = R.head >= R.meta.ticks ? (narrow.matches ? "конец" : "конец записи") : narrow.matches ? short(R.head) : label(R.head);
         if (tm.textContent !== tt) tm.textContent = tt;
         showVerdict(R.head >= R.meta.ticks);
-        const f = `таблицы — на ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
+        // простыми словами (круг 24: «таблицы — на г.4 д.31» непонятно): снимок раз в 30 дней, вот его день
+        const f = `снимок таблиц — ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
         if (fr.textContent !== f) fr.textContent = f;
         const pt = R.head >= R.meta.ticks ? "Заново" : R.speed === "pause" ? "Пуск" : "Пауза";
         if (pl.textContent !== pt) pl.textContent = pt;
@@ -1901,6 +1948,13 @@ function linkText(text, refs) {
 }
 const ref = (id, name) => id ? `<a class="ref" href="#${id}" data-id="${id}">${nm(name || id)}</a>` : "—";
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+// второй ряд того же «кто» (под землёй, раненые): чертой и бледнее — к фону на долю k (canvas не знает color-mix)
+function fade(hex, k = 0.45) {
+  const h = x => { x = x.replace("#", ""); if (x.length === 3) x = [...x].map(c => c + c).join(""); return [0, 2, 4].map(i => parseInt(x.slice(i, i + 2), 16)); };
+  const a = h(hex), b = h(css("--surface") || "#000");
+  if (a.some(isNaN) || b.some(isNaN)) return hex;
+  return "#" + a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, "0")).join("");
+}
 // всплывающая подсказка вместо alert(): в песочнице claude.ai диалоги не показываются
 function toast(msg) {
   let el = document.getElementById("toast");
@@ -1909,7 +1963,10 @@ function toast(msg) {
   el.classList.add("on");
   clearTimeout(toast.t);
   toast.t = setTimeout(() => el.classList.remove("on"), 4000);
+  toast.at = Date.now();
 }
+// сообщение не висит над следующими действиями: любой новый щелчок (не сразу) его убирает (круг 24)
+document.addEventListener("click", () => { const el = document.getElementById("toast"); if (el && el.classList.contains("on") && Date.now() - (toast.at || 0) > 800) el.classList.remove("on"); }, true);
 
 // ---------------------------------------------------------------- сеть
 // window.DOC_BACKEND — проигрыватель записи (Web/replay/replay.js): те же запросы, но
@@ -2017,7 +2074,8 @@ function renderDoom() {
   if (!s || !el) return;
   const known = !META.full;                     // игроку — угроза по вестям (известная совету)
   const thr = s.threat, gd = s.guard;
-  const cover = thr > 0 ? gd / thr : 1;         // какую долю угрозы покрывает гарнизон
+  const spent = thr <= 0 && gd <= 0;            // прорыв выплеснул угрозу и убил гарнизон: 0 против 0 — не «держит»
+  const cover = thr > 0 ? gd / thr : spent ? 0 : 1;   // какую долю угрозы покрывает гарнизон
   // разрыв и его движение за 45 дней — а не одна пугающая цифра, которая горит годами
   const tk = deltaCol(known ? "known" : "threat", 45), gk = deltaCol("guard", 45);
   const r0 = tk && gk && gk.then > 0 ? tk.then / gk.then : null, r1 = gd > 0 ? thr / gd : null;
@@ -2049,20 +2107,23 @@ function renderDoom() {
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
       : gd <= 0 ? `<span class="st serious"><span class="sg">▲</span> гарнизона нет — прорыв возможен в любой день</span>`
-        : `<span class="st ${r1 >= 5 ? "serious" : "quiet"}"><span class="sg">▲</span> угроза в ${times(r1)} сильнее гарнизона${way}</span>`;   // цвет — у знака, текст — чернилами: тревога не «кричит» годами
-  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : gd <= 0 ? "гарнизон погиб — держать угрозу некому" : `угроза в ${times(r1)} сильнее гарнизона${way}`)
+        : `<span class="st serious"><span class="sg">▲</span> угроза в ${times(r1)} сильнее гарнизона${way}</span>`;   // цвет — у знака, текст — чернилами: тревога не «кричит» годами
+  const br = fresh ? (spent ? "угроза выплеснулась в город, гарнизон погиб — его набирают заново" : gd >= thr ? (thr > 0 ? "гарнизон теперь сильнее угрозы" : "угроза выплеснулась в город, гарнизон уцелел")
+      : gd <= 0 ? "гарнизон погиб — держать угрозу некому" : `угроза в ${times(r1)} сильнее гарнизона${way}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
   el.dataset.level = level;
   el.dataset.over = String(thr > gd);
-  el.classList.toggle("rising", level === "warn" && trend === "up");
+  el.classList.toggle("rising", false);           // рост — стрелкой и словом, не цветом
   if (fresh && UI.saidBreach !== lastBreach) {       // о прорыве — вслух, один раз
     UI.saidBreach = lastBreach;
     $("#announce").textContent = `Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""}.`;
   }
   el.classList.toggle("fresh", fresh);
   // насколько угроза сильнее гарнизона — ступенями: при ×5 и ×10 полоса заметно тяжелеет
-  el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
+  // решение автора (круг 24): пока угроза сильнее гарнизона — одна ровная настороженность, при 3× и при 17×;
+  // красный — только прорыв и 45 дней после: красный значит «случилось», а не «всегда»
+  el.dataset.sev = !fresh && thr > gd ? "2" : "0";
   const fk = focusKey(el);
   const pre = fresh ? (() => { const T = ST.cols[known ? "known" : "threat"] || ST.cols.threat, G = ST.cols.guard, i = lowerBound(ST.cols.t, lastBreach) - 1;
     return T && G && i >= 0 ? { t: T[i], g: G[i] } : null; })() : null;
@@ -2082,7 +2143,7 @@ function renderDoom() {
       `<div class="doom-n">рекорд — ${s.front_max}-й</div>` +
     `</div>` +
     `<div class="doom-side">` +
-      `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}${window.DOC_BACKEND && s.fallen > 0 ? ` <button type="button" class="linkish fallen-go" data-fallen>кто погиб</button>` : ""}</div>` +
+      `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}${window.DOC_BACKEND && s.fallen > 0 ? ` <span class="dim" aria-hidden="true">·</span> <button type="button" class="linkish fallen-go" data-fallen aria-label="Кто погиб — список">кто они</button>` : ""}</div>` +
       `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f && f.now > f.then ? `+${num(f.now - f.then)} за 45 дн.` : "за 45 дн. — никого"; })()}${(() => {
         const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
         const n = s.breaches, w = n % 10 === 1 && n % 100 !== 11 ? "прорыве" : "прорывах";
@@ -2278,11 +2339,11 @@ function buildPxSeries() {
   if (PX.vol) { ch.removeSeries(PX.vol); PX.vol = null; }
   if (UI.pxMode === "candle") {
     PX.main = ch.addSeries(LC.CandlestickSeries, {
-      upColor: css("--s1"), downColor: css("--down"), borderVisible: false,
-      wickUpColor: css("--s1"), wickDownColor: css("--down"),
+      upColor: css("--ink-2"), downColor: css("--down"), borderVisible: false,
+      wickUpColor: css("--ink-2"), wickDownColor: css("--down"),
     });
   } else {
-    PX.main = ch.addSeries(LC.LineSeries, { color: css("--s1"), lineWidth: 2 });
+    PX.main = ch.addSeries(LC.LineSeries, { color: css("--ink-2"), lineWidth: 2 });   // цена — мера, не «кто»: чернилами
   }
   PX.vol = ch.addSeries(LC.HistogramSeries, { color: css("--ink-3"), priceFormat: { type: "volume" }, priceLineVisible: false }, 1);
   const panes = ch.panes();
@@ -2349,13 +2410,14 @@ function selectGood(g) {
 
 // ---------------------------------------------------- малые графики (uPlot)
 const MULT = [
-  { id: "people", title: "Люди", series: [["pop", "горожане"], ["adv", "авантюристы"], ["down", "под землёй"]] },
-  { id: "money", title: "Деньги", series: [["m_houses", "у домов"], ["m_town", "у горожан"], ["m_adv", "у отрядов"], ["treasury", "казна"]] },
-  { id: "depth", title: "Глубина, ярус", series: [["frontier", "фронтир"], ["trip_d", "средний поход"]] },
+  // цвет — «кто»: авантюристы — --c-adv, дома — --c-house, горожане — --c-town, совет — --garrison; черта — второй ряд того же «кто»
+  { id: "people", title: "Люди", series: [["pop", "горожане", "--c-town"], ["adv", "авантюристы", "--c-adv"], ["down", "под землёй", "--c-adv", 1]] },
+  { id: "money", title: "Деньги", series: [["m_houses", "у домов", "--c-house"], ["m_town", "у горожан", "--c-town"], ["m_adv", "у отрядов", "--c-adv"], ["treasury", "казна", "--garrison"]] },
+  { id: "depth", title: "Глубина, ярус", series: [["frontier", "фронтир", "--c-adv"], ["trip_d", "средний поход", "--c-adv", 1]] },
   // угроза — тем же цветом, что в полосе угрозы; гарнизон — цветом «держит»
   { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза", "--threat"], ["known", "известная совету", "--warn"], ["guard", "гарнизон", "--garrison"]] },
-  { id: "loss", title: "Потери за 45 дней", series: [["@fallen", "погибли"], ["@wounded", "ранены"], ["@bankrupt", "разорились дома"]] },
-  { id: "hunger", title: "Голод, %", series: [["%hunger", "голод"]], range: [0, 85], hideFlat: true },
+  { id: "loss", title: "Потери за 45 дней", series: [["@fallen", "погибли", "--c-adv"], ["@wounded", "ранены", "--c-adv", 1], ["@bankrupt", "разорились дома", "--c-house"]] },
+  { id: "hunger", title: "Голод, %", series: [["%hunger", "голод", "--c-town"]], range: [0, 85], hideFlat: true },
 ];
 const PLOTS = {};
 function seriesData(key) {
@@ -2400,7 +2462,7 @@ function buildMultiples() {
         Object.assign({}, axis, { size: 56, values: (u, vals) => vals.map(compact) }),
       ],
       series: [{ label: "день", value: (u, v) => (v == null ? "—" : evDay(Math.round(v)) === "конец записи" ? "конец записи" : fmtDay(Math.round(v))) }]
-        .concat(m.series.map(([, label, c], i) => ({ label, stroke: c ? css(c) : colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
+        .concat(m.series.map(([, label, c, dash], i) => ({ label, stroke: (x => dash ? fade(x) : x)(c ? css(c) : colors[i]), width: dash ? 1.5 : 2, dash: dash ? [6, 4] : undefined, value: (u, v) => (v == null ? "—" : compact(v)) }))),
       hooks: { setSelect: [u => { if (u.select.width > 0) PLOTS[m.id].zoomed = true; }] },
     };
     const u = new uPlot(opts, multData(m), el);
@@ -2460,7 +2522,7 @@ function thesisVal(i) {
   if (!d || !d.x.length) return;
   if (i == null || i < 0) i = d.x.length - 1;
   const at = i === d.x.length - 1 ? "сейчас" : `на ${evDay(d.x[i])}`;
-  $("#thesisVal").innerHTML = `<b>${at}:</b> угроза ${f1n(d.thr[i] || 0)} против гарнизона ${f1n(d.gd[i] || 0)} · фронтир — ${d.fr[i] || "—"}-й ярус` +
+  $("#thesisVal").innerHTML = `<b>${at}:</b> ${!d.thr[i] && !d.gd[i] ? "угроза выплеснулась прорывом, гарнизона нет" : `угроза ${f1n(d.thr[i] || 0)} против гарнизона ${f1n(d.gd[i] || 0)}`} · фронтир — ${d.fr[i] || "—"}-й ярус` +
     (d.mine && d.mine[i] != null ? ` · снаряжение дома игрока — у ${num(d.mine[i])} ${plural(d.mine[i], "отряда", "отрядов", "отрядов")} внизу` : "");
 }
 function buildThesis() {
@@ -2477,7 +2539,8 @@ function buildThesis() {
     const u = new uPlot({
       width: el.clientWidth || 600, height: H[i] + (last ? 22 : 0), legend: { show: false },
       cursor: { sync: { key: "thesis" }, drag: { x: false, y: false }, points: { size: 7 } },
-      scales: { x: { time: false } },
+      // ось — от нуля до данных, без запаса вдвое (фронтир 38 на оси 0–76 — круг 24)
+      scales: { x: { time: false }, y: { range: (u, lo, hi) => [0, Math.max(1, hi) * 1.08] } },
       axes: [Object.assign({}, ax, { show: last, space: 110, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
              Object.assign({}, ax, { size: 46, ticks: { show: false }, values: (u, vals) => vals.map(v => compact(v)), splits: (u, si, mn, mx) => [Math.max(0, mn), mx].map(v => Math.round(v)) })],
       series: [{}].concat(series),
@@ -2488,9 +2551,9 @@ function buildThesis() {
   };
   const d = TH.d;
   mk("th-a", [{ label: "угроза", stroke: css("--threat"), width: 2 }, { label: "гарнизон", stroke: css("--garrison"), width: 2, dash: [6, 4] }], [d.x, d.thr, d.gd], 0, false);
-  mk("th-b", [{ label: "фронтир", stroke: css("--ink-2"), width: 2, paths: uPlot.paths && uPlot.paths.stepped ? uPlot.paths.stepped({ align: 1 }) : undefined }], [d.x, d.fr], 1, !d.mine);
+  mk("th-b", [{ label: "фронтир", stroke: css("--c-adv"), width: 2, paths: uPlot.paths && uPlot.paths.stepped ? uPlot.paths.stepped({ align: 1 }) : undefined }], [d.x, d.fr], 1, !d.mine);
   if (d.mine) mk("th-c", [{ label: "со снаряжением дома игрока", stroke: css("--accent"), width: 2, fill: "color-mix(in srgb, " + css("--accent") + " 18%, transparent)" }], [d.x, d.mine], 2, true);
-  thesisVal(null);
+  thesisVal(null); thMineNote(d);
   $("#thesisNote").textContent = window.DOC_BACKEND && META.seat_at != null ? "пунктир — игрок занял дом; красная полоса — прорыв. Наведите — значения на тот день." : "красная полоса — прорыв";
   TH.u.forEach(u => ro.observe(u.root.parentElement));
 }
@@ -2502,6 +2565,16 @@ function renderThesis() {
   TH.u[1].setData([d.x, d.fr]);
   if (TH.u[2] && d.mine) TH.u[2].setData([d.x, d.mine]);
   if (!TH.hover) thesisVal(null);
+  thMineNote(d);
+}
+// третий ряд до того, как игрок занял дом, — пустой: сказать это, а не показывать легенду без линии (круг 24)
+function thMineNote(d) {
+  const row = $("#th-crow"); if (!row || !d.mine) return;
+  const none = d.mine.every(v => v == null);
+  let n = $(".th-none", row);
+  if (!n) { n = document.createElement("span"); n.className = "th-none"; row.appendChild(n); }
+  n.textContent = none ? `игрок ещё не занял дом — займёт ${evDay(META.seat_at)}` : "";
+  n.hidden = !none;
 }
 $("#thesis") && $("#thesis").addEventListener("click", e => {
   const b = e.target.closest("[data-th]");
@@ -2537,7 +2610,9 @@ function rebuildCharts() {
 
 // ------------------------------------------------------------ летопись
 function evItem(e, fresh) {
-  return `<li data-t="${e.t}" class="lv${e.lv} k-${e.k}${fresh ? " fresh" : ""}"><span class="t">${evDay(e.t)}</span><span class="x">${linkText(e.text, e.refs)}</span></li>`;
+  // погибшие несли снаряжение дома игрока — соучастие не только суммой в итоге (решение автора, круг 24)
+  const mine = e.mine ? ` <span class="mine-tag"><i class="mine-dot" aria-hidden="true"></i>со снаряжением дома игрока</span>` : "";
+  return `<li data-t="${e.t}" class="lv${e.lv} k-${e.k}${fresh ? " fresh" : ""}${e.mine ? " mine" : ""}"><span class="t">${evDay(e.t)}</span><span class="x">${linkText(e.text, e.refs)}${mine}</span></li>`;
 }
 // летопись: род событий и поиск — поверх уровня «важное / всё» (выбран род или задан поиск — уровень не важен)
 const EV_GROUP = { breach: ["breach"], depth: ["frontier"], loss: ["wiped", "missing"], ruin: ["bankrupt", "fence_end"],
@@ -2548,7 +2623,8 @@ const evPlain = e => e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && 
 function evFiltered() { return UI.evKinds.size || UI.evQuery || UI.evRef; }
 function evPass(e) {
   if (UI.evRef) { if (!(e.refs && e.refs[UI.evRef]) && !e.text.includes("{" + UI.evRef + "}")) return false; }
-  if (UI.evKinds.size && ![...UI.evKinds].some(g => EV_GROUP[g].includes(e.k))) return false;
+  // «потери отрядов» — и разбитые, и вернувшиеся с погибшими: чип не спорит с числом погибших (круг 24)
+  if (UI.evKinds.size && ![...UI.evKinds].some(g => EV_GROUP[g].includes(e.k) || (g === "loss" && e.k === "return" && /погиб/.test(e.text)))) return false;
   if (UI.evQuery && !evPlain(e).includes(UI.evQuery)) return false;
   if (!evFiltered()) return e.lv >= UI.evLevel;
   return true;
@@ -2596,13 +2672,15 @@ function renderEvents() {
     const key = UI.searchQ = UI.evQuery + "@" + (ST.state ? ST.state.tick : 0);
     api("/api/search?q=" + encodeURIComponent(UI.evQuery)).then(r => { if (UI.searchQ === key && Array.isArray(r)) { UI.searchRes = r; renderEvents(); } });
   }
-  const src = UI.evQuery && window.DOC_BACKEND && UI.searchRes ? UI.searchRes : ST.events;
+  // «всё про X» и род событий в записи — тоже по всей летописи до этого дня: число в карточке = число здесь
+  const src = UI.evQuery && window.DOC_BACKEND && UI.searchRes ? UI.searchRes
+    : (UI.evRef || UI.evKinds.size) && window.DOC_BACKEND ? (h => window.DOC_BACKEND.R.events.filter(x => x.t <= h))(ST.state ? ST.state.tick : 0) : ST.events;
   const all = src.filter(evPass), list = all.slice(-300).reverse();
   evStateLine(all.length);
   const ae = document.activeElement, ol = $("#events");
   const fid = ol.contains(ae) ? (ae.dataset.id || (ae.tagName === "SUMMARY" ? "summary:" + ae.closest("li").dataset.t : null)) : null;
   const olK = focusKey(ol);
-  ol.innerHTML = list.length ? (evFiltered() ? list.map(e => evItem(e)) : evRuns(list)).join("") : `<li class="empty">${evFiltered() ? "под фильтр ничего не подошло" : "пока тихо"}</li>`;
+  ol.innerHTML = list.length ? (evFiltered() ? list.map(e => evItem(e)) : evRuns(list)).join("") : (evFiltered() ? "" : `<li class="empty">пока тихо</li>`);   // под фильтром «ничего» и что делать — уже в строке состояния
   focusBack(ol, olK, true);
   if (fid) {
     const again = fid.startsWith("summary:") ? $(`li[data-t="${fid.slice(8)}"] summary`, ol) : $(`.ref[data-id="${CSS.escape(fid)}"]`, ol);
@@ -2920,13 +2998,16 @@ async function openFallen() {
   $("#drawerTitle").innerHTML = `<small class="dk">павшие </small>в походах — ${num(list.length)}`;
   const byLv = {}; for (const x of list) if (x.d) byLv[x.d] = (byLv[x.d] || 0) + 1;
   const top = Object.entries(byLv).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d, n]) => `${d}-й — ${n}`).join(", ");
-  $("#drawerBody").innerHTML = `<p class="hint">Кто погиб в походах к ${evDay(ST.state ? ST.state.tick : 0)}, новые сверху. Имя — карточка человека и его история.${top ? ` Больше всего — на ярусах: ${top}.` : ""}</p>` +
+  const nm = list.filter(x => x.mine).length;
+  $("#drawerBody").innerHTML = `<p class="hint">Кто погиб в походах к ${evDay(ST.state ? ST.state.tick : 0)}, новые сверху. Имя — карточка человека и его история.${top ? ` Больше всего — на ярусах: ${top}.` : ""}` +
+    `${nm ? ` <span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>${num(nm)} из них ${nm % 10 === 1 && nm % 100 !== 11 ? "нёс" : "несли"} снаряжение дома игрока.</span>` : ""}</p>` +
     (list.length ? `<ul class="hist fallen">` + list.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${ref(x.id, x.name)}` +
-      `${x.rank ? ` <span class="dim">${esc(x.rank)}${x.trips != null ? `, походов ${x.trips}` : ""}</span>` : ""} — ${x.d ? `на ${x.d}-м ярусе` : "в походе"}${x.squad ? `, отряд ${ref(x.squad, x.sq || x.squad)}` : ""}</span></li>`).join("") + `</ul>`
+      `${x.rank ? ` <span class="dim">${esc(x.rank)}${x.trips != null ? `, походов ${x.trips}` : ""}</span>` : ""} — ${x.d ? `на ${x.d}-м ярусе` : "в походе"}${x.squad ? `, отряд ${ref(x.squad, x.sq || x.squad)}` : ""}${x.mine ? ` <span class="mine-tag"><i class="mine-dot" aria-hidden="true"></i>со снаряжением дома игрока</span>` : ""}</span></li>`).join("") + `</ul>`
       : `<p class="empty">к этому дню в походах никто не погиб</p>`);
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-fallen]")) { e.preventDefault(); openFallen(); } });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
+// одно Esc — один слой: карточка закрылась — вводная и история под ней остаются (круг 24)
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) { e.stopImmediatePropagation(); $("#drawerClose").click(); } });
 
 async function openEntity(id, push) {
   UI.panel = null;
@@ -2971,7 +3052,8 @@ document.addEventListener("click", ev => {
   if (!ev.target.closest("#btnEvRef")) return;
   UI.evRef = UI.entity; UI.evRefName = ($("#drawerTitle").textContent || "").replace(/^(дом|отряд|человек|скупщик) /, "");
   closeDrawer(); setView("world"); renderEvents();
-  const c = $("#secChronicle"); c.scrollIntoView({ block: "start" }); $("#evClear").focus({ preventScroll: true });
+  // фокус — на первую найденную строку, а не на «сбросить»
+  const c = $("#secChronicle"); c.scrollIntoView({ block: "start" }); ($("#events .ref") || $("#evClear")).focus({ preventScroll: true });
 });
 // срок возвращения: прошёл (снимок шахты старше дня) — «возвращения ждут», после конца записи — так и сказать
 function backTxt(t) {
@@ -3036,12 +3118,12 @@ function fenceCard(e) {
 function squadCard(e) {
   let h = `<dl class="kv">${lifeLine(e)}`;
   if (e.roster) h += `<dt>сила</dt><dd>${num(e.power, 2)}</dd><dt>сплочённость</dt><dd>${bar(e.cohesion)}${num(e.cohesion, 2)} <span class="dim">— ${e.cohesion < 0.3 ? "ещё не сработались" : e.cohesion < 0.7 ? "притираются" : "сработались"}</span></dd>`;
-  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн.${e.plan.T > 50 ? " (долгий — дольше обычных 45)" : ""}, шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
+  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн.${e.plan.T > 50 ? " (долгий — дольше обычных 45)" : ""}, шансы ${Math.round(e.plan.p * 100)}%, ${backTxt(e.plan.back)}</dd>`;   // срок прошёл — «возвращения ждут», а не «вернётся» в прошлом
   h += `</dl>`;
   if (e.roster) {
-    h += `<h3>Состав</h3><table><thead><tr><th>Имя</th><th>Роль</th><th>Ранг</th><th class="num">Касса</th><th class="num">Походов</th></tr></thead><tbody>` +
+    h += `<h3>Состав</h3><div class="roster-wrap"><table class="roster"><thead><tr><th>Имя</th><th>Роль</th><th>Ранг</th><th class="num">Касса</th><th class="num">Походов</th></tr></thead><tbody>` +
       e.roster.map(m => `<tr><td>${ref(m.id, m.short)}${m.id === e.leader ? ' <span class="tag">вожак</span>' : ""}${m.heal > 0 ? ' <span class="tag">ранен</span>' : ""}</td><td>${esc(m.role)}</td><td>${esc(m.rank)}</td><td class="num">${compact(m.cash)}</td><td class="num">${m.trips}</td></tr>`).join("") +
-      `</tbody></table>`;
+      `</tbody></table></div>`;
   }
   if (e.names && e.names.length > 1) {
     h += `<h3>Названия</h3><ul class="hist">` + e.names.slice().reverse().map(n =>
@@ -3072,7 +3154,8 @@ function houseCard(e) {
 }
 const bar = v => `<span class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></i></span>`;
 function personCard(e) {
-  let h = e.died ? `<p class="died">✕ Погиб${e.fem ? "ла" : ""} ${evDay(e.died.t != null ? e.died.t : e.ended + 1)}${e.died.d ? ` на ${e.died.d}-м ярусе` : ""}${e.died.squad ? `, в отряде ${ref(e.died.squad, e.refs && e.refs[e.died.squad])}` : ""}.</p>` : "";
+  let h = e.died ? `<p class="died">✕ Погиб${e.fem ? "ла" : ""} ${evDay(e.died.t != null ? e.died.t : e.ended + 1)}${e.died.d ? ` на ${e.died.d}-м ярусе` : ""}${e.died.squad ? `, в отряде ${ref(e.died.squad, e.refs && e.refs[e.died.squad])}` : ""}.` +
+    `${e.died.mine ? ` <span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>Отряд нёс снаряжение дома игрока.</span>` : ""}</p>` : "";
   h += `<dl class="kv">${lifeLine(e)}`;
   if (e.role) {
     h += `<dt>отряд</dt><dd>${e.squad ? ref(e.squad, e.refs && e.refs[e.squad]) : "в гильдии, без отряда"}</dd>` +
@@ -3095,7 +3178,7 @@ function personCard(e) {
 
 // ------------------------------------------------------- денежные потоки
 // приток и отток в день, скользящее среднее за 30 дней (из накопленных счётчиков книги)
-const FLOWS = { id: "flows", title: "", series: [["~created", "приток: создано"], ["~destroyed", "отток: уничтожено"]] };
+const FLOWS = { id: "flows", title: "", series: [["~created", "приток: создано", "--ink-2"], ["~destroyed", "отток: уничтожено", "--ink-3", 1]] };   // не «кто», а мера: чернила и черта
 async function loadFlows() {
   if (UI.hoverFlows) return;
   const f = await api("/api/flows");
@@ -3269,7 +3352,7 @@ function housePlot(id, series, range) {
     axes: [Object.assign({}, ax, { space: 90, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
            Object.assign({}, ax, { size: 56, values: (u, vals) => vals.map(compact) })],
     series: [{ label: "день", value: (u, v) => (v == null ? "—" : evDay(Math.round(v)) === "конец записи" ? "конец записи" : fmtDay(Math.round(v))) }]
-      .concat(series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
+      .concat(series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, dash: i > 0 ? [6, 4] : undefined, value: (u, v) => (v == null ? "—" : compact(v)) }))),   // медиана — чертой: в светлой теме два коричневых не различить
   }, [[]].concat(series.map(() => [])), el);
   HP[id] = { u, el, series };
   u.over.addEventListener("mouseenter", () => el.classList.add("hover"));
@@ -3648,7 +3731,7 @@ function bindIntro() {
         if (!b) return;
         const c = ch.find(x => String(x.t) === b.dataset.t);
         closeIntro(); window.scrollTo(0, 0);
-        if (c) { STORY.on = true; B.seek(c.t); storyGo(c); }
+        if (c) { STORY.on = true; STORY.forceBack = B.R.head > c.at + 5; B.seek(c.t); storyGo(c); }   // глава раньше, чем стоял гость, — «назад во времени»
       };
     });
   }
@@ -3678,6 +3761,7 @@ function bindIntro() {
     else if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
     if (B && B.R.speed !== "pause") { B.R.lastSpeed = B.R.speed; B.R.speed = "pause"; }   // пока выбирают главу — время стоит
     $("#intro").hidden = false;
+    $("#intro").classList.remove("compact");   // «Главы» — значит главы: короткая вводная по ссылке раскрывается
     $("#intro").scrollIntoView({ block: "start" });
     $("#introClose").focus({ preventScroll: true });   // открылось — фокус туда, где выбор
   };
@@ -3723,6 +3807,7 @@ function storyGo(c) {
   }
   // к главе — не дольше нескольких секунд: дальний путь перематывается, последние ~90 дней видны в ходу
   const gap = c.at - B.R.head, start = Math.max(0, Math.min(c.t, c.at - 90));
+  STORY.back = gap < 0 || !!STORY.forceBack; STORY.forceBack = false;   // глава раньше, чем гость стоял: сказать, что перематываем назад
   if (gap < 0 || B.R.head < start) B.seek(start, true); else { B.R.jumpFrom = B.R.head; try { history.pushState(null, "", location.hash || "#"); } catch (e) { /* песочница */ } }
   B.R.stopAt = c.at; B.R.stopTitle = c.title;
   B.R.speed = c.at - B.R.head > 60 ? "30" : "10";
@@ -3808,9 +3893,11 @@ function storyRender(state) {
   el.classList.toggle("strip", !matchMedia("(max-width: 680px)").matches);
   const i = STORY.ch.indexOf(c), n = STORY.ch.length, nx = STORY.ch[i + 1];
   const had = el.contains(document.activeElement);
-  el.innerHTML = `<div class="story-k">Глава ${i + 1} из ${n} · ${evDay(c.at)}<button type="button" class="story-min" data-story="min" aria-expanded="${!STORY.min}" aria-label="${STORY.min ? "Показать текст главы" : "Свернуть текст главы"}">${STORY.min ? "текст ▴" : "свернуть ▾"}</button></div>` +
+  // глава до того, как игрок занял дом, — так и подписана (круг 24: «история начинается раньше игрока»)
+  const pre = window.DOC_BACKEND && META.seat_at != null && c.at < META.seat_at && c.k !== "seat" ? " · до игрока" : "";
+  el.innerHTML = `<div class="story-k">Глава ${i + 1} из ${n} · ${evDay(c.at)}${pre}<button type="button" class="story-min" data-story="min" aria-expanded="${!STORY.min}" aria-label="${STORY.min ? "Показать текст главы" : "Свернуть текст главы"}">${STORY.min ? "текст ▴" : "свернуть ▾"}</button></div>` +
     `<h2 id="storyTitle">${esc(c.title)}</h2>` +
-    (state === "here" ? `<p>${esc(c.noteNow || c.note)}</p>` : `<p class="dim">Запись идёт к этой главе…</p>`) +
+    (state === "here" ? `<p>${esc(c.noteNow || c.note)}</p>` : `<p class="dim">${STORY.back ? `Назад во времени, к ${evDay(c.at)}: запись покажет, как к этому шли…` : "Запись идёт к этой главе…"}</p>`) +
     `<div class="story-go">` +
       (state === "here" && nx ? `<button type="button" class="primary" data-story="next">Дальше: ${esc(nx.title)} →</button>` : "") +
       (state === "going" ? `<button type="button" data-story="skip">Сразу туда</button>` : "") +
@@ -3819,7 +3906,8 @@ function storyRender(state) {
     `</div>`;
   el.hidden = false;
   el.classList.toggle("min", !!STORY.min); STORY.state = state;
-  if (state === "going") el.classList.remove("dock");
+  // телефон: пока запись идёт к главе, подпись с «Сразу туда» — закреплена над полосой, а не где-то выше по странице (круг 24)
+  if (state === "going") el.classList.toggle("dock", matchMedia("(max-width: 680px)").matches);
   const ae = document.activeElement, idle = !ae || ae === document.body || ae.id === "doom" || (ae.closest && ae.closest("#intro"));
   if (state === "going" && had) { const b = $("[data-story=skip]", el); if (b) b.focus({ preventScroll: true }); }
   if (state === "here" && (had || idle)) { const b = $("[data-story=next]", el) || $("[data-story=free]", el); if (b) b.focus({ preventScroll: true }); }
@@ -4067,6 +4155,10 @@ document.addEventListener("keydown", e => {
     if (B.R.speed !== "pause") B.R.lastSpeed = B.R.speed;
     B.seek(m.t, true); B.R.speed = "pause"; B.R.stopAt = null;
     setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t: m.t, title: m.title } })), 0);
+    // фокус пропал с перерисовкой (был на строке, которой больше нет) — на веху на дорожке, а не на <body> (круг 24)
+    setTimeout(() => { if (document.activeElement && document.activeElement !== document.body) return;
+      const bs = $$("#rbMarks .rb-m"); const near = bs.reduce((a, x) => (!a || Math.abs(+x.dataset.t - m.t) < Math.abs(+a.dataset.t - m.t) ? x : a), null);
+      if (near) near.focus({ preventScroll: true }); }, 400);
   } else if (e.key === "?") {
     $("#btnHelp").click();
   } else if (e.key === "Escape" && !$("#intro").hidden && !$("#drawer").classList.contains("open") && $("#story").hidden) {
@@ -4142,6 +4234,11 @@ main().catch(err => {
   const main = document.getElementById("viewWorld");
   main.insertBefore(box, main.firstChild);
 });
+// прототип интерфейса игрока (PLAYER-UI.md) — только в серверной игре и только по ?ui=play: смотровая не меняется
+if (!window.DOC_BACKEND && new URLSearchParams(location.search).get("ui") === "play") {
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/static/play.css"; document.head.appendChild(l);
+  const s = document.createElement("script"); s.src = "/static/play.js"; document.body.appendChild(s);
+}
 
 </script>
 </body></html>
