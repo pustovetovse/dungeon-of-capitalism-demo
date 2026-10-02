@@ -654,6 +654,38 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .intro .chapter { width: 100%; flex-direction: row; align-items: baseline; gap: 10px; min-height: 36px; padding: 6px 10px; }
   .intro .chapter .ch-t { flex: 0 0 5.6em; }
 }
+/* подсветка главы после перерисовки — без повторной вспышки */
+.story-focus.still { animation: none; }
+/* полоса угрозы тяжелеет с разрывом: ×5 и ×10 — плотнее рамка и фон, крупнее число угрозы */
+.doom[data-level=warn][data-sev="2"] { border-width: 2px; background: color-mix(in srgb, var(--serious) 7%, var(--surface)); }
+.doom[data-level=warn][data-sev="3"] { border-width: 2px; border-color: var(--serious); background: color-mix(in srgb, var(--serious) 11%, var(--surface)); }
+.doom[data-level=warn][data-sev="3"] .doom-thr { font-size: 46px; }
+@media (max-width: 680px) { .doom[data-level=warn][data-sev="3"] .doom-thr { font-size: 36px; } }
+/* фокус на кнопках с акцентной заливкой — тёмной обводкой, иначе её не видно */
+button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:focus-visible { outline-color: var(--ink); outline-offset: 2px; }
+/* раскрытая группа летописи — даты одной ширины */
+.events .ev-sub .t { display: inline-block; min-width: 5.8em; }
+/* шахта прокручена к фронтиру — видно, что выше есть ярусы */
+.shaft { position: relative; }
+.shaft-up { position: sticky; top: 0; z-index: 2; display: block; width: 100%; text-align: left; padding: 4px 8px; min-height: 28px;
+  font-size: 13px; color: var(--accent); background: var(--surface-2); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
+.shaft-up[hidden] { display: none; }
+/* легенда шахты — образцами, а не абзацем */
+.dg-key { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; color: var(--ink-3); font-size: 12.5px; margin: 0 0 8px; }
+.dg-key > span { display: inline-flex; align-items: center; gap: 6px; }
+.dg-key .sbar { width: 46px; display: inline-block; vertical-align: middle; }
+.dg-key b.g { color: var(--accent); font-weight: 400; }
+/* вкладки на узком экране — лентой вбок, не в две строки */
+@media (max-width: 420px) { .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .tabs button { flex: 0 0 auto; font-size: 17px; } }
+/* таблица шире карточки — тени у краёв говорят, что она листается вбок */
+.tablewrap { background:
+  linear-gradient(to right, var(--surface) 30%, transparent) left / 24px 100% no-repeat local,
+  linear-gradient(to left, var(--surface) 30%, transparent) right / 24px 100% no-repeat local,
+  radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, .22), transparent) left / 10px 100% no-repeat scroll,
+  radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .22), transparent) right / 10px 100% no-repeat scroll; }
+/* очень узкий телефон: «Ссылка» — во всплывающем окне «Знаков», полоса — в две строки */
+.rb-share2 { display: none; margin-top: 8px; }
+@media (max-width: 400px) { .replaybar > .rb-share { display: none; } .replayinfo .rb-share2 { display: inline-block; } }
 
 </style>
 </head><body>
@@ -714,7 +746,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     <div class="intro-body">
     <div class="intro-text">
     <p class="intro-lead">Город живёт подземельем: дома снабжают отряды авантюристов, и чем лучше снабжение,
-      тем глубже они уходят — и тем сильнее просыпается подземелье. Все здесь — боты.</p>
+      тем глубже они уходят&nbsp;— и&nbsp;тем сильнее просыпается подземелье. Все здесь&nbsp;— боты.</p>
     <p class="intro-mode" id="introMode"></p>
     <div class="intro-chapters" id="introChapters" hidden></div>
     <details class="intro-where">
@@ -1218,7 +1250,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
         const sw = (me.journal || []).filter(j => /сменил отрасль/.test(j[1])).map(j => (j[1].match(/«([^»]+)»/) || [])[1]).filter(Boolean);
         pm.innerHTML = `<b>Дом игрока «${me.name}»</b> рычагов не трогал. ` + (me.alive === false ? "Дом разорился." :
           `Капитал ${w0 != null ? `${Math.round(w0).toLocaleString("ru-RU")} → ` : ""}${Math.round(me.wealth).toLocaleString("ru-RU")}` +
-          (m0 != null && me.median ? `, но город богател быстрее (средний дом — ${Math.round(m0).toLocaleString("ru-RU")} → ${Math.round(me.median).toLocaleString("ru-RU")})` : "") +
+          (m0 != null && me.median ? `, но город богател быстрее (у медианного дома капитал ${Math.round(m0).toLocaleString("ru-RU")} → ${Math.round(me.median).toLocaleString("ru-RU")})` : "") +
           (q0 != null ? `: был богаче ${Math.round(q0)}% домов, стал богаче ${Math.round(me.pctl)}%.` : `: богаче ${Math.round(me.pctl)}% домов.`) +
           (sw.length ? ` ${sw.length === 1 ? "Сменил отрасль" : `Менял отрасль ${sw.length} ${plural(sw.length, "раз", "раза", "раз")}`}: теперь «${sw[sw.length - 1]}».` : ""));
         pm.hidden = false;
@@ -1273,6 +1305,9 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     // на телефоне полоса прибита к низу: отступ страницы — по её настоящей высоте
     new ResizeObserver(() => document.documentElement.style.setProperty("--rbh", bar.offsetHeight + "px")).observe(bar);
     const sh = bar.querySelector("#rbShare");
+    if (sh) info.insertAdjacentHTML("beforeend", `<button type="button" class="rb-share2" id="rbShare2">Ссылка на этот момент</button>`);
+    const sh2 = info.querySelector("#rbShare2");
+    if (sh2) sh2.onclick = () => sh.click();
     if (sh) sh.onclick = async () => {
       const h = window.docHash ? window.docHash() : new URLSearchParams();
       h.set("t", R.head);
@@ -1527,13 +1562,15 @@ function renderDoom() {
     $("#announce").textContent = `Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""}.`;
   }
   el.classList.toggle("fresh", fresh);
+  // насколько угроза сильнее гарнизона — ступенями: при ×5 и ×10 полоса заметно тяжелеет
+  el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
     (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
     `<div class="doom-main">` +
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
         `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
-      `<div class="doom-cap">гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы</div>` +
+      `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "гарнизона нет — угрозу держать некому"}</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${Math.max(2, pct)}%"></span></div>` +
       `<div class="doom-n">${[head, move, br].filter(Boolean).join(" · ")}</div>` +
       doomSpark() +
@@ -1571,6 +1608,12 @@ function doomSpark() {
     `<polyline class="sp-t" points="${line(T)}"></polyline><polyline class="sp-g" points="${line(G)}"></polyline></svg>` +
     `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${marks ? ` <i class="sp-kb"></i>прорыв` : ""} — за ${n > 300 ? "год" : num(t[t.length - 1] - t[j0]) + " дн."}</span></div>`;
 }
+// подсветка главы истории — снова после перерисовки (полоса угрозы пересобирается каждый опрос)
+function storyRefocus() {
+  const h = typeof STORY !== "undefined" && STORY.hl;
+  if (!h || Date.now() > h.until) return;
+  h.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus", "still"); });
+}
 function buildTiles() {
   $("#tiles").innerHTML = TILES.map(([k, label]) =>
     `<div class="tile" id="tile-${k}"><div class="k">${ic(TILE_IC[k])}${label}</div><div class="v">—</div><div class="n"></div></div>`).join("");
@@ -1579,6 +1622,7 @@ function renderTiles() {
   const s = ST.state;
   if (!s) return;
   renderDoom();
+  storyRefocus();
   for (const [k, , v, n] of TILES) {
     const el = $("#tile-" + k);
     $(".v", el).textContent = v(s);
@@ -1647,7 +1691,7 @@ function renderHeader() {
   $("#skipbar").hidden = !s.skip;
   $("#choosebar").hidden = !s.choosing || UI.view === "house";
   if (s.skip) $("#skipText").textContent = `досчитываю: осталось ${num(s.skip)} дн.`;
-  document.title = `${fmtDay(s.tick)} — Dungeon of Capitalism`;
+  document.title = `${META.replay && META.ticks && s.tick >= META.ticks ? "конец записи" : fmtDay(s.tick)} — Dungeon of Capitalism`;
 }
 
 // -------------------------------------------------------------- биржа
@@ -1882,11 +1926,11 @@ function renderEvents() {
 // в «важном» подряд идущие разорения — одной строкой «волны» с раскрытием, иначе они
 // заслоняют прорывы, рекорды глубины и разбитые отряды
 function shaftTabs() {
-  const dots = $$("#shaft .sqdot, #shaft button"), cur = dots.indexOf(document.activeElement);
+  const dots = $$("#shaft .sqdot, #shaft button").filter(x => !x.hidden), cur = dots.indexOf(document.activeElement);
   dots.forEach((a, i) => (a.tabIndex = i === (cur >= 0 ? cur : 0) ? 0 : -1));
 }
 $("#shaft").addEventListener("keydown", e => {
-  const dots = $$("#shaft .sqdot, #shaft button"), i = dots.indexOf(document.activeElement);
+  const dots = $$("#shaft .sqdot, #shaft button").filter(x => !x.hidden), i = dots.indexOf(document.activeElement);
   if (i < 0) return;
   const j = e.key === "ArrowDown" || e.key === "ArrowRight" ? Math.min(dots.length - 1, i + 1) : e.key === "ArrowUp" || e.key === "ArrowLeft" ? Math.max(0, i - 1)
     : e.key === "Home" ? 0 : e.key === "End" ? dots.length - 1 : -1;
@@ -2097,7 +2141,7 @@ function bindTable() {
 // ------------------------------------------------------------ карточки
 document.addEventListener("click", e => {
   const a = e.target.closest(".ref[data-id]");
-  if (a) { e.preventDefault(); UI.refLabel = a.textContent.trim(); openEntity(a.dataset.id, true); }
+  if (a) { e.preventDefault(); const t = a.textContent.trim(); UI.refLabel = /\p{L}/u.test(t) ? t : null; openEntity(a.dataset.id, true); }
 });
 // ящик карточки: при открытии фокус — на заголовок, при закрытии — туда, откуда открыли;
 // закрытый ящик инертен (не ловит Tab и не читается)
@@ -2213,7 +2257,7 @@ function houseCard(e) {
     h += `<h3>Линии</h3><table><thead><tr><th>Линия</th><th>Выпуск</th><th class="num">Мощность</th><th class="num">Просит</th></tr></thead><tbody>` +
       e.lines.map(l => `<tr><td>${esc(l.n)}${l.idle ? ' <span class="tag">стоит</span>' : ""}</td><td>${esc(l.good)}</td><td class="num">${num(l.cap, 2)}</td><td class="num">${num(l.ask, 2)}</td></tr>`).join("") + `</tbody></table>`;
     if (e.stock && e.stock.length) {
-      h += `<h3>Склад</h3><table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">По рынку</th></tr></thead><tbody>` +
+      h += `<h3>Склад</h3><table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">Стоимость по рынку</th></tr></thead><tbody>` +
         e.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td></tr>`).join("") + `</tbody></table>`;
     }
   }
@@ -2313,12 +2357,17 @@ async function loadDungeon() {
   if (UI.shaftAll) parts.unshift(`<div class="lvl-fold"><span>все ярусы</span><button type="button" class="ghost small" data-shaft="fold">свернуть надёжные</button></div>`);
   const sh = $("#shaft");
   const fid = sh.contains(document.activeElement) ? document.activeElement.dataset.id || document.activeElement.dataset.shaft : null;
-  sh.innerHTML = parts.join("");
+  sh.innerHTML = `<button type="button" class="shaft-up" data-shaft="up" hidden>▲ выше — ярусы с 1-го; показать</button>` + parts.join("");
   const again = fid && sh.querySelector(`[data-id="${CSS.escape(fid)}"], [data-shaft="${CSS.escape(fid)}"]`);
   if (again) again.focus({ preventScroll: true });
   shaftTabs();
   // к фронтиру — пока шахту не прокрутили руками
   if (!UI.shaftScrolled) { const f = $(".lvl.front", sh); if (f) sh.scrollTop = Math.max(0, f.offsetTop - sh.offsetTop - sh.clientHeight / 2); }
+  shaftUp();
+}
+function shaftUp() {
+  const sh = $("#shaft"), b = $(".shaft-up", sh);
+  if (b) { const was = b.hidden; b.hidden = !(sh.scrollTop > 4 && sh.scrollHeight > sh.clientHeight + 4); if (was !== b.hidden) shaftTabs(); }
 }
 function bindDungeon() {
   if (!META.full) {
@@ -2328,15 +2377,19 @@ function bindDungeon() {
   sh.addEventListener("pointerenter", () => (UI.hoverShaft = true));
   sh.addEventListener("pointerleave", () => (UI.hoverShaft = false));
   ["wheel", "touchmove", "keydown"].forEach(ev => sh.addEventListener(ev, () => (UI.shaftScrolled = true), { passive: true }));
+  sh.addEventListener("scroll", shaftUp, { passive: true });
   sh.addEventListener("click", e => {
     const b = e.target.closest("button[data-shaft]");
     if (!b) return;
+    if (b.dataset.shaft === "up") { UI.shaftScrolled = true; sh.scrollTop = 0; shaftUp(); return; }
     UI.shaftAll = b.dataset.shaft === "all";
     loadDungeon();
   });
-  $("#dgLegend").innerHTML = !META.full ? "▾ спуск · ● промысел · ▴ подъём · ✕ не вернулся в срок — значок кликается · " +
-    "полоса — что о ярусе говорят в городе (правду знают только те, кто там был) · шансы вернуться: новичкам · сильнейшим, ✓ — у обоих 95% и выше" : "▾ спуск · ● промысел · ▴ подъём · ✕ не вернулся в срок — значок кликается · " +
-    "полоса — запас яруса на деле, черта — что о нём говорят в городе · шансы вернуться: новичкам · сильнейшим, ✓ — у обоих 95% и выше";
+  const bar = (w, r) => `<span class="sbar${r == null ? "" : ""}"><i style="width:${w}%"></i>${r != null ? `<b style="left:${r}%"></b>` : ""}</span>`;
+  $("#dgLegend").innerHTML = `<div class="dg-key">` +
+    `<span><b class="g">▾ ● ▴</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">✕</b> не вернулся в срок</span>` +
+    (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
+    `<span><b class="g">✓</b> шансы вернуться ≥ 95%</span><span>значки и имена кликаются</span></div>`;
 }
 
 // ------------------------------------------------------------- мой дом (И2)
@@ -2489,7 +2542,7 @@ function renderHouse(h) {
           : `<span class="tag">как у бота</span>`}</div>` +
         (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">Настроить</button></div>` : "") + `</div>`;
     }).join("");
-    $("#hStock").innerHTML = h.stock.length ? `<table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">По рынку</th><th class="num">Дней работы</th></tr></thead><tbody>` +
+    $("#hStock").innerHTML = h.stock.length ? `<table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">Стоимость по рынку</th><th class="num">Дней работы</th></tr></thead><tbody>` +
       h.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td><td class="num">${s.days != null ? num(s.days, 1) : "—"}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">пусто</p>`;
     $("#hBook").innerHTML = h.book.length ? `<table><thead><tr><th>Сторона</th><th>Товар</th><th class="num">Цена</th><th class="num">Кол-во</th></tr></thead><tbody>` +
       h.book.map(b => `<tr><td>${b.side}</td><td>${esc(b.g)}</td><td class="num">${num(b.px, 2)}</td><td class="num">${num(b.q, 1)}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">заявок нет</p>`;
@@ -2749,6 +2802,8 @@ function bindIntro() {
   if (plain) plain.onclick = () => { if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; closeIntro(); };
   $("#btnHelp").onclick = () => {
     setView("world");
+    const pl = $("#introPlain");
+    if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
     $("#intro").hidden = false;
     $("#intro").scrollIntoView({ block: "start" });
   };
@@ -2803,6 +2858,7 @@ function storyFocus(c) {
   $$(".story-focus").forEach(x => x.classList.remove("story-focus"));
   const pick = { seat: ["#doom .doom-v", "#doom .doom-bar"], breach: ["#doom .doom-alarm", "#doom .doom-v"],
     first: ["#doom .doom-side"], deep: ["#doom .doom-side"], wave: [] }[c.k] || [];
+  STORY.hl = { sel: pick, until: Date.now() + 6000 };
   const els = pick.map(q => $(q)).filter(Boolean);
   if (c.k === "wave" || c.k === "breach")
     for (const li of $$("#events > li[data-t]")) { const t = +li.dataset.t, t0 = +(li.dataset.t0 || li.dataset.t); if (t >= (c.from != null ? c.from : c.at) - 3 && t0 <= c.at + 3 && li.classList.contains(c.k === "breach" ? "k-breach" : "k-bankrupt")) els.push(li); }
