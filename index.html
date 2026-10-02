@@ -1,7 +1,5 @@
 <!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dungeon of Capitalism</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path fill='%23c9a25a' d='M254.25 15.344c-132.537 0-240.188 107.62-240.188 240.156 0 132.537 107.65 240.188 240.188 240.188 132.537 0 240.156-107.65 240.156-240.188 0-132.537-107.62-240.156-240.156-240.156zm0 18.687c122.436 0 221.47 99.034 221.47 221.47 0 65.65-28.465 124.583-73.75 165.125V238.75l14-22.78h-7.595L364 101.5l-43.813 114.47h-8.156l14.595 22.78v33.875h-36.813v-88.188l14.625-22.78h-7.593l-44.406-114.47-44.375 114.47h-7.594l14.03 22.78v123.22h-37.375v-18.094l14.594-22.782h-8.19l-43.78-114.467L95.344 266.78H87.75l14.03 22.783V416.25C59.25 375.9 32.75 318.83 32.75 255.5c0-122.436 99.064-221.47 221.5-221.47zm1.094 160.532h18.687v36.344h-18.686v-36.344zm110.156 87.97h18.688v36.312H365.5V282.53zm-246.656 22.03h18.687v36.344h-18.686v-36.344zm50.875 29.407h18.686v36.342H169.72V333.97zm170.81 30.5h18.69v36.342h-18.69V364.47z'/></svg>"><meta name="description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:type" content="website"><meta property="og:title" content="Dungeon of Capitalism"><meta property="og:description" content="Экономическая игра про город у входа в подземелье: ремесленные дома снабжают отряды авантюристов, и чем лучше снабжение, тем глубже они лезут. Запись мира — 10 лет за минуты."><meta property="og:url" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/"><meta property="og:image" content="https://pustovetovse.github.io/dungeon-of-capitalism-demo/preview.png"><meta name="twitter:card" content="summary_large_image">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant:wght@500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=Alegreya:wght@400;700&display=swap">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
 .uplot, .uplot *, .uplot *::before, .uplot *::after {box-sizing: border-box;}.uplot {font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";line-height: 1.5;width: min-content;}.u-title {text-align: center;font-size: 18px;font-weight: bold;}.u-wrap {position: relative;user-select: none;}.u-over, .u-under {position: absolute;}.u-under {overflow: hidden;}.uplot canvas {display: block;position: relative;width: 100%;height: 100%;}.u-axis {position: absolute;}.u-legend {font-size: 14px;margin: auto;text-align: center;}.u-inline {display: block;}.u-inline * {display: inline-block;}.u-inline tr {margin-right: 16px;}.u-legend th {font-weight: 600;}.u-legend th > * {vertical-align: middle;display: inline-block;}.u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}.u-inline.u-live th::after {content: ":";vertical-align: middle;}.u-inline:not(.u-live) .u-value {display: none;}.u-series > * {padding: 4px;}.u-series th {cursor: pointer;}.u-legend .u-off > * {opacity: 0.3;}.u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}.u-cursor-x, .u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}.u-hz .u-cursor-x, .u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}.u-hz .u-cursor-y, .u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}.u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline "background" shorthand */background-clip: padding-box !important;}.u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off {display: none;}
 /* Смотровая. Цвета — только токенами; тёмная тема по умолчанию, светлая — по
@@ -735,6 +733,40 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* «Все столбцы» — видно, что кнопка */
 .tbl-cols { border: 1px solid var(--line) !important; background: var(--surface-2) !important; }
 
+/* стержень «Мира»: шахта (шире) и летопись рядом, одной высоты */
+.grid.spine { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: stretch; }
+.spine .dungeon { display: flex; flex-direction: column; }
+.spine .shaft { height: auto; flex: 1; min-height: 420px; max-height: 640px; }
+.spine .chronicle { height: auto; min-height: 520px; max-height: 760px; }
+@media (max-width: 900px) { .grid.spine { grid-template-columns: minmax(0, 1fr); } .spine .chronicle { max-height: 70vh; } }
+/* подробности: рынок и деньги */
+.more-world { margin: 0; }
+.more-world > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px;
+  padding: 12px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); min-height: 44px; }
+.more-world > summary::-webkit-details-marker { display: none; }
+.more-world > summary .mw-t { font-family: var(--font-head); font-size: 21px; font-weight: 600; color: var(--ink); }
+.more-world > summary .mw-t::after { content: " ›"; color: var(--accent); }
+.more-world[open] > summary .mw-t::after { content: " ⌄"; }
+.more-world > summary .ic { color: var(--accent); }
+.more-world > summary:hover { border-color: var(--accent); }
+
+.more-world > * + * { margin-top: 16px; }
+@media (max-width: 680px) { .spine .shaft { max-height: none; min-height: 0; } }
+/* подпись главы теперь над обоими видами: на телефоне в потоке — с полями страницы */
+@media (max-width: 680px) { .story:not(.dock) { margin: 12px 16px 0; } }
+
+/* полоса угрозы: главное слева (на две строки), фронтир и погибшие — столбиком справа, график — во всю ширину */
+.doom { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.doom > .doom-main { grid-column: 1; grid-row: span 2; }
+.doom > .doom-side { grid-column: 2; }
+.doom > .doom-spark, .doom > .doom-why, .doom > .doom-alarm { grid-column: 1 / -1; }
+.doom > .doom-spark { max-width: none; margin-top: 0; }
+.doom > .doom-spark svg { height: 44px; }
+@media (max-width: 680px) { .doom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doom > .doom-main { grid-column: 1 / -1; grid-row: auto; } .doom > .doom-side { grid-column: auto; } }
+.doom-pre { display: block; font-family: var(--font-text); font-size: 14px; font-weight: 400; color: var(--ink-2); margin-top: 2px; }
+/* вводная по присланной ссылке — коротко: заголовок, одна строка и кнопки */
+.intro.compact .intro-lead, .intro.compact .intro-chapters, .intro.compact .intro-where { display: none; }
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -785,6 +817,8 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
   <button type="button" id="btnStopSkip">Стоп</button>
 </div>
 
+<!-- подпись главы истории — над обоими видами: глава про дом игрока показывает «Мой дом» -->
+<section class="story" id="story" hidden aria-labelledby="storyTitle"></section>
 <main id="viewWorld">
   <section class="card intro" id="intro" hidden aria-labelledby="introTitle">
     <div class="intro-head">
@@ -811,12 +845,21 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     </div>
     </div>
   </section>
-  <section class="story" id="story" hidden aria-labelledby="storyTitle"></section>
   <section class="card doom" id="doom" aria-label="Угроза городу" tabindex="-1"></section>
   <section class="tiles" id="tiles" aria-label="Сводка"></section>
   <div class="vh" id="announce" aria-live="polite"></div>
 
-  <div class="grid">
+  <!-- стержень «Мира»: подземелье (глубина сверху вниз) и летопись — сразу под угрозой -->
+  <div class="grid spine">
+    <section class="card dungeon" id="secDungeon">
+      <div class="card-head">
+        <h2><svg class="ic" aria-hidden="true"><use href="#i-cave-entrance"/></svg>Подземелье</h2>
+        <div class="card-tools"><span class="hint" id="dgHint"></span></div>
+      </div>
+      <div class="dg-legend" id="dgLegend"></div>
+      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд; ✓ — у обоих 95% и выше">шансы</span></div>
+      <div class="shaft" id="shaft" role="group" aria-label="Ярусы подземелья: отряды и кнопки — стрелками"></div>
+    </section>
     <section class="card chronicle" id="secChronicle">
       <div class="card-head">
         <h2><svg class="ic" aria-hidden="true"><use href="#i-scroll-unfurled"/></svg>Летопись</h2>
@@ -828,6 +871,12 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       <p class="ev-key" aria-hidden="true"><span class="k-b">■</span> прорыв · <span class="k-f">▼</span> рекорд глубины · <span class="k-w">✕</span> отряд разбит или пропал · <span>◆</span> разорение · <span class="k-o">◇</span> прочее важное</p>
       <ol class="events" id="events" aria-label="Летопись: имена — стрелками вверх и вниз"></ol>
     </section>
+  </div>
+
+  <!-- рынок и деньги — подробности, свёрнуты: открываются кнопкой, ссылкой из вводной или по адресу -->
+  <details class="more-world" id="moreWorld">
+    <summary><span class="mw-t"><svg class="ic" aria-hidden="true"><use href="#i-scales"/></svg>Подробнее: рынок и деньги</span><span class="hint">биржа, денежные потоки, графики города, таблицы домов, отрядов и скупщиков</span></summary>
+  <div class="grid2">
     <section class="card exchange" id="secExchange">
       <div class="card-head">
         <h2><svg class="ic" aria-hidden="true"><use href="#i-scales"/></svg>Биржа</h2>
@@ -842,19 +891,6 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       </div>
       <div class="pxinfo" id="pxInfo"></div>
       <div id="pxChart" class="lwc"></div>
-    </section>
-
-  </div>
-
-  <div class="grid2">
-    <section class="card dungeon" id="secDungeon">
-      <div class="card-head">
-        <h2><svg class="ic" aria-hidden="true"><use href="#i-cave-entrance"/></svg>Подземелье</h2>
-        <div class="card-tools"><span class="hint" id="dgHint"></span></div>
-      </div>
-      <div class="dg-legend" id="dgLegend"></div>
-      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд; ✓ — у обоих 95% и выше">шансы</span></div>
-      <div class="shaft" id="shaft" role="group" aria-label="Ярусы подземелья: отряды и кнопки — стрелками"></div>
     </section>
     <section class="card flows" id="flowsCard">
       <div class="card-head">
@@ -883,6 +919,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     </div>
     <div class="tablewrap" id="tableWrap" role="tabpanel" aria-label="Таблица"></div>
   </section>
+  </details>
 </main>
 
 <main id="viewHouse" hidden>
@@ -1157,8 +1194,11 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     const add = (at, title, k, note, look, from) => out.push({ at, t: Math.max(0, (from != null ? from : at) - 5), title, k, note, look, from });
     add(R.meta.seat_at, `Игрок занимает дом «${R.meta.seat_name || "—"}»`, "seat",
       `Игрок занял дом «${R.meta.seat_name || "—"}» — и дальше рычагов не трогает: дом живёт как бот. Угроза из подземелья уже сильнее гарнизона — следите за полосой угрозы.`, "doom");
-    for (const m of ms) if (m.k === "breach") add(m.t, "Прорыв из подземелья", "breach",
-      "Угроза прорвала гарнизон: в городе погибли люди. Прибыль была у домов своя, а риск оказался общим.", "doom");
+    const S = R.hist && R.hist.summary, sv = (k, t) => S && S[k] ? S[k][Math.max(0, Math.min(t, S[k].length - 1))] : null;
+    const f1 = x => (Math.round(x * 10) / 10).toLocaleString("ru-RU");
+    for (const m of ms) if (m.k === "breach") { const tb = sv("threat", m.t - 1), gb = sv("guard", m.t - 1);
+      add(m.t, "Прорыв из подземелья", "breach",
+        `Угроза прорвала гарнизон${tb != null && gb != null ? `: перед прорывом она была ${f1(tb)} против ${f1(gb)} у гарнизона` : ""}. В городе погибли люди — прибыль была у домов своя, а риск оказался общим.`, "doom"); }
     const fr = R.events.filter(e => e.k === "frontier");
     const deep = fr.filter(e => e.t > R.meta.seat_at);
     const lvl = e => +(e.text.match(/(\d+)-й ярус/) || [0, 0])[1];
@@ -1168,13 +1208,14 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
       `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.t); }
     // глава глубины — числами, а не прилагательным: что выросло с тех пор, как игрок занял дом
-    const S = R.hist && R.hist.summary, sv = (k, t) => S && S[k] ? S[k][Math.min(t, S[k].length - 1)] : null;
-    const f1 = x => (Math.round(x * 10) / 10).toLocaleString("ru-RU");
     if (fr.length) { const e = fr[fr.length - 1], s0 = R.meta.seat_at;
       const fa = sv("frontier", s0), ta = sv("threat", s0), tb = sv("threat", e.t), ga = sv("guard", s0), gb = sv("guard", e.t);
       add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
         `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали.` +
         (fa != null && ta != null && tb != null ? ` С тех пор как игрок занял дом, фронтир ${Math.round(fa)} → ${lvl(e)}, угроза ${f1(ta)} → ${f1(tb)}, гарнизон ${f1(ga)} → ${f1(gb)}.` : ""), "doom"); }
+    // дом игрока — посреди записи: пока город богатеет, дом живёт как бот (числа — при прибытии, из «Мой дом»)
+    if (R.meta.seat) add(Math.round(R.meta.seat_at + (R.meta.ticks - R.meta.seat_at) * 0.55), `Дом игрока «${R.meta.seat_name || "—"}»`, "house",
+      "Пока город богатеет, дом игрока живёт как бот: рычагов никто не трогает.", "house");
     out.sort((a, b) => a.at - b.at);
     out.push({ at: R.meta.ticks, t: R.meta.ticks, title: "Чем кончилось", k: "end", note: "", look: "verdict" });
     return out;
@@ -1622,7 +1663,9 @@ function renderDoom() {
   el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
   const fk = el.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.spark : null;
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
-    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
+    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}` +
+      (() => { const T = ST.cols[known ? "known" : "threat"] || ST.cols.threat, G = ST.cols.guard, i = lowerBound(ST.cols.t, lastBreach) - 1;
+        return T && G && i >= 0 ? `<span class="doom-pre">перед прорывом угроза ${compact(T[i])} против ${num(G[i], 1)} у гарнизона</span>` : ""; })() + `</div>` : "") +
     `<div class="doom-main">` +
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
@@ -1630,7 +1673,6 @@ function renderDoom() {
       `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "гарнизона нет — угрозу держать некому"}</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${Math.max(2, pct)}%"></span></div>` +
       `<div class="doom-n">${[head, move, br].filter(Boolean).join(" · ")}</div>` +
-      doomSpark() +
     `</div>` +
     `<div class="doom-side">` +
       `<div class="doom-k">${ic("stairs-goal")}Фронтир</div><div class="doom-v2">${s.frontier}-й ярус</div>` +
@@ -1644,6 +1686,7 @@ function renderDoom() {
         return n ? ` · в ${num(n)} ${w} — ${num(dead)}` : " · прорывов не было";
       })()}</div>` +
     `</div>` +
+    doomSpark() +
     `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
   if (fk) { const b = $(`[data-spark="${fk}"]`, el); if (b) b.focus({ preventScroll: true }); }
   if (!el.dataset.sparkBound) { el.dataset.sparkBound = "1"; el.addEventListener("click", e => { const b = e.target.closest("[data-spark]"); if (b) { UI.sparkAll = b.dataset.spark === "all"; renderDoom(); storyRefocus(); } }); }
@@ -2268,6 +2311,14 @@ $("#drawer").addEventListener("keydown", e => {   // Tab по кругу вну�
   else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
 });
 $("#scrim").onclick = () => $("#drawerClose").click();
+// «Подробнее: рынок и деньги» — свёрнуто; помнить выбор гостя
+function openMore() { const d = $("#moreWorld"); if (d && !d.open) d.open = true; }
+(() => {
+  const d = $("#moreWorld");
+  if (!d) return;
+  try { if (localStorage.getItem("doc-more") === "1") d.open = true; } catch (e) { /* без памяти */ }
+  d.addEventListener("toggle", () => { try { localStorage.setItem("doc-more", d.open ? "1" : "0"); } catch (e) { /* без памяти */ } });
+})();
 // широкий экран: статьи денег раскрыты — карточка денег рядом с высокой шахтой не пустует
 if (matchMedia("(min-width: 1100px)").matches && $("#flowMore")) $("#flowMore").open = true;
 $("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
@@ -2431,7 +2482,7 @@ async function loadDungeon() {
       `</div>` + (r.d === g.frontier ? `<div class="frontline">фронтир — ${g.frontier}-й ярус</div>` : "");
   };
   // надёжные пустые ярусы выше фронтира сворачиваются в одну строку — драма у фронтира
-  const quiet = r => r.d < g.frontier - 1 && !r.squads.length && safe(r);
+  const quiet = r => Math.abs(r.d - g.frontier) > 1 && !r.squads.length && safe(r);
   const parts = [];
   for (let i = 0; i < g.rows.length;) {
     let j = i;
@@ -2450,7 +2501,7 @@ async function loadDungeon() {
   if (again) again.focus({ preventScroll: true });
   shaftTabs();
   // к фронтиру — пока шахту не прокрутили руками
-  if (!UI.shaftScrolled) { const f = $(".lvl.front", sh); if (f) sh.scrollTop = Math.max(0, f.offsetTop - sh.offsetTop - sh.clientHeight / 2); }
+  if (!UI.shaftScrolled) { const f = $(".lvl.front", sh); if (f) sh.scrollTop = Math.max(0, f.getBoundingClientRect().top - sh.getBoundingClientRect().top + sh.scrollTop - sh.clientHeight / 2); }
   shaftUp();
 }
 function shaftUp() {
@@ -2599,6 +2650,7 @@ function renderHouseRisk(h) {
   $("#hToDoom").onclick = () => { setView("world"); const d = $("#doom"); d.scrollIntoView({ block: "start" }); d.focus({ preventScroll: true }); };
 }
 function renderHouse(h) {
+  UI.houseData = h;
   $("#hName").innerHTML = `${esc(h.name)}` + (h.ind ? ` <span class="tag">${esc(h.ind)}</span>` : "");
   if (!h.alive) {
     $("#hHint").textContent = "дом разорился — место потеряно";
@@ -2868,6 +2920,7 @@ function bindIntro() {
       $("#introMode").textContent = `Это запись ${years} лет одного города; запись стоит на присланном дне. Смотрите отсюда или пройдите историю по главам с начала.`;
       $("#introPlain").textContent = "или история с начала";
       $("#introPlain").dataset.story = "1";
+      $("#intro").classList.add("compact");
     }
     B.ready.then(() => {
       const ch = B.chapters ? B.chapters() : [];
@@ -2889,7 +2942,7 @@ function bindIntro() {
     });
   }
   $("#introClose").onclick = () => {
-    if (B && replay && $("#introClose").dataset.here) { delete $("#introClose").dataset.here; closeIntro(); B.R.speed = "3"; return; }
+    if (B && replay && $("#introClose").dataset.here) { delete $("#introClose").dataset.here; closeIntro(); B.R.speed = "1"; return; }
     if (B && replay && STORY.ch.length) {
       closeIntro();
       const nx = STORY.started && storyNext();
@@ -2921,6 +2974,7 @@ function bindIntro() {
     e.preventDefault();
     if (a.dataset.go === "house") { setView("house"); window.scrollTo(0, 0); return; }
     setView("world");
+    if (["secExchange", "flowsCard"].includes(a.dataset.go)) openMore();
     const el = document.getElementById(a.dataset.go);
     if (el) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   });
@@ -2942,6 +2996,7 @@ function storyGo(c) {
   const B = window.DOC_BACKEND;
   if (!c) { storyStop(); return; }
   STORY.cur = c; STORY.started = true; STORY.hl = null;
+  if (c.look !== "house" && UI.view === "house") setView("world");
   $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still"));
   if (c.k === "end") {                               // конец — сразу к итогу
     B.seek(B.R.meta.ticks); B.R.stopAt = null; storyStop();
@@ -2955,9 +3010,26 @@ function storyGo(c) {
   B.R.speed = c.at - B.R.head > 60 ? "30" : "10";
   storyRender("going");
 }
+async function storyHouse(c) {
+  setView("house"); window.scrollTo(0, 0);
+  await loadHouse();
+  const h = UI.houseData;
+  if (h && h.alive && STORY.cur === c) {
+    const q0 = h.series && h.series.pctl ? Math.round(h.series.pctl[0]) : null;
+    c.noteNow = `${c.note} Сейчас он богаче ${Math.round(h.pctl)}% домов${q0 != null ? ` (когда игрок занял его — ${q0}%)` : ""}: ` +
+      `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома. Прибыль у каждого своя — а угроза у ворот растёт для всех.`;
+    storyRender("here");
+    STORY.hl = { sel: ["#hTiles .tile:nth-child(2)", "#plot-hpctl"], until: Date.now() + 6000 };
+    STORY.hl.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus"); });
+    setTimeout(() => $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still")), 6000);
+  }
+  $("#announce").textContent = `${c.title}. ${c.noteNow || c.note}`;
+}
 function storyArrived() {
   storyRender("here");
   const c = STORY.cur, narrow = matchMedia("(max-width: 680px)").matches;
+  if (c.look === "house") { $("#story").classList.remove("dock"); storyHouse(c); return; }   // подпись — в потоке над плитками дома
+  if (UI.view === "house") setView("world");      // после главы про дом — обратно в «Мир»
   const el = c && document.getElementById(narrow && c.look === "doom" ? "story" : c.look);
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   $("#story").classList.toggle("dock", narrow && c.look !== "doom");
@@ -2986,7 +3058,7 @@ function storyRender(state) {
   const had = el.contains(document.activeElement);
   el.innerHTML = `<div class="story-k">Глава ${i + 1} из ${n} · ${evDay(c.at)}</div>` +
     `<h2 id="storyTitle">${esc(c.title)}</h2>` +
-    (state === "here" ? `<p>${esc(c.note)}</p>` : `<p class="dim">Запись идёт к этой главе…</p>`) +
+    (state === "here" ? `<p>${esc(c.noteNow || c.note)}</p>` : `<p class="dim">Запись идёт к этой главе…</p>`) +
     `<div class="story-go">` +
       (state === "here" && nx ? `<button type="button" class="primary" data-story="next">Дальше: ${esc(nx.title)} →</button>` : "") +
       (state === "going" ? `<button type="button" data-story="skip">Сразу туда</button>` : "") +
@@ -3217,6 +3289,7 @@ async function main() {
   await loadDungeon(); await loadFlows();
   bindViews();
   UI.hashReady = true;
+  if (H.tab || H.g) openMore();          // ссылка на таблицу или товар — подробности раскрыть
   await applyHash(H);
   writeHash();
   await checkAway();
