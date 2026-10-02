@@ -776,7 +776,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* ровная угроза — нейтральным текстом */
 .st.quiet { color: var(--ink-2); }
 /* подпись главы — слева, когда цель справа */
-@media (min-width: 681px) { .story.left { right: auto; left: 16px; } .story.up { bottom: auto; top: var(--story-top, 84px); } }
+@media (min-width: 681px) { .story.at-left { right: auto; left: 16px; } .story.at-top { bottom: auto; top: var(--story-top, 84px); } }
 
 /* летопись: чипы рода событий (они же ключ знаков) и поиск по имени */
 .ev-tools { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: -2px 0 8px; }
@@ -817,7 +817,7 @@ h2 { font-size: 22px; }
 h1 { font-size: 28px; }
 @media (max-width: 680px) { h1 { font-size: 26px; } main h2 { font-size: 21px; } h3 { font-size: 17px; } }
 @media (max-width: 380px) { h1 { font-size: 26px; } main h2 { font-size: 20.75px; } h3 { font-size: 16.5px; } }   /* шаг шкалы ≥ 1,25 и на 360 px */
-@media (max-width: 380px) { .brand .sub { display: none; } }
+@media (max-width: 440px) { .brand .sub { display: none; } }   /* иначе на 390 шапка в три ряда */
 
 /* v26: бегунок не меняет ширину от подписи кнопки и дня (вехи не перескакивают) */
 @media (min-width: 681px) {
@@ -876,6 +876,23 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 .follow b { color: var(--ink); font-weight: 400; }
 .follow .fw-ev { color: var(--ink-2); }
 .follow .fw-go { white-space: nowrap; margin-left: 4px; }
+/* v28: павшие — кнопка у числа погибших, список в шторке, строка гибели в карточке */
+.doom-v2 .fallen-go { font: 400 13px var(--font-text); vertical-align: middle; margin-left: 6px; }
+.drawer .died, #drawerBody .died { color: var(--critical); font-weight: 700; margin: 0 0 8px; }
+#drawerBody ul.fallen li { align-items: baseline; }
+/* v28: сразу после прорыва полоса гарнизона нейтральна — тревога в строке над полосой, а не «зелёный порядок» */
+.doom.fresh .doom-bar span { background: var(--ink-3) !important; }
+/* v28: слитая веха на касании — события кнопками */
+.rb-tip.pick { pointer-events: auto; width: min(300px, calc(100vw - 32px)); padding: 4px; }
+.rb-tip .tip-go { display: block; width: 100%; text-align: left; font: inherit; color: var(--ink-2); background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 8px 6px; min-height: 40px; }
+.rb-tip .tip-go:last-of-type { border-bottom: 0; }
+.rb-tip .tip-h { display: block; padding: 4px 6px 2px; color: var(--ink-3); font-size: 12px; }
+/* v28: телефон — имя строки таблицы остаётся на месте, пока таблицу листают вбок */
+@media (max-width: 680px) {
+  .tablewrap.allcols th:first-child, .tablewrap.allcols td:first-child, #hStock th:first-child, #hStock td:first-child,
+  #drawerBody table th:first-child, #drawerBody table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+  #hTiles { scroll-margin-top: 12px; }
+}
 
 </style>
 </head><body>
@@ -970,7 +987,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       </div>
       <p class="dg-lag" id="dgLag" hidden></p>
       <div class="dg-legend" id="dgLegend"></div>
-      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num dg-odds">шансы вернуться<small>новичкам · сильнейшим</small></span></div>
+      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num dg-odds">шансы вернуться<small>новичкам · сильнейшим; пусто — от 95%</small></span></div>
       <div class="shaft" id="shaft" role="group" aria-label="Ярусы подземелья: отряды и кнопки — стрелками"></div>
     </section>
     <section class="card chronicle" id="secChronicle">
@@ -1258,7 +1275,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         const seq = parseInt(a.seq || "0", 10), lim = parseInt(a.limit || "400", 10), lv = parseInt(a.lv || "0", 10);
         return R.events.filter(e => e.seq > seq && e.t <= R.head && e.lv >= lv).slice(-lim);
       }
-      case "/api/market": return (await frame()).market;
+      case "/api/market": { const fr = await frame(); return Object.assign({}, fr.market, { asof: fr.tick }); }   // стакан — на день снимка
       case "/api/houses": return (await frame()).houses;
       case "/api/squads": return (await frame()).squads;
       case "/api/dungeon": { const fr = await frame(); return Object.assign({}, fr.dungeon, { asof: fr.tick }); }   // снимок — и на какой день
@@ -1273,6 +1290,14 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         const q = String(a.q || "").toLowerCase(), out = [];
         if (q.length >= 2) for (const id in LIVES) { const L = LIVES[id]; if (L[0] <= R.head && L[2] && L[2].toLowerCase().includes(q)) { out.push({ id, name: L[2], ended: L[1] != null && L[1] <= R.head }); if (out.length >= 6) break; } }
         return out;
+      }
+      case "/api/fallen": {           // павшие в походах к этому дню: кто, когда, где, в каком отряде
+        if (!LIVES) [LIVES, GONE] = await Promise.all([getJSON("lives.json"), getJSON("gone.json")]);
+        const out = [];
+        for (const id in GONE) { const g = GONE[id]; if (id[0] === "P" && g.why === "погиб" && g.ended != null && g.ended <= R.head) {
+          const sq = (g.died && g.died.squad) || g.squad;
+          out.push({ id, name: g.name, t: g.died ? g.died.t : g.ended + 1, d: g.died ? g.died.d : null, squad: sq, sq: sq && g.refs ? g.refs[sq] : null, rank: g.rank, trips: g.trips }); } }
+        return out.sort((a, b) => b.t - a.t);
       }
       case "/api/me": {
         const seated = R.meta.seat && R.head >= seatShown();
@@ -1298,7 +1323,9 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     if (R.head >= R.meta.ticks && action === "speed" && value !== "pause") R.speed = "pause";
     return state();
   }
-  function seek(t) {
+  // mark — нарочный переход (веха, глава, итог): прежний день остаётся в истории браузера, «Назад» вернёт
+  function seek(t, mark) {
+    if (mark) { R.jumpFrom = R.head; try { history.pushState(null, "", location.hash || "#"); } catch (e) { /* песочница */ } }
     R.head = Math.max(0, Math.min(R.meta.ticks, Math.round(t)));
     R.acc = 0;
     R.epoch += 1;                      // страница перечитает историю с нуля
@@ -1332,6 +1359,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     return out;
   }
   const RANK = { frontier: 1, bankrupt: 2, wiped: 3, breach: 4 };
+  const nf1 = x => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toLocaleString("ru-RU");   // числа повествования: 135, 29,8
   const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
   // главы для вводной: место игрока, прорывы, первая и последняя глубина, крупнейшая волна
   // разорений, конец; t — куда переносить (за 5 дней до события), at — дата события
@@ -1406,22 +1434,34 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
   function bindMarks(box) {
     const tip = document.getElementById("rbTip"), bs = () => [...box.querySelectorAll(".rb-m")];
     const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-    let hideT = null;
+    let hideT = null, touch = false, armed = null;
     const show = (b, stay) => {
       const m = MS[+b.dataset.i];
-      tip.innerHTML = m.items.map(x => `<span class="tip-t">${short(x.t)}</span> <b>${KIND_RU[x.k]}</b>: ${esc(x.text)}`).join("<br>");
+      // касание по слитой вехе: события списком — перейти можно к любому, а не к одному выбранному
+      const pick = stay && m.items.length > 1;
+      tip.innerHTML = m.items.map((x, j) => pick ? `<button type="button" class="tip-go" data-j="${j}"><span class="tip-t">${short(x.t)}</span> <b>${KIND_RU[x.k]}</b>: ${esc(x.text)}</button>`
+        : `<span class="tip-t">${short(x.t)}</span> <b>${KIND_RU[x.k]}</b>: ${esc(x.text)}`).join(pick ? "" : "<br>") + (pick ? `<span class="tip-h">коснитесь события — перейти к нему</span>` : "");
+      tip.classList.toggle("pick", pick); tip.dataset.i = b.dataset.i;
       tip.hidden = false;
       const x = parseFloat(b.style.left);
       tip.style.left = `clamp(0px, calc(${x}% - 120px), calc(100% - 240px))`;
       clearTimeout(hideT);
-      if (stay) hideT = setTimeout(() => (tip.hidden = true), 3500);
+      if (stay) hideT = setTimeout(() => (tip.hidden = true), pick ? 9000 : 3500);
     };
     const hide = () => { clearTimeout(hideT); tip.hidden = true; };
+    tip.addEventListener("click", e => {
+      const g = e.target.closest(".tip-go");
+      if (!g) return;
+      const it = MS[+tip.dataset.i].items[+g.dataset.j];
+      if (R.speed !== "pause") R.lastSpeed = R.speed;
+      seek(it.t, true); R.speed = "pause"; R.stopAt = null; armed = null; hide();
+      setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t: it.t, title: KIND_RU[it.k] } })), 0);
+    });
     window.addEventListener("scroll", () => { if (!tip.hidden) hide(); }, { passive: true });
     box.addEventListener("pointerover", e => { const b = e.target.closest(".rb-m"); if (b) show(b); });
-    box.addEventListener("pointerout", e => { if (e.target.closest(".rb-m")) hide(); });
+    box.addEventListener("pointerout", e => { if (e.target.closest(".rb-m") && !(e.pointerType === "touch" && tip.classList.contains("pick"))) hide(); });
     box.addEventListener("focusin", e => { const b = e.target.closest(".rb-m"); if (b) show(b); });
-    box.addEventListener("focusout", hide);
+    box.addEventListener("focusout", e => { if (!(e.relatedTarget && tip.contains(e.relatedTarget)) && !tip.classList.contains("pick")) hide(); });
     box.addEventListener("keydown", e => {
       const all = bs(), i = all.indexOf(document.activeElement);
       if (i < 0) return;
@@ -1431,7 +1471,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       e.preventDefault(); e.stopPropagation();
       all[i].tabIndex = -1; all[j].tabIndex = 0; all[j].focus();
     });
-    let touch = false, armed = null;
+    touch = false; armed = null;
     box.addEventListener("pointerdown", e => { touch = e.pointerType === "touch"; });
     box.addEventListener("click", e => {
       const b = e.target.closest(".rb-m");
@@ -1442,7 +1482,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       // слитая веха: в день того события, чей знак на ней (■ — прорыв), и под его именем
       const m = MS[+b.dataset.i], it = m.items.find(x => x.k === m.k) || m.items[0], t = it.t, title = KIND_RU[it.k];
       if (R.speed !== "pause") R.lastSpeed = R.speed;
-      seek(t); R.speed = "pause"; R.stopAt = null;
+      seek(t, true); R.speed = "pause"; R.stopAt = null;
       hide();                                          // подпись вехи уступает сообщению «Вы на месте»
       setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t, title } })), 0);
     });
@@ -1500,7 +1540,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         const sw = (me.journal || []).filter(j => /сменил отрасль/.test(j[1])).map(j => (j[1].match(/«([^»]+)»/) || [])[1]).filter(Boolean);
         // снабженец: что он делает, что заработал и кто носит его снаряжение — тезис на одном доме
         const esc = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;");
-        const q1 = me.pctl, up = q0 == null || q1 >= q0 - 2, cap = v => Math.round(v).toLocaleString("ru-RU");
+        const q1 = me.pctl, up = q0 == null || q1 >= q0 - 2, cap = fmt;   // одно правило для всех денег итога
         const who = Object.entries(me.brand || {}).filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).map(([k]) => ({ "новичок": "новички", "ветеран": "ветераны", "мастер": "мастера" })[k] || k);
         const goods = [...new Set((me.lines || []).map(l => l.good_ru))].join(", ");
         const fa = S.frontier[R.meta.seat_at], ta = S.threat[R.meta.seat_at];
@@ -1508,7 +1548,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
           `Капитал ${w0 != null ? `${cap(w0)} → ` : ""}${cap(me.wealth)}` +
           (up ? "" : m0 != null && me.median ? `, но город богател быстрее (у медианного дома ${cap(m0)} → ${cap(me.median)})` : "") +
           (q0 != null ? `: был богаче ${Math.round(q0)}% домов, стал богаче ${Math.round(q1)}%.` : `: богаче ${Math.round(q1)}% домов.`) +
-          (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (fa != null ? ` — и за эти годы отряды ушли с ${Math.round(fa)}-го до ${f("front_max")}-го яруса, а угроза у ворот выросла с ${fmt(ta)} до ${fmt(f("threat"))}.` : ".") : "") +
+          (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (fa != null ? ` — и за эти годы отряды ушли с ${Math.round(fa)}-го до ${f("front_max")}-го яруса, а угроза у ворот выросла с ${nf1(ta)} до ${nf1(f("threat"))}${(pk => pk > f("threat") * 1.3 ? ` (на пике — ${nf1(pk)})` : "")(Math.max(...S.threat.slice(R.meta.seat_at)))}.` : ".") : "") +
           (sw.length ? ` ${sw.length === 1 ? "Сменил отрасль" : `Менял отрасль ${sw.length} ${plural(sw.length, "раз", "раза", "раз")}`}: теперь «${sw[sw.length - 1]}».` : ""));
         pm.hidden = false;
       }
@@ -1519,7 +1559,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       if (e.target.closest("button[data-house]")) { const v = document.querySelector('button[data-view="house"]'); if (v) v.click(); return; }
       const b = e.target.closest("button[data-go]");
       if (!b) return;
-      seek(+b.dataset.go); R.speed = "3";
+      seek(+b.dataset.go, true); R.speed = "3";
       window.scrollTo(0, 0);
     };
   }
@@ -1533,6 +1573,8 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     const hv = document.querySelector('button[data-view="house"]');
     if (hv) for (const n of hv.childNodes) if (n.nodeType === 3 && /Мой дом/.test(n.textContent)) n.textContent = "Дом игрока";
     const ih = document.querySelector('#intro a[data-go="house"]'); if (ih) ih.textContent = "Дом игрока";
+    // «?» в записи — это главы истории: так и подписать
+    const hb = document.getElementById("btnHelp"); if (hb) { hb.textContent = "Главы"; hb.setAttribute("aria-label", "Главы истории и вводная"); }
     const bar = document.createElement("div");
     bar.className = "replaybar";
     bar.innerHTML = `<span class="rb-k">Запись мира</span>` +
@@ -1660,7 +1702,9 @@ function compact(v) {
   if (a >= 1e4) return nf0.format(v / 1e3) + " тыс";
   return num(v);
 }
-const pct = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(d).replace(".", ",") + "%");
+// числа в повествовании (главы, итог): до 100 — с десятой, дальше целым — как в подписях глав записи
+const f1n = x => { const v = x >= 100 ? Math.round(x) : Math.round(x * 10) / 10; return num(v, Number.isInteger(v) ? 0 : 1); };
+const pct = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(d).replace(".", ",").replace("-", "−") + "%");   // минус — знаком минуса, как в остальных числах
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // текст с метками {id} -> ссылки на карточки
 // «Новое (бывш. Старое)» — имя из ядра; прежнее название тише основного, чтобы строки не двоились
@@ -1814,7 +1858,7 @@ function renderDoom() {
   // что значит разрыв: по правилу ядра прорыв случается в день с вероятностью (T − R) / T / breach_days
   const bd = (META && META.breach_days) || 1200;
   const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
-  const risk = thr > gd ? `риск прорыва — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
+  const risk = thr > gd ? `<button type="button" class="linkish" data-gloss title="Риск растёт с разрывом, но не выше ~26% в год: прорыв — случай, а не срок">риск прорыва</button> — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
   const way = trend === "up" ? " — разрыв растёт" : trend === "down" ? " — разрыв сокращается" : trend === "flat" ? " — разрыв не меняется" : "";
   // заголовок полосы — разрыв и его ход (меняется, когда меняется положение); цвет — по тому же числу
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
@@ -1843,7 +1887,7 @@ function renderDoom() {
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
         `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
-      `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "в гарнизоне ни одного солдата"}</div>` +
+      `<div class="doom-cap">${fresh && s.soldiers ? "после прорыва: " : ""}${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "в гарнизоне ни одного солдата"}</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${pct > 0 ? Math.max(2, pct) : 0}%"></span></div>` +
       `<div class="doom-n">${head ? `<div class="doom-verdict">${head}</div>` : ""}<div class="doom-n2">${[fresh ? br : "", gd > 0 ? risk : "", fresh ? "" : br].filter(Boolean).join(" · ")}</div></div>` +
     `</div>` +
@@ -1852,7 +1896,7 @@ function renderDoom() {
       `<div class="doom-n">рекорд — ${s.front_max}-й</div>` +
     `</div>` +
     `<div class="doom-side">` +
-      `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}</div>` +
+      `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}${window.DOC_BACKEND && s.fallen > 0 ? ` <button type="button" class="linkish fallen-go" data-fallen>кто погиб</button>` : ""}</div>` +
       `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f && f.now > f.then ? `+${num(f.now - f.then)} за 45 дн.` : "за 45 дн. — никого"; })()}${(() => {
         const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
         const n = s.breaches, w = n % 10 === 1 && n % 100 !== 11 ? "прорыве" : "прорывах";
@@ -2087,12 +2131,17 @@ function pushPx(from) {
 function renderPxInfo() {
   const row = UI.market && UI.market.find(r => r.g === UI.good);
   if (!row) { $("#pxInfo").textContent = ""; return; }
-  const k = row.ref ? row.px / row.ref : null;
+  // цена и её ход — по дневному ряду (как последняя точка графика), а не по снимку таблиц
+  const t = ST.cols.t, p = ST.px[UI.good] || [];
+  let i = p.length - 1; while (i >= 0 && p[i] == null) i--;
+  const px = i >= 0 ? p[i] : row.px, j = i >= 0 ? lowerBound(t, t[i] - 30) : -1;
+  const d30 = j >= 0 && j < i && p[j] ? px / p[j] - 1 : row.d30;
+  const k = row.ref ? px / row.ref : null;
   const shop = META.kind[UI.good] === "лавка";
-  let s = `<b>${esc(row.ru)}</b> · цена <b>${num(row.px, 2)}</b> · опорная ${num(row.ref, 2)}`
-    + (k ? ` (×${num(k, 2)})` : "") + ` · за 30 дн. ${pct(row.d30)}`
+  let s = `<b>${esc(row.ru)}</b> · цена <b>${num(px, 2)}</b> · опорная ${num(row.ref, 2)}`
+    + (k ? ` (×${num(k, 2)})` : "") + ` · за 30 дн. ${pct(d30)}`
     + ` · ${shop ? "продажи лавок в день" : "объём за день"} ${num(row.vol, 1)}`;
-  if (!shop) s += ` · лучший бид ${num(row.bid, 2)} / аск ${row.ask ? num(row.ask, 2) : "—"}`;
+  if (!shop) s += ` · лучшая покупка ${row.bid ? num(row.bid, 2) : "—"} / продажа ${row.ask ? num(row.ask, 2) : "—"}${UI.marketAsof != null && window.DOC_BACKEND ? ` <span class="dim">(стакан на ${evDay(UI.marketAsof)})</span>` : ""}`;
   $("#pxInfo").innerHTML = s;
 }
 function setTab(t) {
@@ -2254,7 +2303,7 @@ function evStateLine(n) {
       const box = $("#evFind");
       if (!box || UI.evQuery !== q || !r || !r.length) return;
       const kind = id => ({ H: "дом", S: "отряд", P: "человек", F: "скупщик" })[id[0]] || "";
-      box.innerHTML = `карточки: ` + r.map(x => `<a class="ref" href="#${x.id}" data-id="${x.id}">${esc(x.name)}</a> <span class="dim">(${kind(x.id)}${x.ended ? ", ушёл" : ""})</span>`).join(", ") + " ·";
+      box.innerHTML = ` · карточки: ` + r.map(x => `<a class="ref" href="#${x.id}" data-id="${x.id}">${esc(x.name)}</a> <span class="dim">(${kind(x.id)}${x.ended ? ", ушёл" : ""})</span>`).join(", ") + " ·";
     });
   }
   $("#evClear").onclick = () => { UI.evKinds.clear(); UI.evQuery = ""; UI.evRef = null; $("#evQuery").value = ""; $$("#evKinds button").forEach(b => b.setAttribute("aria-pressed", "false")); renderEvents(); };
@@ -2376,7 +2425,7 @@ const COLS = {
     { k: "x", l: "К опорной", n: 1, f: v => (v == null ? "—" : "×" + num(v, 2)) },
     { k: "d30", l: "За 30 дн.", n: 1, f: v => `<span class="${v > 0.005 ? "up" : v < -0.005 ? "down" : ""}">${pct(v)}</span>` },
     { k: "vol", l: "Объём/день", n: 1, lo: 1, f: v => num(v, 1) },
-    { k: "bid", l: "Бид", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Аск", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") },
+    { k: "bid", l: "Покупка", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Продажа", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") },
     { k: "depth_b", l: "Спрос в стакане", n: 1, lo: 1, lo2: 1, f: v => (v == null ? "—" : num(v, 0)) },
     { k: "depth_a", l: "Предложение", n: 1, lo: 1, lo2: 1, f: v => (v == null ? "—" : num(v, 0)) },
   ],
@@ -2421,13 +2470,13 @@ let TABLE_ROWS = [];
 async function loadTable() {
   if (UI.tab === "market") {
     const r = await api("/api/market");
-    UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+    UI.marketAsof = r.asof; UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
     TABLE_ROWS = UI.market;
     UI.fences = r.fences;
     renderPxInfo(); updateRefLine();
   } else if (UI.tab === "fences") {
     const r = await api("/api/market");
-    UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+    UI.marketAsof = r.asof; UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
     TABLE_ROWS = r.fences;
     renderPxInfo();
   } else {
@@ -2438,11 +2487,14 @@ async function loadTable() {
 }
 async function loadMarketQuiet() {
   const r = await api("/api/market");
-  UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
+  UI.marketAsof = r.asof; UI.market = r.rows.map(x => Object.assign(x, { x: x.ref ? x.px / x.ref : null, kind: META.kind[x.g] }));
   renderPxInfo(); updateRefLine();
 }
 function renderTable() {
-  const cols = (!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab], srt = UI.sort[UI.tab];
+  // второстепенный столбец, пустой во всех строках (ни одной заявки на покупку), — не показывать
+  const cols = ((!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab]).filter(c => !c.lo || TABLE_ROWS.some(r => r[c.k])), srt = UI.sort[UI.tab];
+  const fk = document.activeElement && document.activeElement.closest && document.activeElement.closest("#tableWrap th[data-k]");
+  const focusK = fk ? fk.dataset.k : null;      // сортировка с клавиатуры: фокус остаётся на том же заголовке
   let rows = TABLE_ROWS.slice();
   if (srt) {
     rows.sort((a, b) => {
@@ -2472,6 +2524,7 @@ function renderTable() {
   if (cb) cb.onclick = () => { UI.allCols = Object.assign(UI.allCols || {}, { [UI.tab]: !(UI.allCols || {})[UI.tab] }); renderTable(); };
   const more = $("#tblMore");
   if (more) more.onclick = () => { UI.showAll = Object.assign(UI.showAll || {}, { [UI.tab]: true }); renderTable(); };
+  if (focusK) { const b = $(`#tableWrap th[data-k="${focusK}"] .th-sort`); if (b) b.focus({ preventScroll: true }); }
   $("#tabHint").textContent = !META.full && UI.tab === "houses"
     ? "живые дома, по мощности; касса чужих домов не видна — только послужной список"
     : !META.full && UI.tab === "fences" ? "касса и склад скупщиков не видны" : HINT[UI.tab];
@@ -2563,7 +2616,23 @@ function openMore() { const d = $("#moreWorld"); if (d && !d.open) d.open = true
   d.addEventListener("toggle", () => { try { localStorage.setItem("doc-more", d.open ? "1" : "0"); } catch (e) { /* без памяти */ } });
 })();
 // статьи денег — по раскрытию: раскрытые сами по себе тянули карточку на 1000 px рядом с короткой биржей
-$("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
+$("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id === "fallen") openFallen(); else if (id) openEntity(id, true); };
+// павшие в походах: список к текущему дню, имя — карточка с историей (← назад — к списку)
+async function openFallen() {
+  const list = await api("/api/fallen");
+  if (!Array.isArray(list)) return;
+  showDrawer();
+  UI.entity = null; UI.drawer = ["fallen"]; writeHash();
+  $("#drawerBack").hidden = true;
+  $("#drawerTitle").innerHTML = `<small class="dk">павшие </small>в походах — ${num(list.length)}`;
+  const byLv = {}; for (const x of list) if (x.d) byLv[x.d] = (byLv[x.d] || 0) + 1;
+  const top = Object.entries(byLv).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([d, n]) => `${d}-й — ${n}`).join(", ");
+  $("#drawerBody").innerHTML = `<p class="hint">Кто погиб в походах к ${evDay(ST.state ? ST.state.tick : 0)}, новые сверху. Имя — карточка человека и его история.${top ? ` Больше всего — на ярусах: ${top}.` : ""}</p>` +
+    (list.length ? `<ul class="hist fallen">` + list.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${ref(x.id, x.name)}` +
+      `${x.rank ? ` <span class="dim">${esc(x.rank)}${x.trips != null ? `, походов ${x.trips}` : ""}</span>` : ""} — ${x.d ? `на ${x.d}-м ярусе` : "в походе"}${x.squad ? `, отряд ${ref(x.squad, x.sq || x.squad)}` : ""}</span></li>`).join("") + `</ul>`
+      : `<p class="empty">к этому дню в походах никто не погиб</p>`);
+}
+document.addEventListener("click", e => { if (e.target.closest("[data-fallen]")) { e.preventDefault(); openFallen(); } });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
 
 async function openEntity(id, push) {
@@ -2608,6 +2677,11 @@ document.addEventListener("click", ev => {
   closeDrawer(); setView("world"); renderEvents();
   const c = $("#secChronicle"); c.scrollIntoView({ block: "start" }); $("#evClear").focus({ preventScroll: true });
 });
+// срок возвращения: прошёл (снимок шахты старше дня) — «возвращения ждут», после конца записи — так и сказать
+function backTxt(t) {
+  const now = ST.state ? ST.state.tick : 0;
+  return t >= (META.ticks || Infinity) ? "вернётся после конца записи" : t < now ? `возвращения ждут (срок — ${evDay(t)})` : `вернётся ${evDay(t)}`;
+}
 // «следить»: отряд или дом закреплён строкой под полосой угрозы, подсвечен в шахте и летописи, хранится в адресе
 document.addEventListener("click", ev => {
   if (!ev.target.closest("#btnFollow")) return;
@@ -2631,7 +2705,7 @@ async function renderFollow() {
     const rows = await api("/api/squads"), r = (Array.isArray(rows) ? rows : rows.rows || []).find(x => x.id === id);
     const lv = UI.dg && UI.dg.rows ? UI.dg.rows.find(x => x.squads.some(q => q.id === id)) : null, q = lv && lv.squads.find(x => x.id === id);
     if (r) { F.name = r.name.replace(/\s*\(бывш\.[^)]*\)\s*$/, "") || F.name;
-      const back = t => t >= (META.ticks || Infinity) ? "вернётся после конца записи" : `вернётся ${evDay(t)}`;
+      const back = backTxt;
       line = q ? `${lv.d}-й ярус, ${q.phase} · ${r.size} чел. · ${back(q.back)} · шансы ${Math.round(q.p * 100)}%`
         : `${r.state}${r.depth ? `, ${r.depth}-й ярус` : ""} · ${r.size} чел. · сила ${num(r.power, 2)}${r.back ? ` · ${back(r.back)}` : ""}`; }
     else gone = await api(`/api/entity?id=${id}`);
@@ -2702,7 +2776,8 @@ function houseCard(e) {
 }
 const bar = v => `<span class="bar"><i style="width:${Math.round(Math.max(0, Math.min(1, v)) * 100)}%"></i></span>`;
 function personCard(e) {
-  let h = `<dl class="kv">${lifeLine(e)}`;
+  let h = e.died ? `<p class="died">✕ Погиб${e.fem ? "ла" : ""} ${evDay(e.died.t != null ? e.died.t : e.ended + 1)}${e.died.d ? ` на ${e.died.d}-м ярусе` : ""}${e.died.squad ? `, в отряде ${ref(e.died.squad, e.refs && e.refs[e.died.squad])}` : ""}.</p>` : "";
+  h += `<dl class="kv">${lifeLine(e)}`;
   if (e.role) {
     h += `<dt>отряд</dt><dd>${e.squad ? ref(e.squad, e.refs && e.refs[e.squad]) : "в гильдии, без отряда"}</dd>` +
       `<dt>роль</dt><dd>${esc(e.role)}</dd><dt>ранг</dt><dd>${esc(e.rank)}</dd><dt>касса</dt><dd>${num(e.cash)}</dd>` +
@@ -2713,8 +2788,9 @@ function personCard(e) {
     h += `<dt>где</dt><dd>не в отряде и не в гильдии</dd>`;
   }
   h += `</dl>`;
-  if (e.hist && e.hist.length) {
-    h += `<h3>История</h3><ul class="hist">` + e.hist.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${linkText(x.text, e.refs)}</span></li>`).join("") + `</ul>`;
+  const hs = (e.hist || []).filter(x => !(e.died && /^погибл?а? на \d+-м ярусе/.test(x.text)));   // гибель — уже строкой сверху
+  if (hs.length) {
+    h += `<h3>История</h3><ul class="hist">` + hs.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${linkText(x.text, e.refs)}</span></li>`).join("") + `</ul>`;
   } else if (e.ended != null) {
     h += `<p class="empty">история ушедших не хранится — только в летописи</p>`;
   }
@@ -2761,7 +2837,7 @@ async function loadDungeon() {
   if (heldUnder("shaft", UI.hoverShaft)) return;
   const g = UI.dg = await api("/api/dungeon");
   if (UI.follow) setTimeout(renderFollow, 0);      // строка «следите» — по тому же снимку шахты
-  const pct0 = v => Math.round(v * 100) + "%";
+  const pct0 = v => Math.floor(v * 100) + "%";   // вниз: 94,8% — «94%», а не «95%» (надёжно — от 95%, клетка пуста)
   const fl = ST.state ? ST.state.frontier : g.frontier, fm = ST.state ? ST.state.front_max : g.front_max;
   // одна правда: черта фронтира — живая (как в полосе угрозы); ярусы — снимок, его возраст — явной меткой
   const lag = g.asof != null && ST.state && window.DOC_BACKEND ? ST.state.tick - g.asof : 0;
@@ -2780,7 +2856,7 @@ async function loadDungeon() {
     const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
     const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
     const sq = r.squads.slice(0, 12).map(s =>
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     // глубже — темнее: шахта читается как спуск, а не как таблица
@@ -3267,7 +3343,7 @@ function bindIntro() {
     });
   }
   $("#introClose").onclick = () => {
-    if (B && replay && $("#introClose").dataset.here) { delete $("#introClose").dataset.here; closeIntro(); B.R.speed = "1"; return; }
+    if (B && replay && $("#introClose").dataset.here) { delete $("#introClose").dataset.here; closeIntro(); B.R.speed = "3"; return; }
     if (B && replay && STORY.ch.length) {
       closeIntro();
       const nx = STORY.started && storyNext();
@@ -3292,6 +3368,7 @@ function bindIntro() {
     else if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
     $("#intro").hidden = false;
     $("#intro").scrollIntoView({ block: "start" });
+    $("#introClose").focus({ preventScroll: true });   // открылось — фокус туда, где выбор
   };
   $("#intro").addEventListener("click", e => {
     const a = e.target.closest("a[data-go]");
@@ -3313,7 +3390,8 @@ const storyNext = () => STORY.ch.find(c => c.at > window.DOC_BACKEND.R.head + 1)
 function storyStart() { STORY.on = true; STORY.started = true; storyGo(STORY.ch[0]); }
 function storyStop() {
   const had = $("#story").contains(document.activeElement);
-  STORY.on = false; STORY.cur = null;
+  STORY.on = false; STORY.cur = null; STORY.hl = null;
+  $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still"));   // история кончилась — подсветка тоже
   $("#story").hidden = true;
   if (had) { const p = $("#rbPlay"); if (p) p.focus({ preventScroll: true }); }   // фокус — не на <body>
 }
@@ -3331,7 +3409,7 @@ function storyGo(c) {
   }
   // к главе — не дольше нескольких секунд: дальний путь перематывается, последние ~90 дней видны в ходу
   const gap = c.at - B.R.head, start = Math.max(0, Math.min(c.t, c.at - 90));
-  if (gap < 0 || B.R.head < start) B.seek(start);
+  if (gap < 0 || B.R.head < start) B.seek(start, true); else { B.R.jumpFrom = B.R.head; try { history.pushState(null, "", location.hash || "#"); } catch (e) { /* песочница */ } }
   B.R.stopAt = c.at; B.R.stopTitle = c.title;
   B.R.speed = c.at - B.R.head > 60 ? "30" : "10";
   storyRender("going");
@@ -3341,17 +3419,17 @@ function storyGo(c) {
 function storySide(id) {
   const st = $("#story");
   if (id) STORY.sideId = id;
-  if (st.hidden || matchMedia("(max-width: 680px)").matches) { st.classList.remove("left", "up"); return; }
+  if (st.hidden || matchMedia("(max-width: 680px)").matches) { st.classList.remove("at-left", "at-top"); return; }
   const base = document.getElementById(STORY.sideId);
   // беречь подсвеченное и сам предмет главы (в главе о доме — график капитала, о котором подпись)
-  const rs = [...$$(".story-focus"), base].filter(Boolean).map(x => x.getBoundingClientRect()).filter(r => r.width && r.bottom > 0 && r.top < innerHeight);
+  const rs = [...$$(".story-focus"), base, UI.view === "house" ? $("#hTiles") : null].filter(Boolean).map(x => x.getBoundingClientRect()).filter(r => r.width && r.bottom > 0 && r.top < innerHeight);
   const w = st.offsetWidth, h = st.offsetHeight, bar = $(".replaybar"), m = 16;
   const top = (bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().bottom : 0) + 12;
   const cost = (x, y) => rs.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.right) - Math.max(x, r.left)) * Math.max(0, Math.min(y + h, r.bottom) - Math.max(y, r.top)), 0);
   const corners = [[false, false], [true, false], [false, true], [true, true]]       // [слева, сверху]; по умолчанию — справа внизу
     .map(([l, u]) => ({ l, u, c: cost(l ? m : innerWidth - m - w, u ? top : innerHeight - m - h) }));
   const best = corners.reduce((a, b) => (b.c < a.c - 1 ? b : a));
-  st.classList.toggle("left", best.l); st.classList.toggle("up", best.u);
+  st.classList.toggle("at-left", best.l); st.classList.toggle("at-top", best.u);   // не «up»: так зовётся зелёный цвет роста в таблицах
   st.style.setProperty("--story-top", top + "px");
 }
 addEventListener("scroll", () => {
@@ -3368,12 +3446,14 @@ async function storyHouse(c) {
     const S = ST.cols, i0 = S && S.t ? lowerBound(S.t, META.seat_at) : -1, ta = i0 >= 0 && S.threat ? S.threat[i0] : null;
     c.noteNow = `${c.note} Сейчас он богаче ${Math.round(h.pctl)}% домов${q0 != null ? ` (когда игрок занял его — ${q0}%)` : ""}: ` +
       `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома.` +
-      (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (ta != null && ST.state ? ` — а угроза у ворот за это время ${compact(ta)} → ${compact(ST.state.threat)}.` : ".") : "");
+      (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (ta != null && ST.state ? ` — а угроза у ворот за это время ${f1n(ta)} → ${f1n(ST.state.threat)}.` : ".") : "");
     storyRender("here");
-    STORY.hl = { sel: ["#hTiles .tile:nth-child(2)", "#plot-hpctl", "#hBrand"], until: Date.now() + 6000 };
+    // телефон: графики и «Слава» — далеко внизу; подсветить плитки капитала и места и показать их
+    const narrow = matchMedia("(max-width: 680px)").matches;
+    STORY.hl = { sel: narrow ? ["#hTiles .tile:nth-child(1)", "#hTiles .tile:nth-child(2)"] : ["#hTiles .tile:nth-child(2)", "#plot-hpctl", "#hBrand"], until: Infinity };   // до следующей главы
+    if (narrow) { const t = $("#hTiles"); if (t) setTimeout(() => t.scrollIntoView({ block: "start" }), 60); }
     setTimeout(() => storySide("plot-hwealth"), 50);
     STORY.hl.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus"); });
-    setTimeout(() => $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still")), 6000);
   }
   $("#announce").textContent = `${c.title}. ${c.noteNow || c.note}`;
 }
@@ -3394,7 +3474,7 @@ function storyFocus(c) {
   $$(".story-focus").forEach(x => x.classList.remove("story-focus"));
   const pick = { seat: ["#doom .doom-v", "#doom .doom-bar"], breach: ["#doom .doom-alarm"],
     first: ["#doom .doom-side"], deep: ["#doom .doom-side"], wave: [] }[c.k] || [];
-  STORY.hl = { sel: pick, until: Date.now() + 6000 };
+  STORY.hl = { sel: pick, until: Infinity };     // подсветка держится до следующей главы или закрытия истории
   const els = pick.map(q => $(q)).filter(Boolean);
   if (c.k === "wave" || c.k === "breach")
     for (const li of $$("#events > li[data-t]")) { const t = +li.dataset.t, t0 = +(li.dataset.t0 || li.dataset.t); if (t >= (c.from != null ? c.from : c.at) - 3 && t0 <= c.at + 3 && li.classList.contains(c.k === "breach" ? "k-breach" : "k-bankrupt")) els.push(li); }
@@ -3402,7 +3482,6 @@ function storyFocus(c) {
   // строки летописи — первую подсвеченную в окно (внутренняя прокрутка летописи тоже)
   const li = els.find(x => x.tagName === "LI"), box = $("#events");
   if (li && box.scrollHeight > box.clientHeight) box.scrollTop = Math.max(0, li.offsetTop - box.offsetTop - box.clientHeight / 3);
-  setTimeout(() => els.forEach(x => x.classList.remove("story-focus")), 6000);
 }
 function storyRender(state) {
   const c = STORY.cur, el = $("#story");
@@ -3449,8 +3528,9 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && STORY.on &
 // словарь: каждое число и слово страницы — одной строкой (открывается из «Об игре» и по ссылкам «словарь»)
 const GLOSS = [
   ["Угроза", "сила, которую копит подземелье: растёт, когда отряды выносят добычу с глубоких ярусов, и сама понемногу затихает."],
-  ["Гарнизон", "городская стража — то, что держит угрозу у ворот. Числа угрозы и гарнизона сравнимы: «78 против 7,4» — угроза в 10,5 раза сильнее."],
+  ["Гарнизон", "городская стража — то, что держит угрозу у ворот. Числа угрозы и гарнизона сравнимы между собой: если угроза 80, а гарнизон 8, угроза в 10 раз сильнее."],
   ["Прорыв", "угроза пересилила гарнизон, и подземелье вышло в город: гибнут стража и горожане. Чем больше разрыв, тем выше риск прорыва — на полосе он дан в процентах за год."],
+  ["Риск прорыва", "вероятность прорыва за год при нынешнем разрыве. Он растёт с разрывом, но медленно и не выше ~26% в год: при угрозе вдвое сильнее гарнизона — около 14%, в десять раз — около 24%. Прорыв — случай, а не срок: можно годами жить под угрозой и не дождаться его."],
   ["Ярус", "уровень подземелья. Чем глубже, тем богаче добыча и тем сильнее просыпается подземелье."],
   ["Фронтир", "самый глубокий ярус, с которого отряды возвращаются. Если туда долго не ходят, черта отступает."],
   ["Поход", "45 дней внизу: отряд берёт припас, спускается, добывает и возвращается — или нет."],
@@ -3459,11 +3539,13 @@ const GLOSS = [
   ["Знание", "сколько походов вернулось с яруса: тропы и ловушки известны — ходить туда безопаснее."],
   ["Запас: на деле и слух", "сколько добычи осталось на ярусе и сколько о ней думает город по рассказам вернувшихся."],
   ["Шансы вернуться", "вероятность вернуться из похода с полным припасом: новичкам и сильнейшим отрядам; пустая клетка — надёжно для всех (≥ 95%)."],
+  ["Отряд разбит", "в отряде после похода меньше двух живых: меньше двух в поход не ходят, отряд распускается, уцелевший уходит в гильдию ждать найма."],
+  ["Погибшие", "у «Погибли в походах» — кнопка «кто погиб»: список павших, их ярусы и отряды; имя в летописи — карточка человека с его историей."],
   ["Линия", "мастерская дома, выпускающая один товар."],
   ["Мощность", "размер мастерских линии. Выпуск за день — мощность, умноженная на выработку ремесла (у каждого ремесла своя)."],
   ["Опорная цена", "себестоимость товара, посчитанная по рецептам от стоимости труда; рыночная цена ходит вокруг неё. «К опорной ×2» — вдвое дороже."],
   ["Стакан", "заявки на бирже: кто сколько хочет купить и продать и по какой цене."],
-  ["Бид и аск", "лучшая цена покупки и лучшая цена продажи в стакане."],
+  ["Покупка и продажа (бид и аск)", "лучшая цена, по которой в стакане готовы купить, и лучшая — по которой готовы продать."],
   ["Капитал", "касса дома, мастерские по цене стройки и склад по цене рынка, минус долги."],
   ["Разорение", "у дома кончились деньги — он закрывается, его покупатели уходят к выжившим."],
   ["Скупщик", "выкупает добычу у вернувшихся отрядов и продаёт её на бирже."],
@@ -3588,6 +3670,11 @@ window.docHash = hashParams;
 const hashFollow = () => { const B = window.DOC_BACKEND; if (B && UI.hashReady && B.R.head !== UI.hashWrote) { UI.hashWrote = B.R.head; writeHash(); } };
 setInterval(hashFollow, 500);
 document.addEventListener("doc-seek", hashFollow);
+// «Назад» в браузере после вехи, главы или кнопки итога — на прежний день
+addEventListener("popstate", () => {
+  const B = window.DOC_BACKEND, H = readHash();
+  if (B && H.t != null && +H.t !== B.R.head) { B.R.stopAt = null; B.R.speed = "pause"; B.seek(+H.t); toast(`Назад — к ${evDay(+H.t)}`); }
+});
 window.docToast = (m) => toast(m);
 function writeHash() {
   if (!UI.hashReady) return;                       // пока страница собирается — адрес не трогать
@@ -3620,7 +3707,8 @@ document.addEventListener("doc-arrived", e => {
   const { t, title } = e.detail || {};
   if (STORY.on) { storyArrived(); return; }
   const go = matchMedia("(pointer: coarse)").matches ? "«Пуск» внизу — смотреть дальше" : "Пробел — смотреть дальше";
-  toast(`Вы на месте: ${title || "веха"} — ${evDay(t)}. ${go}.`);
+  const back = window.DOC_BACKEND && window.DOC_BACKEND.R.jumpFrom != null && Math.abs(window.DOC_BACKEND.R.jumpFrom - t) > 5 ? ` «Назад» в браузере — к ${evDay(window.DOC_BACKEND.R.jumpFrom)}.` : "";
+  toast(`Вы на месте: ${title || "веха"} — ${evDay(t)}. ${go}.${back}`);
   $("#announce").textContent = `${title || "Веха"}, ${evDay(t)}. Запись на паузе.`;
   // итог перехода — на виду: если полоса угрозы ушла за край, вернуть её в окно
   const d = $("#doom");
