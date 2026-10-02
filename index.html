@@ -686,6 +686,25 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* очень узкий телефон: «Ссылка» — во всплывающем окне «Знаков», полоса — в две строки */
 .rb-share2 { display: none; margin-top: 8px; }
 @media (max-width: 400px) { .replaybar > .rb-share { display: none; } .replayinfo .rb-share2 { display: inline-block; } }
+/* на подкрашенной полосе угрозы (рост, ×5, ×10, прорыв) мелкие подписи — на ступень темнее: контраст ≥ 4,5 */
+.doom.rising :is(.doom-k, .doom-num small, .doom-vs, .sp-cap, .doom-cap),
+.doom:is([data-sev="2"], [data-sev="3"], [data-level=critical]) :is(.doom-k, .doom-num small, .doom-vs, .sp-cap, .doom-cap) { color: var(--ink-2); }
+/* телефон: заголовок сайта не мельче заголовков карточек */
+@media (max-width: 680px) { main h2 { font-size: 19px; } }
+@media (max-width: 380px) { main h2 { font-size: 18px; } .tablewrap th, .tablewrap td { padding-left: 4px; padding-right: 4px; } .tablewrap table { font-size: 13px; } }
+
+/* телефон: глава про летопись или шахту — подпись прибита над нижней полосой, текст — до трёх строк */
+@media (max-width: 680px) {
+  .story.dock { position: fixed; left: 8px; right: 8px; bottom: calc(var(--rbh, 108px) + 6px); z-index: 15; margin: 0;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, .28); padding: 8px 12px; }
+  .story.dock h2 { font-size: 16px; margin: 0 0 4px; }
+  .story.dock p { font-size: 13.5px; margin: 0 0 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  body:has(.story.dock) { padding-bottom: calc(var(--rbh, 108px) + 200px); }
+}
+.rb-cx { font: 700 10.5px/1 var(--font-text); padding: 1px 3px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+.sqdot { font-weight: 700; }
+#drawerTitle .dk { display: block; font-family: var(--font-text); font-size: 12.5px; font-weight: 400; color: var(--ink-3); letter-spacing: .02em; }
+@media (max-width: 680px) { td.wrap { min-width: 110px; } }
 
 </style>
 </head><body>
@@ -1277,7 +1296,8 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       `<span class="rb-n">мир № ${R.meta.seed} · ${Math.round(R.meta.ticks / R.meta.day)} лет · игрок занял дом «${R.meta.seat_name || "—"}» в начале ${Math.floor(R.meta.seat_at / R.meta.day) + 1}-го года и рычагов не трогает` +
       `<span class="rb-legend" aria-hidden="true">` + [["frontier", "рекорд глубины"], ["breach", "прорыв"], ["wiped", "разбит отряд"], ["bankrupt", "волна разорений"]]
         .map(([k, l]) => `<span><i class="rb-m rb-${k}"></i>${l}</span>`).join("") +
-        `<span><i class="rb-wk"></i>разгон — первые ${Math.round(R.meta.seat_at / R.meta.day)} года мир идёт сам</span></span></span>` +
+        `<span><i class="rb-wk"></i>разгон — первые ${Math.round(R.meta.seat_at / R.meta.day)} года мир идёт сам</span>` +
+        `<span><b class="rb-cx">2</b> цифра у вехи — сколько событий в ней слилось</span></span></span>` +
       `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
       `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="rb-speed">` +
       ["1", "3", "10", "30", "max"].map(v => `<option value="${v}"${v === "3" ? " selected" : ""}>${v === "max" ? "макс" : v + "/с"}</option>`).join("") + `</select>` +
@@ -1404,6 +1424,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 // «Новое (бывш. Старое)» — имя из ядра; прежнее название тише основного, чтобы строки не двоились
 const nm = n => { const m = /^(.*?)\s*(\(бывш\. [^)]*\))$/.exec(n); return m ? `${esc(m[1])} <span class="was">${esc(m[2])}</span>` : esc(n); };
 function linkText(text, refs) {
+  text = text.replace(/(^|[.!;:] )\{(S-\d+)\} (ушёл|вернулся|разбит|не вернулся|пропал)/g, (_m, pre, id, v) => `${pre}${pre ? "отряд" : "Отряд"} {${id}} ${v}`);
   return esc(text).replace(/\{([PHSF]-\d+)\}/g, (_m, id) =>
     `<a class="ref" href="#${id}" data-id="${id}">${nm((refs && refs[id]) || id)}</a>`);
 }
@@ -1450,7 +1471,7 @@ function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
   const b = document.getElementById("btnTheme");   // кнопка говорит, какая тема сейчас
-  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `Тема<span class="d-only">: ${dark ? "тёмная" : "светлая"}</span>`; b.setAttribute("aria-label", dark ? "Тема сейчас тёмная — включить светлую" : "Тема сейчас светлая — включить тёмную"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
+  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `<span class="d-only">${dark ? "Светлая тема" : "Тёмная тема"}</span><span class="m-only">Тема</span>`; b.setAttribute("aria-label", dark ? "Тема сейчас тёмная — включить светлую" : "Тема сейчас светлая — включить тёмную"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
 }
 function currentTheme() {
   const t = document.documentElement.getAttribute("data-theme");
@@ -2020,10 +2041,10 @@ const COLS = {
     { k: "owed", l: "Долг", n: 1, f: v => (v ? compact(v) : "—") }, { k: "age", l: "Возраст, дн.", n: 1, f: v => num(v) },
   ],
   squads: [
-    { k: "name", l: "Отряд", f: (v, r) => ref(r.id, v) }, { k: "leader_name", l: "Вожак", f: (v, r) => ref(r.leader, v) },
-    { k: "size", l: "Людей", n: 1 }, { k: "rank", l: "Ранг", n: 1, f: v => ["новички", "ветераны", "мастера"][v] || v },
-    { k: "power", l: "Сила", n: 1, f: v => num(v, 2) }, { k: "cash", l: "Касса", n: 1, f: compact },
-    { k: "state", l: "Где", f: (v, r) => r.depth ? `${v}: ${r.depth}-й ярус, ${ST.state && r.back < ST.state.tick ? "возвращения ждут" : "вернётся " + evDay(r.back)}` : v },
+    { k: "name", l: "Отряд", w: 1, f: (v, r) => ref(r.id, v) }, { k: "leader_name", l: "Вожак", lo: 1, f: (v, r) => ref(r.leader, v) },
+    { k: "size", l: "Людей", n: 1 }, { k: "rank", l: "Ранг", n: 1, lo: 1, f: v => ["новички", "ветераны", "мастера"][v] || v },
+    { k: "power", l: "Сила", n: 1, lo: 1, f: v => num(v, 2) }, { k: "cash", l: "Касса", n: 1, lo: 1, f: compact },
+    { k: "state", l: "Где", w: 1, f: (v, r) => r.depth ? `${v}: ${r.depth}-й ярус<span class="lo">, ${ST.state && r.back < ST.state.tick ? "возвращения ждут" : "вернётся " + evDay(r.back)}</span>` : v },
   ],
   fences: [
     { k: "name", l: "Скупщик", f: (v, r) => ref(r.id, fenceLabel(r.id, v)) }, { k: "cash", l: "Касса", n: 1, f: compact }, { k: "stock", l: "Склад по рынку", n: 1, f: compact },
@@ -2099,7 +2120,7 @@ function renderTable() {
   // планшет (≤1000 px): прячется только стакан; телефон — все второстепенные
   const lo = (cols.some(c => c.lo) && narrow) || (cols.some(c => c.lo2) && matchMedia("(max-width: 1000px)").matches);
   $("#tableWrap").classList.toggle("allcols", !!(UI.allCols || {})[UI.tab]);
-  if (lo) $("#tableWrap").insertAdjacentHTML("afterbegin", `<button type="button" class="tbl-cols ghost small" id="tblCols" aria-pressed="${!!(UI.allCols || {})[UI.tab]}">${(UI.allCols || {})[UI.tab] ? "Только главные столбцы" : (narrow ? "Все столбцы: опорная, объём, стакан" : "Все столбцы: стакан")}</button>`);
+  if (lo) $("#tableWrap").insertAdjacentHTML("afterbegin", `<button type="button" class="tbl-cols ghost small" id="tblCols" aria-pressed="${!!(UI.allCols || {})[UI.tab]}">${(UI.allCols || {})[UI.tab] ? "Только главные столбцы" : `Все столбцы: ${cols.filter(c => narrow ? c.lo : c.lo2).map(c => c.l.toLowerCase()).join(", ")}`}</button>`);
   const cb = $("#tblCols");
   if (cb) cb.onclick = () => { UI.allCols = Object.assign(UI.allCols || {}, { [UI.tab]: !(UI.allCols || {})[UI.tab] }); renderTable(); };
   const more = $("#tblMore");
@@ -2202,7 +2223,9 @@ async function openEntity(id, push) {
     if (go) go.onclick = () => { window.DOC_BACKEND.seek(e.seek); setTimeout(() => openEntity(id, false), 900); };
     return;
   }
-  $("#drawerTitle").textContent = e.name;
+  // в заголовке — и что это: дом, отряд, человек, скупщик
+  const kind = { H: "дом", S: "отряд", P: "человек", F: "скупщик" }[(id || "")[0]];
+  $("#drawerTitle").innerHTML = (kind ? `<small class="dk">${kind} </small>` : "") + esc(e.name);
   // в летописи имя может быть новее карточки (снимок раз в 90 дней) или старше её
   const lab = UI.refLabel ? UI.refLabel.replace(/\s*\(бывш\.[^)]*\)\s*$/, "") : null;
   let renamed = "";
@@ -2311,7 +2334,7 @@ function bindFlows() {
 }
 
 // ---------------------------------------------------------- подземелье
-const PHASE = { "спуск": "▾", "промысел": "●", "подъём": "▴", "не вернулся": "✕" };
+const PHASE = { "спуск": "↓", "промысел": "●", "подъём": "↑", "не вернулся": "?" };
 async function loadDungeon() {
   if (UI.hoverShaft) return;
   const g = await api("/api/dungeon");
@@ -2357,7 +2380,7 @@ async function loadDungeon() {
   if (UI.shaftAll) parts.unshift(`<div class="lvl-fold"><span>все ярусы</span><button type="button" class="ghost small" data-shaft="fold">свернуть надёжные</button></div>`);
   const sh = $("#shaft");
   const fid = sh.contains(document.activeElement) ? document.activeElement.dataset.id || document.activeElement.dataset.shaft : null;
-  sh.innerHTML = `<button type="button" class="shaft-up" data-shaft="up" hidden>▲ выше — ярусы с 1-го; показать</button>` + parts.join("");
+  sh.innerHTML = `<button type="button" class="shaft-up" data-shaft="up" hidden>↑ к верхним ярусам (с 1-го)</button>` + parts.join("");
   const again = fid && sh.querySelector(`[data-id="${CSS.escape(fid)}"], [data-shaft="${CSS.escape(fid)}"]`);
   if (again) again.focus({ preventScroll: true });
   shaftTabs();
@@ -2387,7 +2410,7 @@ function bindDungeon() {
   });
   const bar = (w, r) => `<span class="sbar${r == null ? "" : ""}"><i style="width:${w}%"></i>${r != null ? `<b style="left:${r}%"></b>` : ""}</span>`;
   $("#dgLegend").innerHTML = `<div class="dg-key">` +
-    `<span><b class="g">▾ ● ▴</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">✕</b> не вернулся в срок</span>` +
+    `<span><b class="g">↓ ● ↑</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">?</b> не вернулся в срок</span>` +
     (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
     `<span><b class="g">✓</b> шансы вернуться ≥ 95%</span><span>значки и имена кликаются</span></div>`;
 }
@@ -2427,7 +2450,7 @@ function axisStyle() {
 }
 function housePlot(id, series, range) {
   if (libMissing("uPlot", $("#plot-" + id))) return;
-  const el = $("#plot-" + id), colors = ["--s1", "--s2", "--s3", "--s4"].map(css), ax = axisStyle();
+  const el = $("#plot-" + id), colors = (id === "hwealth" ? ["--s1", "--ink-3"] : ["--s1", "--s2", "--s3", "--s4"]).map(css), ax = axisStyle();
   el.innerHTML = "";
   const u = new uPlot({
     width: el.clientWidth || 300, height: 180,
@@ -2850,6 +2873,7 @@ function storyArrived() {
   const c = STORY.cur, narrow = matchMedia("(max-width: 680px)").matches;
   const el = c && document.getElementById(narrow && c.look === "doom" ? "story" : c.look);
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  $("#story").classList.toggle("dock", narrow && c.look !== "doom");
   storyFocus(c);
   $("#announce").textContent = `${c.title}. ${c.note}`;
 }
@@ -2880,7 +2904,9 @@ function storyRender(state) {
       `<button type="button" class="ghost story-x" data-story="close" aria-label="Закрыть историю">×</button>` +
     `</div>`;
   el.hidden = false;
+  if (state === "going") el.classList.remove("dock");
   const ae = document.activeElement, idle = !ae || ae === document.body || ae.id === "doom" || (ae.closest && ae.closest("#intro"));
+  if (state === "going" && had) { const b = $("[data-story=skip]", el); if (b) b.focus({ preventScroll: true }); }
   if (state === "here" && (had || idle)) { const b = $("[data-story=next]", el) || $("[data-story=free]", el); if (b) b.focus({ preventScroll: true }); }
 }
 $("#story").addEventListener("click", e => {
@@ -2890,9 +2916,18 @@ $("#story").addEventListener("click", e => {
   if (a === "next") storyGo(storyNext());
   else if (a === "skip") { const c = STORY.cur; B.seek(c.t); B.R.stopAt = c.at; B.R.speed = "10"; }
   else if (a === "free") { B.R.stopAt = null; storyStop(); if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; }
-  else { B.R.stopAt = null; storyStop(); }
+  else storyClose();
 });
-document.addEventListener("keydown", e => { if (e.key === "Escape" && STORY.on && !$("#drawer").classList.contains("open")) { window.DOC_BACKEND.R.stopAt = null; storyStop(); } });
+function storyClose() {
+  const B = window.DOC_BACKEND;
+  B.R.stopAt = null;
+  const ran = B.R.speed !== "pause";
+  if (ran) B.R.speed = "pause";
+  storyStop();
+  $("#announce").textContent = ran ? "История закрыта, запись на паузе." : "История закрыта.";
+  if (ran) toast(`История закрыта, запись на паузе. ${matchMedia("(pointer: coarse)").matches ? "«Пуск» внизу" : "Пробел или «Пуск»"} — смотреть дальше.`);
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape" && STORY.on && !$("#drawer").classList.contains("open")) storyClose(); });
 
 // ---------------------------------------------------------------- «Об игре»
 async function openAbout() {
