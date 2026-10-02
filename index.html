@@ -123,7 +123,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .doom.rising { border-color: var(--serious); background: color-mix(in srgb, var(--serious) 6%, var(--surface)); }
 .doom[data-level=good] { border-color: color-mix(in srgb, var(--good) 45%, var(--line)); }
 .doom[data-over=true] .doom-bar span { background: var(--serious); }
-.doom[data-over=false] .doom-bar span { background: var(--good); }
+.doom[data-over=false] .doom-bar span { background: var(--garrison); }
 .doom-alarm { grid-column: 1 / -1; font-family: var(--font-head); font-weight: 700; font-size: 22px; color: var(--critical); padding-bottom: 8px; border-bottom: 1px solid color-mix(in srgb, var(--critical) 40%, var(--line)); }
 .doom.fresh { box-shadow: inset 0 0 0 1px var(--critical); }
 .doom-n { color: var(--ink-2); font-size: 13px; }
@@ -202,7 +202,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .lvl:not(.front) { background: color-mix(in srgb, var(--depth-ink, #000) calc(var(--dp, 0) * var(--depth-k, 16%)), transparent); }
 .sbar { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
 .sbar.rumor i { opacity: .55; }
-.sbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--s1); border-radius: 3px; }
+.sbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--stock); border-radius: 3px; }
 .sbar b { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
 .sq { display: flex; flex-wrap: wrap; gap: 1px 3px; line-height: 1; }
 .sqdot { display: inline-block; min-width: 24px; padding: 4px 0; line-height: 16px; text-align: center; font-size: 14px; color: var(--accent); text-decoration: none !important; }   /* цель касания крупнее значка */
@@ -537,13 +537,13 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
 .doom-spark { margin-top: 8px; max-width: 520px; }
 .doom-spark svg { display: block; width: 100%; height: 34px; overflow: visible; }
 .doom-spark polyline { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
-.doom-spark .sp-t { stroke: var(--serious); }
-.doom-spark .sp-g { stroke: var(--good); }
+.doom-spark .sp-t { stroke: var(--threat); }
+.doom-spark .sp-g { stroke: var(--garrison); stroke-dasharray: 5 3; }   /* пунктир: угроза и гарнизон различимы и без цвета */
 .doom-spark .sp-b { fill: color-mix(in srgb, var(--critical) 28%, transparent); }
 .sp-cap { display: block; color: var(--ink-3); font-size: 12px; margin-top: 2px; }
 .sp-cap i { display: inline-block; width: 12px; height: 2px; vertical-align: 3px; margin: 0 3px 0 6px; }
 .sp-cap i:first-child { margin-left: 0; }
-.sp-kt { background: var(--serious); } .sp-kg { background: var(--good); }
+.sp-kt { background: var(--threat); } .sp-kg { background: repeating-linear-gradient(90deg, var(--garrison) 0 5px, transparent 5px 8px); }
 .sp-kb { height: 8px !important; vertical-align: -1px !important; width: 6px !important; background: color-mix(in srgb, var(--critical) 45%, transparent); }
 
 /* летопись: прорыв и рекорд глубины — заметнее прозвищ */
@@ -615,7 +615,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .lvl .sqdot.ph-ok { color: color-mix(in srgb, var(--accent) 78%, #000); } }
 .rb-legend .rb-m { cursor: default; }
 @media (max-width: 680px) {
-  .rb-m .rb-c { display: none; }                 /* на узкой дорожке число не понять, чьё — оно в подписи вехи */
+  .rb-m .rb-c, .rb-legend .rb-cxl { display: none; }   /* на узкой дорожке число не понять, чьё — оно в подписи вехи; и в «Знаках» его нет */
   .tablewrap th, .tablewrap td { padding-left: 5px; padding-right: 5px; }
   .tablewrap table { font-size: 13.5px; }
 }
@@ -682,8 +682,12 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
   radial-gradient(farthest-side at 0 50%, rgba(0, 0, 0, .22), transparent) left / 10px 100% no-repeat scroll,
   radial-gradient(farthest-side at 100% 50%, rgba(0, 0, 0, .22), transparent) right / 10px 100% no-repeat scroll; }
 /* очень узкий телефон: «Ссылка» — во всплывающем окне «Знаков», полоса — в две строки */
-.rb-share2 { display: none; margin-top: 8px; }
-@media (max-width: 400px) { .replaybar > .rb-share { display: none; } .replayinfo .rb-share2 { display: inline-block; } }
+/* узкий телефон: «Ссылка» остаётся в полосе (гости приходят по ссылкам с телефона) — полосу ужать */
+@media (max-width: 400px) {
+  .replaybar { column-gap: 8px; }
+  .replaybar .rb-key, .replaybar .rb-share { min-height: 40px; padding: 4px 8px; font-size: 13.5px; }
+  .replaybar .rb-share { order: 6; }
+}
 /* на подкрашенной полосе угрозы (рост, ×5, ×10, прорыв) мелкие подписи — на ступень темнее: контраст ≥ 4,5 */
 .doom.rising :is(.doom-k, .doom-num small, .doom-vs, .sp-cap, .doom-cap),
 .doom:is([data-sev="2"], [data-sev="3"], [data-level=critical]) :is(.doom-k, .doom-num small, .doom-vs, .sp-cap, .doom-cap) { color: var(--ink-2); }
@@ -772,7 +776,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* ровная угроза — нейтральным текстом */
 .st.quiet { color: var(--ink-2); }
 /* подпись главы — слева, когда цель справа */
-@media (min-width: 681px) { .story.left { right: auto; left: 16px; } }
+@media (min-width: 681px) { .story.left { right: auto; left: 16px; } .story.up { bottom: auto; top: var(--story-top, 84px); } }
 
 /* летопись: чипы рода событий (они же ключ знаков) и поиск по имени */
 .ev-tools { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: -2px 0 8px; }
@@ -793,7 +797,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* поле поиска: подсказка — цветом подписей (браузерный серый был 3,8–4,3:1) */
 input::placeholder { color: var(--ink-3); opacity: 1; }
 /* шахта: подписанная пара шансов, возраст снимка, легенда — раскрытием */
-.dg-head .dg-odds small { display: block; font-size: 11.5px; color: var(--ink-3); font-weight: 400; line-height: 1.15; }
+.dg-head .dg-odds small { display: block; font-size: 12px; color: var(--ink-3); font-weight: 400; line-height: 1.15; }
 .dg-lag { margin: -4px 0 8px; font-size: 13px; color: var(--ink-2); }
 .dg-lag::before { content: "◷ "; color: var(--accent); }
 .dg-keyd > summary { cursor: pointer; color: var(--accent); font-size: 13px; padding: 2px 0 6px; min-height: 24px; }
@@ -812,8 +816,51 @@ h3 { font-size: 17.5px; }
 h2 { font-size: 22px; }
 h1 { font-size: 28px; }
 @media (max-width: 680px) { h1 { font-size: 26px; } main h2 { font-size: 21px; } h3 { font-size: 17px; } }
-@media (max-width: 380px) { h1 { font-size: 24px; } main h2 { font-size: 19.5px; } h3 { font-size: 16px; } }
+@media (max-width: 380px) { h1 { font-size: 26px; } main h2 { font-size: 20.75px; } h3 { font-size: 16.5px; } }   /* шаг шкалы ≥ 1,25 и на 360 px */
 @media (max-width: 380px) { .brand .sub { display: none; } }
+
+/* v26: бегунок не меняет ширину от подписи кнопки и дня (вехи не перескакивают) */
+@media (min-width: 681px) {
+  .replaybar .rb-play { min-width: 6.4em; }
+  .replaybar .rb-t { min-width: 8.6em; font-variant-numeric: tabular-nums; }
+}
+
+/* v26: словарь в «Об игре» */
+.about-body h3#gloss { margin: 16px 0 6px; font-size: 19px; }
+.about-body h3#gloss:focus { outline: none; }
+.about-body dl.gloss { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0 0 12px; font-size: 14.5px; }
+.about-body dl.gloss dt { font-weight: 700; color: var(--ink); }
+.about-body dl.gloss dd { margin: 0; color: var(--ink-2); }
+@media (max-width: 520px) { .about-body dl.gloss { grid-template-columns: 1fr; gap: 0; } .about-body dl.gloss dd { margin-bottom: 8px; } }
+.gloss-go { margin: 6px 0 0; }
+/* v26: под полосой — вердикт крупно, подробности строкой ниже */
+.doom-main .doom-verdict { font-size: 16px; font-weight: 700; line-height: 1.3; margin: 2px 0 2px; }
+.doom-main .doom-verdict .st.quiet { color: var(--ink); }
+.doom-main .doom-n2 { font-size: 13px; color: var(--ink-2); }
+/* v26: в легендах малых графиков день — только под курсором (иначе он повторён в каждой) */
+.plot:not(.hover) .u-legend .u-series:first-child { display: none; }
+/* v26: «Мой дом» — линии слева, склад и заявки столбцом справа */
+.house-mid { align-items: start; }
+.house-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* v26: цвета предметов — одни везде (полоса, малые графики, шахта): угроза, гарнизон, запас ярусов */
+:root { --threat: var(--serious); --garrison: #5aa894; --stock: #7f9bb3; }
+:root[data-theme="light"] { --garrison: #2c7a68; --stock: #4f6d86; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) { --garrison: #2c7a68; --stock: #4f6d86; } }
+/* v26: сгруппированная волна — заметная кнопка «список», а не крошечный «›» */
+.events li.ev-run summary::before { content: "◆ "; }
+.events li.ev-run details[open] > summary::before { content: "◆ "; }
+.events li.ev-run summary::after { content: "список ▾"; display: inline-block; margin-left: 8px; padding: 0 8px; border: 1px solid var(--line);
+  border-radius: 10px; font-size: 12.5px; line-height: 20px; color: var(--accent); vertical-align: 1px; }
+.events li.ev-run details[open] > summary::after { content: "свернуть ▴"; }
+.events li.ev-run summary:hover::after { border-color: var(--accent); }
+/* крупный палец: переключатели летописи и графика угрозы — не меньше 40 px */
+@media (pointer: coarse) {
+  #evFilter button, .sp-sw button, #evKinds button { min-height: 40px; }
+}
+/* v26: одно «выбрано» на всю страницу — заливка акцентом, как у переключателей вида и скорости */
+.ev-kinds button[aria-pressed="true"], .sp-sw button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.ev-kinds button[aria-pressed="true"] span { color: inherit; }
 
 </style>
 </head><body>
@@ -887,6 +934,7 @@ h1 { font-size: 28px; }
         <li><a href="#secDungeon" data-go="secDungeon">Подземелье</a> — где отряды и что осталось на ярусах.</li>
         <li><a href="#secExchange" data-go="secExchange">Биржа</a> и <a href="#flowsCard" data-go="flowsCard">деньги</a> — цены и денежные потоки.</li>
         <li><a href="#viewHouse" data-go="house">Мой дом</a> — экран игрока.</li>
+        <li><button type="button" class="linkish" data-gloss>Словарь</button> — что значат слова и числа на странице.</li>
       </ol>
       <p class="intro-ctl" id="introCtl"></p>
     </details>
@@ -977,7 +1025,7 @@ h1 { font-size: 28px; }
         <button type="button" role="tab" data-tab="squads" aria-selected="false" aria-controls="tableWrap" tabindex="-1">Отряды</button>
         <button type="button" role="tab" data-tab="fences" aria-selected="false" aria-controls="tableWrap" tabindex="-1">Скупщики</button>
       </div>
-      <div class="card-tools"><span class="hint" id="tabHint"></span></div>
+      <div class="card-tools"><span class="hint" id="tabHint"></span> <span class="hint">· <button type="button" class="linkish" data-gloss>словарь столбцов</button></span></div>
     </div>
     <div class="tablewrap" id="tableWrap" role="tabpanel" aria-label="Таблица"></div>
   </section>
@@ -1001,13 +1049,16 @@ h1 { font-size: 28px; }
       <section class="card"><div class="card-head"><h2>Капитал</h2><div class="card-tools"><span class="hint">касса + мастерские + склад − долги</span></div></div><div class="mult"><div class="plot" id="plot-hwealth"></div></div></section>
       <section class="card"><div class="card-head"><h2>Место среди домов</h2><div class="card-tools"><span class="hint">сколько домов беднее, %: 100 — богаче всех</span></div></div><div class="mult"><div class="plot" id="plot-hpctl"></div></div></section>
     </div>
-    <section class="card">
-      <div class="card-head"><h2>Линии</h2><div class="card-tools"><span class="hint">рычаги политики дома; «Настроить» — панель рычагов с прикидкой</span></div></div>
-      <div class="linecards" id="hLines"></div>
-    </section>
-    <div class="grid2">
-      <section class="card"><div class="card-head"><h2>Склад</h2></div><div class="tablewrap" id="hStock"></div></section>
-      <section class="card"><div class="card-head"><h2>Заявки дома в стакане</h2></div><div class="tablewrap" id="hBook"></div></section>
+    <!-- линии слева, склад и заявки — столбцом справа: одна карточка линии не стоит одна во всю ширину -->
+    <div class="grid2 house-mid">
+      <section class="card">
+        <div class="card-head"><h2>Линии</h2><div class="card-tools"><span class="hint">рычаги политики дома; «Настроить» — панель рычагов с прикидкой</span></div></div>
+        <div class="linecards" id="hLines"></div>
+      </section>
+      <div class="house-col">
+        <section class="card"><div class="card-head"><h2>Склад</h2></div><div class="tablewrap" id="hStock"></div></section>
+        <section class="card"><div class="card-head"><h2>Заявки дома в стакане</h2></div><div class="tablewrap" id="hBook"></div></section>
+      </div>
     </div>
     <div class="grid2">
       <section class="card"><div class="card-head"><h2>Слава у отрядов</h2><div class="card-tools"><span class="hint">растёт, когда вернулись отряды с моим снаряжением</span></div></div><div id="hBrand"></div></section>
@@ -1071,7 +1122,9 @@ h1 { font-size: 28px; }
     // занятие дома игроком — событие летописи (глава 1 истории; в записи ядра его нет)
     if (R.meta.seat) {
       let i = R.events.findIndex(e => e.t > R.meta.seat_at); if (i < 0) i = R.events.length;
-      const seq = (i > 0 ? R.events[i - 1].seq : 0) + 0.5;
+      // целый номер: API читает seq через parseInt, дробный (N + 0,5) приходил бы заново при каждом опросе
+      const seq = (i > 0 ? R.events[i - 1].seq : 0) + 1;
+      for (let j = i; j < R.events.length; j++) R.events[j].seq += 1;
       R.events.splice(i, 0, { seq, t: R.meta.seat_at, k: "seat", lv: 2, text: `Игрок занимает дом «{${R.meta.seat}}» — и дальше рычагов не трогает`, refs: { [R.meta.seat]: R.meta.seat_name } });
     }
     R.head = Math.min(R.meta.seat_at + 40, R.meta.ticks);   // с того, как игрок занял дом
@@ -1230,6 +1283,7 @@ h1 { font-size: 28px; }
     R.head = Math.max(0, Math.min(R.meta.ticks, Math.round(t)));
     R.acc = 0;
     R.epoch += 1;                      // страница перечитает историю с нуля
+    document.dispatchEvent(new CustomEvent("doc-seek", { detail: { t: R.head } }));   // адрес — сразу на новый день
   }
   async function order() {
     return { error: "это запись мира: приказы работают в живой версии" };
@@ -1239,15 +1293,15 @@ h1 { font-size: 28px; }
   document.documentElement.classList.add("is-replay");   // стили: на телефоне время ведёт нижняя полоса
 
   // вехи записи на ползунке: рекорды фронтира, разбитые отряды, прорывы, волны разорений;
-  // события ближе 30 дней друг к другу — одна веха; клик — за 5 дней до неё
+  // события ближе 30 дней друг к другу — одна веха; клик — в день вехи, на паузе
   function milestones() {
     // подпись вехи уже говорит «рекорд глубины» / «прорыв» — из текста убрать повтор
     const trim = t => t.replace(/^Фронтир: новый рекорд — /, "").replace(/^Прорыв из подземелья! /, "");
     const raw = R.events.filter(e => e.lv >= 3).map(e => ({ t: e.t, k: e.k, text: trim(e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id)) }));
     const bk = R.events.filter(e => e.k === "bankrupt").map(e => e.t);
-    for (let i = 0; i < bk.length; i++) {            // волна: 4 разорения за 60 дней
+    for (let i = 0; i < bk.length; i++) {            // волна: 4 разорения за 60 дней; веха — в день последнего (как в летописи)
       let j = i; while (j + 1 < bk.length && bk[j + 1] - bk[i] <= 60) j++;
-      if (j - i + 1 >= 4) { const n = j - i + 1; raw.push({ t: bk[i], end: bk[j], k: "bankrupt", n, text: `${n} ${plural(n, "дом разорился", "дома разорились", "домов разорились")} за ${bk[j] - bk[i] + 1} дн.` }); i = j; }
+      if (j - i + 1 >= 4) { const n = j - i + 1; raw.push({ t: bk[j], start: bk[i], end: bk[j], k: "bankrupt", n, text: `${n} ${plural(n, "дом разорился", "дома разорились", "домов разорились")} за ${bk[j] - bk[i] + 1} дн.` }); i = j; }
     }
     raw.sort((a, b) => a.t - b.t);
     const out = [];
@@ -1280,7 +1334,7 @@ h1 { font-size: 28px; }
       `Хорошо снабжённые отряды уходят глубже — фронтир теперь ${lvl(deep[0])}-й ярус. Чем глубже они спускаются, тем сильнее просыпается подземелье.`, "doom");
     const waves = ms.flatMap(m => m.items.filter(x => x.k === "bankrupt"));
     if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
-      `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.t); }
+      `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.start); }
     // глава глубины — числами, а не прилагательным: что выросло с тех пор, как игрок занял дом
     if (fr.length) { const e = fr[fr.length - 1], s0 = R.meta.seat_at;
       const fa = sv("frontier", s0), ta = sv("threat", s0), tb = sv("threat", e.t), ga = sv("guard", s0), gb = sv("guard", e.t);
@@ -1361,10 +1415,12 @@ h1 { font-size: 28px; }
       if (!b) return;
       if (touch && armed !== b) { armed = b; show(b, true); return; }   // на касании: сперва подпись
       armed = null;
-      seek(Math.max(0, +b.dataset.t - 5));
-      R.stopAt = +b.dataset.t; R.stopTitle = KIND_RU[MS[+b.dataset.i].k];
-      R.speed = "3";
-      show(b, true);
+      // веха — как ползунок: сразу в день события и на паузу (сама запись не трогается с места)
+      const t = +b.dataset.t, title = KIND_RU[MS[+b.dataset.i].k];
+      if (R.speed !== "pause") R.lastSpeed = R.speed;
+      seek(t); R.speed = "pause"; R.stopAt = null;
+      hide();                                          // подпись вехи уступает сообщению «Вы на месте»
+      setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t, title } })), 0);
     });
   }
 
@@ -1448,7 +1504,7 @@ h1 { font-size: 28px; }
       `<span class="rb-legend" aria-hidden="true">` + [["frontier", "рекорд глубины"], ["breach", "прорыв"], ["wiped", "разбит отряд"], ["bankrupt", "волна разорений"]]
         .map(([k, l]) => `<span><i class="rb-m rb-${k}"></i>${l}</span>`).join("") +
         `<span><i class="rb-wk"></i>разгон — первые ${Math.round(R.meta.seat_at / R.meta.day)} года мир идёт сам</span>` +
-        `<span><b class="rb-cx">2</b> цифра у вехи — сколько событий в ней слилось</span></span></span>` +
+        `<span class="rb-cxl"><b class="rb-cx">2</b> цифра у вехи — сколько событий в ней слилось</span></span></span>` +
       `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
       `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="rb-speed">` +
       ["1", "3", "10", "30", "max"].map(v => `<option value="${v}"${v === "3" ? " selected" : ""}>${v === "max" ? "макс" : v + "/с"}</option>`).join("") + `</select>` +
@@ -1476,9 +1532,6 @@ h1 { font-size: 28px; }
     // на телефоне полоса прибита к низу: отступ страницы — по её настоящей высоте
     new ResizeObserver(() => document.documentElement.style.setProperty("--rbh", bar.offsetHeight + "px")).observe(bar);
     const sh = bar.querySelector("#rbShare");
-    if (sh) info.insertAdjacentHTML("beforeend", `<button type="button" class="rb-share2" id="rbShare2">Ссылка на этот момент</button>`);
-    const sh2 = info.querySelector("#rbShare2");
-    if (sh2) sh2.onclick = () => sh.click();
     if (sh) sh.onclick = async () => {
       const h = window.docHash ? window.docHash() : new URLSearchParams();
       h.set("t", R.head);
@@ -1497,6 +1550,7 @@ h1 { font-size: 28px; }
     const sp = bar.querySelector("#rbSpeed");
     sp.onchange = () => { R.lastSpeed = sp.value; R.speed = sp.value; };
     let drag = false;
+    const narrowBar = matchMedia("(max-width: 400px)");   // узкий телефон: «Заново» короче «С начала» — полоса в один ряд
     const narrow = matchMedia("(max-width: 680px)");
     // телефон: легенда вех — по кнопке «Знаки» (строка описания под полосой там не показывается)
     const key = bar.querySelector("#rbKey");
@@ -1522,7 +1576,7 @@ h1 { font-size: 28px; }
         showVerdict(R.head >= R.meta.ticks);
         const f = `таблицы — на ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
         if (fr.textContent !== f) fr.textContent = f;
-        const pt = R.head >= R.meta.ticks ? "С начала" : R.speed === "pause" ? "Пуск" : "Пауза";
+        const pt = R.head >= R.meta.ticks ? (narrowBar.matches ? "Заново" : "С начала") : R.speed === "pause" ? "Пуск" : "Пауза";
         if (pl.textContent !== pt) pl.textContent = pt;
         const sv = R.speed === "pause" ? (R.lastSpeed || "3") : R.speed;
         if (sp.value !== sv && document.activeElement !== sp) sp.value = sv;
@@ -1722,9 +1776,10 @@ function renderDoom() {
   const bd = (META && META.breach_days) || 1200;
   const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
   const risk = thr > gd ? `риск прорыва — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
+  // строка под полосой — в два яруса: вердикт (риск за год или «держит») и под ним разрыв, его ход, прорывы
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : (r1 == null || r1 >= 5) ? `<span class="st serious">▲ ${risk}</span> · ${over}` : `<span class="st quiet">${risk}</span> · ${over}`;   // цвет — по размеру разрыва, рост — стрелкой ↗
+      : (r1 == null || r1 >= 5) ? `<span class="st serious">▲ ${risk}</span>` : `<span class="st quiet">${risk}</span>`;   // цвет — по размеру разрыва, рост — стрелкой ↗
   const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
   const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `${over} · ${risk}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
@@ -1750,7 +1805,7 @@ function renderDoom() {
         `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
       `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "гарнизона нет — угрозу держать некому"}</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${Math.max(2, pct)}%"></span></div>` +
-      `<div class="doom-n">${[head, move, br].filter(Boolean).join(" · ")}</div>` +
+      `<div class="doom-n">${head ? `<div class="doom-verdict">${head}</div>` : ""}<div class="doom-n2">${[fresh || gd >= thr ? "" : over, move, br].filter(Boolean).join(" · ")}</div></div>` +
     `</div>` +
     `<div class="doom-side">` +
       `<div class="doom-k">${ic("stairs-goal")}Фронтир</div><div class="doom-v2">${s.frontier}-й ярус</div>` +
@@ -1761,7 +1816,7 @@ function renderDoom() {
       `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f ? `+${num(f.now - f.then)} за 45 дн.` : ""; })()}${(() => {
         const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
         const n = s.breaches, w = n % 10 === 1 && n % 100 !== 11 ? "прорыве" : "прорывах";
-        return n ? `<br>в городе при ${num(n) === "1" ? "прорыве" : `${num(n)} прорывах`} — ещё ${num(dead)}` : " · прорывов не было";
+        return n ? `<br>в городе при ${num(n) === "1" ? "прорыве" : `${num(n)} прорывах`} — ещё ${num(dead)}` : "";   // «прорывов не было» — уже под полосой
       })()}</div>` +
     `</div>` +
     doomSpark() +
@@ -1843,7 +1898,8 @@ function buildHeader() {
     try { localStorage.setItem("doc-theme", t); } catch (e) { /* без памяти — тоже можно */ }
     rebuildCharts();
   };
-  $("#btnAbout").onclick = openAbout;
+  $("#btnAbout").onclick = () => openAbout();
+  document.addEventListener("click", e => { const g = e.target.closest("[data-gloss]"); if (g) { e.preventDefault(); openAbout("gloss"); } });
   $("#btnSave").onclick = async () => {
     const r = await control("save");
     if (r.error) toast(r.error);
@@ -2018,7 +2074,7 @@ const MULT = [
   { id: "money", title: "Деньги", series: [["m_houses", "у домов"], ["m_town", "у горожан"], ["m_adv", "у отрядов"], ["treasury", "казна"]] },
   { id: "depth", title: "Глубина, ярус", series: [["frontier", "фронтир"], ["trip_d", "средний поход"]] },
   // угроза — тем же цветом, что в полосе угрозы; гарнизон — цветом «держит»
-  { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза", "--critical"], ["known", "известная совету", "--warn"], ["guard", "гарнизон", "--good"]] },
+  { id: "threat", title: "Угроза и оборона", series: [["threat", "угроза", "--threat"], ["known", "известная совету", "--warn"], ["guard", "гарнизон", "--garrison"]] },
   { id: "loss", title: "Потери за 45 дней", series: [["@fallen", "погибли"], ["@wounded", "ранены"], ["@bankrupt", "разорились дома"]] },
   { id: "hunger", title: "Голод, %", series: [["%hunger", "голод"]], range: [0, 85], hideFlat: true },
 ];
@@ -2041,7 +2097,7 @@ function buildMultiples() {
   if (!META.full) {
     // режим игрока: настоящей угрозы город не знает — только вести вернувшихся
     const th = MULT.find(m => m.id === "threat");
-    th.series = [["known", "известная совету", "--critical"], ["guard", "гарнизон", "--good"]];
+    th.series = [["known", "известная совету", "--threat"], ["guard", "гарнизон", "--garrison"]];
   }
   // ряд, который за всю историю не сдвинулся с нуля (голода не было), — не график, а строка
   const flat = m => m.hideFlat && m.series.every(([k]) => seriesData(k).every(v => !v));
@@ -2071,11 +2127,27 @@ function buildMultiples() {
     const u = new uPlot(opts, multData(m), el);
     u.over.addEventListener("dblclick", () => { PLOTS[m.id].zoomed = false; u.setData(multData(m), true); });
     // курсор ушёл — легенда показывает последние значения (подпись прямо у рядов)
-    u.over.addEventListener("mouseenter", () => { PLOTS[m.id].hover = true; });
-    u.over.addEventListener("mouseleave", () => { PLOTS[m.id].hover = false; legendLast(u); });
+    // день в легенде — только под курсором: без него легенда стоит на последнем дне, он и так в полосе записи
+    u.over.addEventListener("mouseenter", () => { PLOTS[m.id].hover = true; el.classList.add("hover"); });
+    u.over.addEventListener("mouseleave", () => { PLOTS[m.id].hover = false; el.classList.remove("hover"); legendLast(u); });
     PLOTS[m.id] = { u, m, el, zoomed: false, hover: false };
     legendLast(u);
   }
+  requestAnimationFrame(fitFlows);
+}
+// «Деньги» рядом с биржей — во всю её высоту: график потоков вытягивается, пустоты под карточкой нет
+function plotH(id) {
+  if (id !== "flows") return 180;
+  const ex = $("#secExchange"), fc = $("#flowsCard"), p = PLOTS.flows;
+  if (!ex || !fc || !p || !ex.offsetHeight) return 180;
+  if (Math.abs(ex.getBoundingClientRect().top - fc.getBoundingClientRect().top) > 4) return 180;   // одна под другой
+  return Math.round(Math.max(180, Math.min(440, ex.offsetHeight - (fc.offsetHeight - p.u.height))));
+}
+function fitFlows() {
+  const p = PLOTS.flows;
+  if (!p || !p.el.clientWidth) return;
+  const h = plotH("flows");
+  if (Math.abs(h - p.u.height) > 2) p.u.setSize({ width: p.el.clientWidth, height: h });
 }
 function legendLast(u) { const n = u.data[0].length; if (n) u.setLegend({ idx: n - 1 }); }
 function renderMultiples() {
@@ -2086,7 +2158,8 @@ function renderMultiples() {
   }
 }
 const ro = new ResizeObserver(() => {
-  for (const id in PLOTS) { const p = PLOTS[id]; if (p.el.clientWidth) { p.u.setSize({ width: p.el.clientWidth, height: 180 }); if (!p.hover) requestAnimationFrame(() => legendLast(p.u)); } }
+  for (const id in PLOTS) { const p = PLOTS[id]; if (p.el.clientWidth) { p.u.setSize({ width: p.el.clientWidth, height: id === "flows" ? p.u.height : 180 }); if (!p.hover) requestAnimationFrame(() => legendLast(p.u)); } }
+  requestAnimationFrame(fitFlows);
   for (const id in HP) { const p = HP[id]; if (p.el.clientWidth) { p.u.setSize({ width: p.el.clientWidth, height: 180 }); requestAnimationFrame(() => legendLast(p.u)); } }
 });
 function rebuildCharts() {
@@ -2094,7 +2167,7 @@ function rebuildCharts() {
   if (UI.view === "house") loadHouse();
   for (const id in PLOTS) { PLOTS[id].u.destroy(); delete PLOTS[id]; }
   buildMultiples();
-  $$(".plot").forEach(el => ro.observe(el));
+  $$(".plot, #secExchange, #flowsCard").forEach(el => ro.observe(el));
   PX.main = PX.vol = PX.refLine = null;
   buildPxChart();
 }
@@ -2224,10 +2297,11 @@ async function loadEvents() {
   const [imp, all] = await Promise.all([api("/api/events?seq=0&limit=400&lv=2"), api("/api/events?seq=0&limit=1000")]);
   const by = new Map();
   for (const e of [...(imp || []), ...(all || [])]) by.set(e.seq, e);
-  ST.events = [];
+  ST.events = []; ST.seq = 0;
   addEvents([...by.values()].sort((a, b) => a.seq - b.seq));
 }
 function addEvents(evs) {
+  evs = evs.filter(e => !(e.seq <= ST.seq));        // уже показанное не повторять (ни при каком ответе API)
   if (!evs.length) return;
   ST.events.push(...evs);
   if (ST.events.length > 2000) {                   // обрезать сначала мелкое, важное — держать
@@ -2528,7 +2602,7 @@ function houseCard(e) {
       e.lines.map(l => `<tr><td>${esc(l.n)}${l.idle ? ' <span class="tag">стоит</span>' : ""}</td><td>${esc(l.good)}</td><td class="num">${num(l.cap, 2)}</td><td class="num">${num(l.ask, 2)}</td></tr>`).join("") + `</tbody></table>`;
     if (e.stock && e.stock.length) {
       h += `<h3>Склад</h3><table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">Стоимость по рынку</th></tr></thead><tbody>` +
-        e.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td></tr>`).join("") + `</tbody></table>`;
+        e.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${s.val > 0 && s.val < 1 ? "<1" : compact(s.val)}</td></tr>`).join("") + `</tbody></table>`;
     }
   }
   return h;
@@ -2604,7 +2678,7 @@ async function loadDungeon() {
     const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
     const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
     const sq = r.squads.slice(0, 12).map(s =>
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}">${PHASE[s.phase] || "●"}</a>`).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     // глубже — темнее: шахта читается как спуск, а не как таблица
@@ -2613,7 +2687,7 @@ async function loadDungeon() {
       `<span class="d" title="добыча: ${esc(r.goods.join(", "))}">${r.d}</span>` +
       `<span class="stock" title="${stockT}"><span class="sbar${hidden ? " rumor" : ""}"><i style="width:${Math.min(100, fill * 100)}%"></i>${rumor}</span></span>` +
       `<span class="sq">${sq}</span>` +
-      `<span class="num" title="вернувшихся походов (в 45-дневных) — знание троп и ловушек">${r.know ? num(r.know, 1) : "—"}</span>` +
+      `<span class="num" title="вернувшихся походов (в 45-дневных) — знание троп и ловушек">${r.know ? (r.know < 1 ? "<1" : num(Math.round(r.know), 0)) : "—"}</span>` +
       `<span class="num" title="шансы вернуться за 45 дней с полным припасом (новичкам · сильнейшим); ниже ${pct0(g.min_odds)} не выходят">${safe(r) ? `<span class="dim safe" aria-label="надёжно">✓</span>` : `${odd(r.odds_new)} · ${odd(r.odds_best)}`}</span>` +
       `</div>` + (r.d === fl ? `<div class="frontline">фронтир — ${fl}-й ярус</div>` : "");
   };
@@ -2665,7 +2739,7 @@ function bindDungeon() {
     `<span><b class="g">↓ ● ↑</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">?</b> не вернулся в срок</span>` +
     (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
     `<span><b class="g">✓</b> шансы вернуться у обоих ≥ 95%</span><span><b class="g">знание</b> — сколько походов вернулось с яруса</span><span>значки и имена кликаются</span></div>`;
-  $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}</details>`;
+  $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}<p class="hint gloss-go">Что значат знание, шансы, слух, фронтир — <button type="button" class="linkish" data-gloss>в словаре</button>.</p></details>`;
 }
 
 // ------------------------------------------------------------- мой дом (И2)
@@ -2715,6 +2789,8 @@ function housePlot(id, series, range) {
       .concat(series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
   }, [[]].concat(series.map(() => [])), el);
   HP[id] = { u, el, series };
+  u.over.addEventListener("mouseenter", () => el.classList.add("hover"));
+  u.over.addEventListener("mouseleave", () => el.classList.remove("hover"));
   ro.observe(el);
 }
 function houseData(sr, series) {
@@ -2820,7 +2896,7 @@ function renderHouse(h) {
         (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">Настроить</button></div>` : "") + `</div>`;
     }).join("");
     $("#hStock").innerHTML = h.stock.length ? `<table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">Стоимость по рынку</th><th class="num">Дней работы</th></tr></thead><tbody>` +
-      h.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${compact(s.val)}</td><td class="num">${s.days != null ? num(s.days, 1) : "—"}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">пусто</p>`;
+      h.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${s.val > 0 && s.val < 1 ? "<1" : compact(s.val)}</td><td class="num">${s.days != null ? num(s.days, 1) : "—"}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">пусто</p>`;
     $("#hBook").innerHTML = h.book.length ? `<table><thead><tr><th>Сторона</th><th>Товар</th><th class="num">Цена</th><th class="num">Кол-во</th></tr></thead><tbody>` +
       h.book.map(b => `<tr><td>${b.side}</td><td>${esc(b.g)}</td><td class="num">${num(b.px, 2)}</td><td class="num">${num(b.q, 1)}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">заявок нет</p>`;
     const br = Object.entries(h.brand || {});
@@ -2829,7 +2905,18 @@ function renderHouse(h) {
   renderHouseRisk(h);
   const jr = (h.journal || []).slice().reverse(), jm = jr.filter(([, x]) => /^за месяц/.test(x)), jk = jr.filter(([, x]) => !/^за месяц/.test(x));
   const jli = ([t, x]) => `<li><span class="t">${evDay(t)}</span><span>${esc(x)}</span></li>`;
-  $("#hJournal").innerHTML = jr.length ? jk.map(jli).join("") +
+  // простои и пуски линий подряд (≥ 3) — одной строкой со списком внутри: журнал не тонет в «стоит неделю»
+  const idle = x => /стоит неделю|снова работает/.test(x), jparts = [];
+  for (let i = 0; i < jk.length;) {
+    let j = i; while (j < jk.length && idle(jk[j][1])) j++;
+    if (j - i >= 3) {
+      const run = jk.slice(i, j), stops = run.filter(([, x]) => /стоит неделю/.test(x)).length;
+      const names = [...new Set(run.map(([, x]) => (x.match(/«([^»]+)»/) || [])[1]).filter(Boolean))].map(n => `«${n}»`).join(", ");
+      jparts.push(`<li class="hj-more"><span class="t">${evDay(run[0][0])}</span><details><summary>${names || "линии"}: простои и пуски — ${run.length} (стояли ${stops} ${plural(stops, "раз", "раза", "раз")}, с ${evDay(run[run.length - 1][0])})</summary><ul class="hist">${run.map(jli).join("")}</ul></details></li>`);
+      i = j;
+    } else { jparts.push(...jk.slice(i, Math.max(j, i + 1)).map(jli)); i = Math.max(j, i + 1); }
+  }
+  $("#hJournal").innerHTML = jr.length ? jparts.join("") +
     (jm.length ? `<li class="hj-more"><details><summary>Месячные сводки цен — ${jm.length}</summary><ul class="hist">${jm.map(jli).join("")}</ul></details></li>` : "")
     : `<li class="empty">пока тихо</li>`;
   const KIND = { seat: "занять дом", lever: "рычаг", build: "достроить", cut: "срезать" };
@@ -3141,18 +3228,34 @@ function storyGo(c) {
       if (!$(".story-k", v)) v.insertAdjacentHTML("afterbegin", `<div class="story-k">Глава ${STORY.ch.length} из ${STORY.ch.length} · конец записи</div>`); v.scrollIntoView({ block: "start" }); v.focus && v.setAttribute("tabindex", "-1"); v.focus({ preventScroll: true }); } }, 900);
     return;
   }
-  const gap = c.at - B.R.head;
-  if (gap > 400 || gap < 0) B.seek(c.t);
+  // к главе — не дольше нескольких секунд: дальний путь перематывается, последние ~90 дней видны в ходу
+  const gap = c.at - B.R.head, start = Math.max(0, Math.min(c.t, c.at - 90));
+  if (gap < 0 || B.R.head < start) B.seek(start);
   B.R.stopAt = c.at; B.R.stopTitle = c.title;
   B.R.speed = c.at - B.R.head > 60 ? "30" : "10";
   storyRender("going");
 }
+// подпись истории на компьютере — в тот из четырёх углов, где она меньше всего закрывает
+// подсвеченное (рамки .story-focus, иначе — сам элемент главы); пересчёт и при прокрутке
 function storySide(id) {
-  const el = document.getElementById(id), st = $("#story");
-  if (!el || matchMedia("(max-width: 680px)").matches) { st.classList.remove("left"); return; }
-  const hl = id === "doom" ? ($(".story-focus") || el) : el, r = hl.getBoundingClientRect();
-  st.classList.toggle("left", r.left + r.width / 2 > innerWidth / 2);
+  const st = $("#story");
+  if (id) STORY.sideId = id;
+  if (st.hidden || matchMedia("(max-width: 680px)").matches) { st.classList.remove("left", "up"); return; }
+  const base = document.getElementById(STORY.sideId);
+  const rs = $$(".story-focus").map(x => x.getBoundingClientRect()).filter(r => r.width && r.bottom > 0 && r.top < innerHeight);
+  if (!rs.length && base) rs.push(base.getBoundingClientRect());
+  const w = st.offsetWidth, h = st.offsetHeight, bar = $(".replaybar"), m = 16;
+  const top = (bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().bottom : 0) + 12;
+  const cost = (x, y) => rs.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.right) - Math.max(x, r.left)) * Math.max(0, Math.min(y + h, r.bottom) - Math.max(y, r.top)), 0);
+  const corners = [[false, false], [true, false], [false, true], [true, true]]       // [слева, сверху]; по умолчанию — справа внизу
+    .map(([l, u]) => ({ l, u, c: cost(l ? m : innerWidth - m - w, u ? top : innerHeight - m - h) }));
+  const best = corners.reduce((a, b) => (b.c < a.c - 1 ? b : a));
+  st.classList.toggle("left", best.l); st.classList.toggle("up", best.u);
+  st.style.setProperty("--story-top", top + "px");
 }
+addEventListener("scroll", () => {
+  if (STORY.sideId && !$("#story").hidden && !STORY.sideRaf) STORY.sideRaf = requestAnimationFrame(() => { STORY.sideRaf = 0; storySide(); });
+}, { passive: true });
 async function storyHouse(c) {
   setView("house"); window.scrollTo(0, 0);
   await loadHouse();
@@ -3184,7 +3287,7 @@ function storyArrived() {
 // что подсветить: угроза против гарнизона, фронтир, строки летописи в окне главы
 function storyFocus(c) {
   $$(".story-focus").forEach(x => x.classList.remove("story-focus"));
-  const pick = { seat: ["#doom .doom-v", "#doom .doom-bar"], breach: ["#doom .doom-alarm", "#doom .doom-v"],
+  const pick = { seat: ["#doom .doom-v", "#doom .doom-bar"], breach: ["#doom .doom-alarm"],
     first: ["#doom .doom-side"], deep: ["#doom .doom-side"], wave: [] }[c.k] || [];
   STORY.hl = { sel: pick, until: Date.now() + 6000 };
   const els = pick.map(q => $(q)).filter(Boolean);
@@ -3238,7 +3341,30 @@ function storyClose() {
 document.addEventListener("keydown", e => { if (e.key === "Escape" && STORY.on && !$("#drawer").classList.contains("open")) storyClose(); });
 
 // ---------------------------------------------------------------- «Об игре»
-async function openAbout() {
+// словарь: каждое число и слово страницы — одной строкой (открывается из «Об игре» и по ссылкам «словарь»)
+const GLOSS = [
+  ["Угроза", "сила, которую копит подземелье: растёт, когда отряды выносят добычу с глубоких ярусов, и сама понемногу затихает."],
+  ["Гарнизон", "городская стража — то, что держит угрозу у ворот. Числа угрозы и гарнизона сравнимы: «78 против 7,4» — угроза в 10,5 раза сильнее."],
+  ["Прорыв", "угроза пересилила гарнизон, и подземелье вышло в город: гибнут стража и горожане. Чем больше разрыв, тем выше риск прорыва — на полосе он дан в процентах за год."],
+  ["Ярус", "уровень подземелья. Чем глубже, тем богаче добыча и тем сильнее просыпается подземелье."],
+  ["Фронтир", "самый глубокий ярус, с которого отряды возвращаются. Если туда долго не ходят, черта отступает."],
+  ["Поход", "45 дней внизу: отряд берёт припас, спускается, добывает и возвращается — или нет."],
+  ["Сила", "боевая ценность бойца: снаряжение с учётом износа плюс опыт; у отряда — средняя по бойцам."],
+  ["Сплочённость", "от 0 до 1 — сколько походов отряд прошёл вместе; сработавшийся отряд надёжнее."],
+  ["Знание", "сколько походов вернулось с яруса: тропы и ловушки известны — ходить туда безопаснее."],
+  ["Запас: на деле и слух", "сколько добычи осталось на ярусе и сколько о ней думает город по рассказам вернувшихся."],
+  ["Шансы вернуться", "вероятность вернуться из похода с полным припасом: новичкам и сильнейшим отрядам; ✓ — надёжно для всех."],
+  ["Линия", "мастерская дома, выпускающая один товар."],
+  ["Мощность", "сколько единиц товара линия может выпустить за день."],
+  ["Опорная цена", "себестоимость товара, посчитанная по рецептам от стоимости труда; рыночная цена ходит вокруг неё. «К опорной ×2» — вдвое дороже."],
+  ["Стакан", "заявки на бирже: кто сколько хочет купить и продать и по какой цене."],
+  ["Бид и аск", "лучшая цена покупки и лучшая цена продажи в стакане."],
+  ["Капитал", "касса дома, мастерские по цене стройки и склад по цене рынка, минус долги."],
+  ["Разорение", "у дома кончились деньги — он закрывается, его покупатели уходят к выжившим."],
+  ["Скупщик", "выкупает добычу у вернувшихся отрядов и продаёт её на бирже."],
+  ["г.4 д.41", "год 4, день 41; в году 360 дней. Запись идёт с первого дня мира."],
+];
+async function openAbout(at) {
   const r = await api("/api/credits");
   const md = r.text.replace(/<!--[\s\S]*?-->/g, "");
   const html = [];
@@ -3261,6 +3387,7 @@ async function openAbout() {
     if (html[i].startsWith("<h2>") && (i === html.length - 1 || html[i + 1].startsWith("<h2>"))) html.splice(i, 1);
   $("#aboutBody").innerHTML = `<h2>Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. ${window.DOC_BACKEND ? "Это запись одного мира: все — боты, а один дом занят местом игрока, который рычагов не трогает." : "Сейчас — смотровая: мир живёт сам; игрок, если он есть, правит одним домом через политику."}</p>` +
     `<p>Игрок не воюет и не торгует руками: он задаёт политику своего дома — цену к рынку, запас, разборчивость в материалах, рост мастерских, — а дом исполняет её каждый день. Экономика целиком живая: цены, разорения, походы и угроза складываются из решений сотен ботов.</p>` +
+    `<h3 id="gloss" tabindex="-1">Словарь</h3><dl class="gloss">${GLOSS.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl>` +
     `<details class="credits"><summary>Благодарности: иконки, шрифты, библиотеки</summary>${html.join("")}</details>`;
   // запись: пока читают «Об игре», время стоит
   const B = window.DOC_BACKEND;
@@ -3270,6 +3397,7 @@ async function openAbout() {
     $("#about").addEventListener("close", () => { if (B.R.speed === "pause") B.R.speed = was; }, { once: true });
   }
   $("#about").showModal();
+  if (at === "gloss") { const g = $("#gloss"); if (g) { g.scrollIntoView({ block: "start" }); g.focus({ preventScroll: true }); } }
 }
 
 // ----------------------------------------------------------------- цикл
@@ -3334,7 +3462,7 @@ async function refreshDrawer() {
 
 // ------------------------------------------------- адрес и клавиши
 // состояние в адресе (#v=house&e=H-000004&tab=squads&g=steel&t=1500): ссылкой можно
-// поделиться; момент записи t — только из кнопки «Ссылка на момент» (иначе адрес менялся бы каждый день)
+// поделиться; t — текущий день записи (адрес идёт за ним)
 function readHash() {
   try { return Object.fromEntries(new URLSearchParams(location.hash.slice(1))); } catch (e) { return {}; }
 }
@@ -3349,7 +3477,10 @@ function hashParams() {
   return h;
 }
 window.docHash = hashParams;
-setInterval(() => { const B = window.DOC_BACKEND; if (B && UI.hashReady && B.R.head !== UI.hashWrote) { UI.hashWrote = B.R.head; writeHash(); } }, 2000);
+// адрес идёт за днём: при перемотке — сразу, при просмотре — дважды в секунду (чаще браузеры не дают)
+const hashFollow = () => { const B = window.DOC_BACKEND; if (B && UI.hashReady && B.R.head !== UI.hashWrote) { UI.hashWrote = B.R.head; writeHash(); } };
+setInterval(hashFollow, 500);
+document.addEventListener("doc-seek", hashFollow);
 window.docToast = (m) => toast(m);
 function writeHash() {
   if (!UI.hashReady) return;                       // пока страница собирается — адрес не трогать
@@ -3439,7 +3570,7 @@ async function main() {
   renderEvents();
   renderHeader(); renderTiles();
   buildPxChart(); buildMultiples();
-  $$(".plot").forEach(el => ro.observe(el));
+  $$(".plot, #secExchange, #flowsCard").forEach(el => ro.observe(el));
   matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => { if (!savedTheme()) rebuildCharts(); });
   bindDungeon(); bindFlows();
   await loadTable();
