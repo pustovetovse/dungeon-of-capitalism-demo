@@ -991,6 +991,21 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 .frontline .fl-sub { font-weight: 400; color: var(--ink-3); }
 @media (max-width: 680px) { .frontline .fl-sub { display: none; } }
 .dg-head .dg-odds .linkish { font: inherit; }
+/* v32: у походов в летописи — свои знаки, как на чипе «↓↑ походы» */
+.events li.k-depart .x::before { content: "↓ "; color: var(--ink-3); }
+.events li.k-return .x::before { content: "↑ "; color: var(--ink-3); }
+/* легенды малых графиков — чертой цвета ряда, а не квадратиком-флажком */
+.u-legend .u-marker { width: 14px !important; height: 0 !important; border-width: 0 0 2px 0 !important; border-radius: 0 !important; background: none !important; vertical-align: 4px; }
+/* вехи на компьютере — без цифр-значков (теснили знаки); сколько событий слилось — в подписи вехи */
+@media (min-width: 681px) { .rb-m .rb-c { display: none; } .rb-legend .rb-cxl { display: none; } }
+/* «Все столбцы» на телефоне: линии дома — одной строкой с многоточием, а не столбиком в 11 строк */
+@media (max-width: 680px) { .tablewrap.allcols td.wrap { max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } }
+/* v32: телефон — подпись главы сворачивается до заголовка («свернуть ▾» / «текст ▴») */
+.story-min { display: none; }
+@media (max-width: 680px) {
+  .story-min { display: inline-block; float: right; font: inherit; font-size: 12.5px; color: var(--accent); background: transparent; border: 0; padding: 0 2px; min-height: 28px; }
+  .story.min p { display: none; }
+}
 
 </style>
 </head><body>
@@ -1179,7 +1194,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
   <section class="card" id="houseEmpty" hidden></section>
   <section class="card away" id="awayCard" hidden></section>
   <div id="houseBody">
-    <p class="hint notice" id="houseNote" hidden>Это дом, которым правил бы игрок. В записи его рычагов никто не трогал — он живёт как бот. В живой игре вы задаёте ему политику: цену к рынку, запас, разборчивость, рост мастерских; «Настроить» у линии показывает, какие рычаги будут.</p>
+    <p class="hint notice" id="houseNote" hidden>Это дом, которым правил бы игрок. В записи его рычагов никто не трогал — он живёт как бот. В живой игре вы задаёте ему политику: цену к рынку, запас, разборчивость, рост мастерских; «Рычаги линии» показывают, какие рычаги будут.</p>
     <section class="card">
       <div class="card-head">
         <h2 id="hName">—</h2>
@@ -1195,7 +1210,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     <!-- линии слева, склад и заявки — столбцом справа: одна карточка линии не стоит одна во всю ширину -->
     <div class="grid2 house-mid">
       <section class="card">
-        <div class="card-head"><h2>Линии</h2><div class="card-tools"><span class="hint">рычаги политики дома; «Настроить» — панель рычагов с прикидкой</span></div></div>
+        <div class="card-head"><h2>Линии</h2><div class="card-tools"><span class="hint">рычаги политики дома — кнопкой у линии</span></div></div>
         <div class="linecards" id="hLines"></div>
       </section>
       <div class="house-col">
@@ -1796,7 +1811,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
         showVerdict(R.head >= R.meta.ticks);
         const f = `таблицы — на ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
         if (fr.textContent !== f) fr.textContent = f;
-        const pt = R.head >= R.meta.ticks ? (narrowBar.matches ? "Заново" : "С начала") : R.speed === "pause" ? "Пуск" : "Пауза";
+        const pt = R.head >= R.meta.ticks ? "Заново" : R.speed === "pause" ? "Пуск" : "Пауза";
         if (pl.textContent !== pt) pl.textContent = pt;
         const sv = R.speed === "pause" ? (R.lastSpeed || "3") : R.speed;
         if (sp.value !== sv && document.activeElement !== sp) sp.value = sv;
@@ -1927,7 +1942,8 @@ function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
   const b = document.getElementById("btnTheme");   // кнопка говорит, какая тема сейчас
-  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `<span class="d-only">${dark ? "Светлая тема" : "Тёмная тема"}</span><span class="m-only">Тема</span>`; b.setAttribute("aria-label", dark ? "Тема сейчас тёмная — включить светлую" : "Тема сейчас светлая — включить тёмную"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
+  // одна подпись на всех ширинах; что включит — в названии кнопки
+  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `Тема`; b.setAttribute("aria-label", dark ? "Тема сейчас тёмная — включить светлую" : "Тема сейчас светлая — включить тёмную"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
 }
 function currentTheme() {
   const t = document.documentElement.getAttribute("data-theme");
@@ -1983,7 +1999,7 @@ const TILES = [
   }],
   ["adv", "Авантюристы", s => num(s.adv), s => `в гильдии ${num(s.pool)}`],
   ["squads", "Отряды", s => num(s.squads), s => `в походе ${num(s.out)}`],
-  ["houses", "Дома", s => num(s.houses), s => `разорились ${num(s.bankrupt)}`],
+  ["houses", "Живых домов", s => num(s.houses), s => `разорились ${num(s.bankrupt)}`],
   ["money", "Деньги", s => compact(s.money), s => `казна ${compact(s.treasury)}`],
 ];
 const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
@@ -2944,7 +2960,10 @@ async function openEntity(id, push) {
   const asof = e.gone ? `<p class="hint">${e.ended != null ? `Конец — ${evDay(e.ended + 1)}${e.why ? ": " + esc(e.why) : ""}. ` : ""}${e.seen != null ? `Ниже — последняя записанная карточка, на ${evDay(e.seen)}.` : ""}</p>`
     : e.asof != null ? `<p class="hint">Так это выглядело на ${evDay(e.asof)}; что было дальше — в летописи.</p>` : "";
   const fol = e.kind === "S" || e.kind === "H", on = fol && UI.follow && UI.follow.id === e.id;
-  const inChron = `<p class="drawer-act"><button type="button" class="small" id="btnEvRef">В летописи: всё про «${esc(e.name)}»</button>` +
+  // сколько о нём в летописи (до этого дня) — кнопка с числом, а если ничего — так и сказать, без перехода в пустоту
+  const evN = (window.DOC_BACKEND ? window.DOC_BACKEND.R.events.filter(x => x.t <= (ST.state ? ST.state.tick : 0)) : ST.events)
+    .filter(x => (x.refs && x.refs[id]) || x.text.includes("{" + id + "}")).length;
+  const inChron = `<p class="drawer-act">${evN ? `<button type="button" class="small" id="btnEvRef">В летописи: всё про «${esc(e.name)}» — ${num(evN)}</button>` : `<span class="hint">в летописи о нём пока ни строки — история ниже</span>`}` +
     (fol && !e.gone ? ` <button type="button" class="small" id="btnFollow" aria-pressed="${on}">${on ? "✓ Следите — перестать" : "Следить во времени"}</button>` : "") + `</p>`;
   $("#drawerBody").innerHTML = renamed + asof + inChron + ({ S: squadCard, H: houseCard, P: personCard, F: fenceCard }[e.kind] || (e => `<dl class="kv">${lifeLine(e)}</dl>`))(e);
 }
@@ -3241,7 +3260,7 @@ function axisStyle() {
 }
 function housePlot(id, series, range) {
   if (libMissing("uPlot", $("#plot-" + id))) return;
-  const el = $("#plot-" + id), colors = (id === "hwealth" ? ["--s1", "--ink-3"] : ["--s1", "--s2", "--s3", "--s4"]).map(css), ax = axisStyle();
+  const el = $("#plot-" + id), colors = (id === "hwealth" ? ["--accent", "--ink-3"] : id === "hpctl" ? ["--accent"] : ["--s1", "--s2", "--s3", "--s4"]).map(css), ax = axisStyle();
   el.innerHTML = "";
   const u = new uPlot({
     width: el.clientWidth || 300, height: 180,
@@ -3356,7 +3375,7 @@ function renderHouse(h) {
         `<dt>входы завтра</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
         `<div class="lev">${lev.length ? lev.map(([k, v]) => `<span class="tag mine">${LEVER_RU[k] ? LEVER_RU[k](v) : k}</span>`).join("")
           : `<span class="tag">как у бота</span>`}</div>` +
-        (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">Настроить</button></div>` : "") + `</div>`;
+        (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">${window.DOC_BACKEND ? "Рычаги линии" : "Настроить"}</button></div>` : "") + `</div>`;
     }).join("");
     $("#hStock").innerHTML = h.stock.length ? `<table><thead><tr><th>Товар</th><th class="num">Кол-во</th><th class="num">Стоимость по рынку</th><th class="num">Дней работы</th></tr></thead><tbody>` +
       h.stock.map(s => `<tr><td>${esc(s.g)}</td><td class="num">${num(s.q, 1)}</td><td class="num">${s.val > 0 && s.val < 1 ? "<1" : compact(s.val)}</td><td class="num">${s.days != null ? num(s.days, 1) : "—"}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">пусто</p>`;
@@ -3678,6 +3697,7 @@ function bindIntro() {
 // «Смотреть историю»: запись сама идёт к следующей главе (близкие — быстро проживает, далёкие —
 // переносит), встаёт на ней и подписывает, что случилось и куда смотреть; «Дальше» — к следующей
 const STORY = { on: false, ch: [], cur: null };
+const state0 = () => STORY.state || "here";
 // высота полосы подписи — для отступа прокрутки (цель главы не прячется под подписью)
 new ResizeObserver(() => document.documentElement.style.setProperty("--storyh", ($("#story").offsetHeight || 0) + "px")).observe($("#story"));
 const storyNext = () => STORY.ch.find(c => c.at > window.DOC_BACKEND.R.head + 1);
@@ -3788,7 +3808,7 @@ function storyRender(state) {
   el.classList.toggle("strip", !matchMedia("(max-width: 680px)").matches);
   const i = STORY.ch.indexOf(c), n = STORY.ch.length, nx = STORY.ch[i + 1];
   const had = el.contains(document.activeElement);
-  el.innerHTML = `<div class="story-k">Глава ${i + 1} из ${n} · ${evDay(c.at)}</div>` +
+  el.innerHTML = `<div class="story-k">Глава ${i + 1} из ${n} · ${evDay(c.at)}<button type="button" class="story-min" data-story="min" aria-expanded="${!STORY.min}" aria-label="${STORY.min ? "Показать текст главы" : "Свернуть текст главы"}">${STORY.min ? "текст ▴" : "свернуть ▾"}</button></div>` +
     `<h2 id="storyTitle">${esc(c.title)}</h2>` +
     (state === "here" ? `<p>${esc(c.noteNow || c.note)}</p>` : `<p class="dim">Запись идёт к этой главе…</p>`) +
     `<div class="story-go">` +
@@ -3798,6 +3818,7 @@ function storyRender(state) {
       `<button type="button" class="ghost story-x" data-story="close" aria-label="Закрыть историю">×</button>` +
     `</div>`;
   el.hidden = false;
+  el.classList.toggle("min", !!STORY.min); STORY.state = state;
   if (state === "going") el.classList.remove("dock");
   const ae = document.activeElement, idle = !ae || ae === document.body || ae.id === "doom" || (ae.closest && ae.closest("#intro"));
   if (state === "going" && had) { const b = $("[data-story=skip]", el); if (b) b.focus({ preventScroll: true }); }
@@ -3808,6 +3829,7 @@ $("#story").addEventListener("click", e => {
   if (!b) return;
   const B = window.DOC_BACKEND, a = b.dataset.story;
   if (a === "next") storyGo(storyNext());
+  else if (a === "min") { STORY.min = !STORY.min; storyRender(state0()); return; }
   else if (a === "skip") { const c = STORY.cur; B.seek(Math.max(0, c.at - 1)); B.R.stopAt = c.at; B.R.speed = "10"; }
   else if (a === "free") { B.R.stopAt = null; storyStop(); if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; }
   else storyClose();
