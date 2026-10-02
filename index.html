@@ -569,6 +569,15 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
 :root[data-theme="light"] .lvl.dark .d, :root[data-theme="light"] .lvl.dark .num, :root[data-theme="light"] .lvl.dark .dim { color: var(--ink-2); }
 @media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .lvl.dark .d, :root:not([data-theme="dark"]) .lvl.dark .num, :root:not([data-theme="dark"]) .lvl.dark .dim { color: var(--ink-2); } }
 
+.ref .was { color: var(--ink-3); font-size: .88em; text-decoration: none; display: inline-block; }
+.lvl .safe { display: inline-block; min-width: 4.2em; text-align: center; font-weight: 700; }
+@media (max-width: 680px) { .tablewrap:not(.allcols) .lo { display: none; } .tbl-cols { margin: 0 0 8px; } }
+/* телефон, запись: дата — в нижней полосе (она всегда на виду), шапка — без строки даты */
+@media (max-width: 680px) {
+  .is-replay .top .clock { display: none; }
+  .replaybar .rb-t { font-family: var(--font-head); font-weight: 700; font-size: 16px; color: var(--ink); }
+}
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -685,7 +694,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
         <div class="card-tools"><span class="hint" id="dgHint"></span></div>
       </div>
       <div class="dg-legend" id="dgLegend"></div>
-      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд">шансы: нов. · сильн.</span></div>
+      <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд; ✓ — у обоих 95% и выше">шансы: нов. · сильн. · ✓ ≥95%</span></div>
       <div class="shaft" id="shaft" role="group" aria-label="Ярусы подземелья: отряды и кнопки — стрелками"></div>
     </section>
     <section class="card flows" id="flowsCard">
@@ -1266,11 +1275,13 @@ function compact(v) {
 const pct = (v, d = 1) => (v == null ? "—" : (v > 0 ? "+" : "") + (v * 100).toFixed(d).replace(".", ",") + "%");
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 // текст с метками {id} -> ссылки на карточки
+// «Новое (бывш. Старое)» — имя из ядра; прежнее название тише основного, чтобы строки не двоились
+const nm = n => { const m = /^(.*?)\s*(\(бывш\. [^)]*\))$/.exec(n); return m ? `${esc(m[1])} <span class="was">${esc(m[2])}</span>` : esc(n); };
 function linkText(text, refs) {
   return esc(text).replace(/\{([PHSF]-\d+)\}/g, (_m, id) =>
-    `<a class="ref" href="#${id}" data-id="${id}">${esc((refs && refs[id]) || id)}</a>`);
+    `<a class="ref" href="#${id}" data-id="${id}">${nm((refs && refs[id]) || id)}</a>`);
 }
-const ref = (id, name) => id ? `<a class="ref" href="#${id}" data-id="${id}">${esc(name || id)}</a>` : "—";
+const ref = (id, name) => id ? `<a class="ref" href="#${id}" data-id="${id}">${nm(name || id)}</a>` : "—";
 const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 // всплывающая подсказка вместо alert(): в песочнице claude.ai диалоги не показываются
 function toast(msg) {
@@ -1856,14 +1867,14 @@ function addEvents(evs) {
 // ------------------------------------------------------------- таблицы
 const COLS = {
   market: [
-    { k: "ru", l: "Товар" }, { k: "kind", l: "Вид", f: (v, r) => `<span class="tag">${META.kind[r.g]}</span>` },
-    { k: "px", l: "Цена", n: 1, f: v => num(v, 2) }, { k: "ref", l: "Опорная", n: 1, f: v => num(v, 2) },
+    { k: "ru", l: "Товар" }, { k: "kind", l: "Вид", lo: 1, f: (v, r) => `<span class="tag">${META.kind[r.g]}</span>` },
+    { k: "px", l: "Цена", n: 1, f: v => num(v, 2) }, { k: "ref", l: "Опорная", n: 1, lo: 1, f: v => num(v, 2) },
     { k: "x", l: "К опорной", n: 1, f: v => (v == null ? "—" : "×" + num(v, 2)) },
     { k: "d30", l: "За 30 дн.", n: 1, f: v => `<span class="${v > 0.005 ? "up" : v < -0.005 ? "down" : ""}">${pct(v)}</span>` },
-    { k: "vol", l: "Объём/день", n: 1, f: v => num(v, 1) },
-    { k: "bid", l: "Бид", n: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Аск", n: 1, f: v => (v ? num(v, 2) : "—") },
-    { k: "depth_b", l: "Спрос в стакане", n: 1, f: v => (v == null ? "—" : num(v, 0)) },
-    { k: "depth_a", l: "Предложение", n: 1, f: v => (v == null ? "—" : num(v, 0)) },
+    { k: "vol", l: "Объём/день", n: 1, lo: 1, f: v => num(v, 1) },
+    { k: "bid", l: "Бид", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Аск", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") },
+    { k: "depth_b", l: "Спрос в стакане", n: 1, lo: 1, f: v => (v == null ? "—" : num(v, 0)) },
+    { k: "depth_a", l: "Предложение", n: 1, lo: 1, f: v => (v == null ? "—" : num(v, 0)) },
   ],
   houses: [
     { k: "name", l: "Дом", f: (v, r) => ref(r.id, v) + (r.player ? ' <span class="tag">игрок</span>' : "") },
@@ -1933,16 +1944,22 @@ function renderTable() {
   }
   const head = cols.map(c => {
     const on = srt && srt.k === c.k;
-    return `<th data-k="${c.k}" class="${c.n ? "num" : ""}${on ? " sorted" + (srt.asc ? " asc" : "") : ""}" aria-sort="${on ? (srt.asc ? "ascending" : "descending") : "none"}">` +
+    return `<th data-k="${c.k}" class="${c.n ? "num" : ""}${c.lo ? " lo" : ""}${on ? " sorted" + (srt.asc ? " asc" : "") : ""}" aria-sort="${on ? (srt.asc ? "ascending" : "descending") : "none"}">` +
       `<button type="button" class="th-sort">${c.l}</button></th>`;
   }).join("");
   // телефон: первые 20 строк и «Показать все» — вместо простыни на тысячи пикселей
   const total = rows.length, narrow = matchMedia("(max-width: 680px)").matches;
   if (narrow && !(UI.showAll || {})[UI.tab] && total > 20) rows = rows.slice(0, 20);
   const body = rows.map(r => `<tr data-g="${r.g || ""}"${UI.tab === "market" && r.g === UI.good ? ' class="sel"' : ""}>` +
-    cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
+    cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}${c.lo ? " lo" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
   $("#tableWrap").innerHTML = (rows.length ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`) +
     (rows.length < total ? `<button type="button" class="tbl-more" id="tblMore">Показать все ${total}</button>` : "");
+  // телефон: второстепенные столбцы (стакан, вид) спрятаны — таблица не уезжает вбок
+  const lo = cols.some(c => c.lo) && narrow;
+  $("#tableWrap").classList.toggle("allcols", !!(UI.allCols || {})[UI.tab]);
+  if (lo) $("#tableWrap").insertAdjacentHTML("afterbegin", `<button type="button" class="tbl-cols ghost small" id="tblCols" aria-pressed="${!!(UI.allCols || {})[UI.tab]}">${(UI.allCols || {})[UI.tab] ? "Только главные столбцы" : "Все столбцы: опорная, объём, стакан"}</button>`);
+  const cb = $("#tblCols");
+  if (cb) cb.onclick = () => { UI.allCols = Object.assign(UI.allCols || {}, { [UI.tab]: !(UI.allCols || {})[UI.tab] }); renderTable(); };
   const more = $("#tblMore");
   if (more) more.onclick = () => { UI.showAll = Object.assign(UI.showAll || {}, { [UI.tab]: true }); renderTable(); };
   $("#tabHint").textContent = !META.full && UI.tab === "houses"
@@ -2159,6 +2176,7 @@ async function loadDungeon() {
   const pct0 = v => Math.round(v * 100) + "%";
   $("#dgHint").innerHTML = `в походе ${g.out} отр., ${g.people} чел. · фронтир ${g.frontier}-й, рекорд ${g.front_max}-й` +
     (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "");
+  const safe = r => r.odds_new >= 0.95 && r.odds_best >= 0.95;
   const one = r => {
     const cls = ["lvl"];
     if (r.d === g.frontier) cls.push("front");
@@ -2179,11 +2197,11 @@ async function loadDungeon() {
       `<span class="stock" title="${stockT}"><span class="sbar${hidden ? " rumor" : ""}"><i style="width:${Math.min(100, fill * 100)}%"></i>${rumor}</span></span>` +
       `<span class="sq">${sq}</span>` +
       `<span class="num" title="вернувшихся походов (в 45-дневных) — знание троп и ловушек">${r.know ? num(r.know, 1) : "—"}</span>` +
-      `<span class="num" title="шансы вернуться за 45 дней с полным припасом (новичкам · сильнейшим); ниже ${pct0(g.min_odds)} не выходят">${r.odds_new >= 0.95 && r.odds_best >= 0.95 ? `<span class="dim">надёжно</span>` : `${odd(r.odds_new)} · ${odd(r.odds_best)}`}</span>` +
+      `<span class="num" title="шансы вернуться за 45 дней с полным припасом (новичкам · сильнейшим); ниже ${pct0(g.min_odds)} не выходят">${safe(r) ? `<span class="dim safe" aria-label="надёжно">✓</span>` : `${odd(r.odds_new)} · ${odd(r.odds_best)}`}</span>` +
       `</div>` + (r.d === g.frontier ? `<div class="frontline">фронтир — ${g.frontier}-й ярус</div>` : "");
   };
   // надёжные пустые ярусы выше фронтира сворачиваются в одну строку — драма у фронтира
-  const quiet = r => r.d < g.frontier - 1 && !r.squads.length && r.odds_new >= 0.95 && r.odds_best >= 0.95;
+  const quiet = r => r.d < g.frontier - 1 && !r.squads.length && safe(r);
   const parts = [];
   for (let i = 0; i < g.rows.length;) {
     let j = i;
