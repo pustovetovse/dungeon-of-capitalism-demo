@@ -767,6 +767,13 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 /* вводная по присланной ссылке — коротко: заголовок, одна строка и кнопки */
 .intro.compact .intro-lead, .intro.compact .intro-chapters, .intro.compact .intro-where { display: none; }
 
+/* телефон: шахта — со своей прокруткой, как летопись; сама встаёт к фронтиру */
+@media (max-width: 680px) { .spine .shaft { max-height: 62vh; min-height: 0; } }
+/* ровная угроза — нейтральным текстом */
+.st.quiet { color: var(--ink-2); }
+/* подпись главы — слева, когда цель справа */
+@media (min-width: 681px) { .story.left { right: auto; left: 16px; } }
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -945,7 +952,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     </section>
     <div class="grid2">
       <section class="card"><div class="card-head"><h2>Склад</h2></div><div class="tablewrap" id="hStock"></div></section>
-      <section class="card"><div class="card-head"><h2>Мои заявки в стакане</h2></div><div class="tablewrap" id="hBook"></div></section>
+      <section class="card"><div class="card-head"><h2>Заявки дома в стакане</h2></div><div class="tablewrap" id="hBook"></div></section>
     </div>
     <div class="grid2">
       <section class="card"><div class="card-head"><h2>Слава у отрядов</h2><div class="card-tools"><span class="hint">растёт, когда вернулись отряды с моим снаряжением</span></div></div><div id="hBrand"></div></section>
@@ -1121,7 +1128,7 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       case "/api/market": return (await frame()).market;
       case "/api/houses": return (await frame()).houses;
       case "/api/squads": return (await frame()).squads;
-      case "/api/dungeon": return (await frame()).dungeon;
+      case "/api/dungeon": { const fr = await frame(); return Object.assign({}, fr.dungeon, { asof: fr.tick }); }   // снимок — и на какой день
       case "/api/flows": return (await frame()).flows;
       case "/api/myhouse": {
         const f = await frame();
@@ -1324,7 +1331,8 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       `<p class="verdict-me" id="verdictMe" hidden></p>` +
       `<dl class="kv verdict-kv"><dt>горожан</dt><dd>${fmt(z("pop"))} → ${fmt(f("pop"))}</dd>` +
       `<dt>рекорд фронтира</dt><dd>${f("front_max")}-й ярус</dd>` +
-      `<dt>погибли внизу</dt><dd>${fmt(f("fallen"))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
+      `<dt>погибли в походах</dt><dd>${fmt(f("fallen"))}</dd>` +
+      `<dt>погибли в городе при прорывах</dt><dd>${fmt(R.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
       `<dt>разорились домов</dt><dd>${f("bankrupt")}</dd><dt>денег в городе</dt><dd>${fmt(z("money"))} → ${fmt(f("money"))}</dd></dl>` +
       `<p class="verdict-line" id="verdictRich"></p>` +
       `<div class="verdict-go"><button type="button" class="primary" data-go="0">Смотреть с начала</button>` +
@@ -1409,8 +1417,9 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
       h.set("t", R.head);
       const url = location.origin + location.pathname + location.search + "#" + h.toString();
       const say = m => (window.docToast ? window.docToast(m) : null);
+      if (navigator.share && matchMedia("(pointer: coarse)").matches) { try { await navigator.share({ title: document.title, url }); return; } catch (e) { /* отменили — к буферу */ } }
       try { await navigator.clipboard.writeText(url); say(`Ссылка на ${R.head >= R.meta.ticks ? "конец записи" : short(R.head)} скопирована: по ней запись откроется на этом дне`); }
-      catch (e) { say("Скопируйте ссылку из адресной строки"); try { history.replaceState(null, "", "#" + h.toString()); } catch (e2) { /* как есть */ } }
+      catch (e) { say(`Ссылка на этот момент: ${url}`); try { history.replaceState(null, "", "#" + h.toString()); } catch (e2) { /* как есть */ } }
     };
     const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime"), fr = bar.querySelector("#rbFrame");
     const pl = bar.querySelector("#rbPlay");          // телефон: пауза под большим пальцем
@@ -1499,7 +1508,9 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 // текст с метками {id} -> ссылки на карточки
 // «Новое (бывш. Старое)» — имя из ядра; прежнее название тише основного, чтобы строки не двоились
 const nm = n => { const m = /^(.*?)\s*(\(бывш\. [^)]*\))$/.exec(n); return m ? `${esc(m[1])} <span class="was">${esc(m[2])}</span>` : esc(n); };
+const diedAgree = t => t.replace(/([Пп])огибли (\d+)/g, (m, P, n) => (+n % 10 === 1 && +n % 100 !== 11) ? `${P}огиб ${n}` : m);
 function linkText(text, refs) {
+  text = diedAgree(text);
   text = text.replace(/(^|[.!;:] )\{(S-\d+)\} (ушёл|вернулся|разбит|не вернулся|пропал)/g, (_m, pre, id, v) => `${pre}${pre ? "отряд" : "Отряд"} {${id}} ${v}`);
   return esc(text).replace(/\{([PHSF]-\d+)\}/g, (_m, id) =>
     `<a class="ref" href="#${id}" data-id="${id}">${nm((refs && refs[id]) || id)}</a>`);
@@ -1646,7 +1657,7 @@ function renderDoom() {
   const risk = thr > gd ? `риск прорыва — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : `<span class="st serious">▲ ${over}</span> · ${risk}`;
+      : (trend === "up" || r1 == null || r1 >= 10) ? `<span class="st serious">▲ ${risk}</span> · ${over}` : `<span class="st quiet">${risk}</span> · ${over}`;
   const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
   const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `${over} · ${risk}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
@@ -1663,7 +1674,7 @@ function renderDoom() {
   el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
   const fk = el.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.spark : null;
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
-    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}` +
+    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: ${diedAgree(`погибли ${lost}`)} ${plural(+lost, "человек", "человека", "человек")}` : ""} — ${ago(since)}` +
       (() => { const T = ST.cols[known ? "known" : "threat"] || ST.cols.threat, G = ST.cols.guard, i = lowerBound(ST.cols.t, lastBreach) - 1;
         return T && G && i >= 0 ? `<span class="doom-pre">перед прорывом угроза ${compact(T[i])} против ${num(G[i], 1)} у гарнизона</span>` : ""; })() + `</div>` : "") +
     `<div class="doom-main">` +
@@ -1683,7 +1694,7 @@ function renderDoom() {
       `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f ? `+${num(f.now - f.then)} за 45 дн.` : ""; })()}${(() => {
         const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
         const n = s.breaches, w = n % 10 === 1 && n % 100 !== 11 ? "прорыве" : "прорывах";
-        return n ? ` · в ${num(n)} ${w} — ${num(dead)}` : " · прорывов не было";
+        return n ? `<br>в городе при ${num(n) === "1" ? "прорыве" : `${num(n)} прорывах`} — ещё ${num(dead)}` : " · прорывов не было";
       })()}</div>` +
     `</div>` +
     doomSpark() +
@@ -2368,7 +2379,7 @@ function fenceCard(e) {
 function squadCard(e) {
   let h = `<dl class="kv">${lifeLine(e)}`;
   if (e.roster) h += `<dt>сила</dt><dd>${num(e.power, 2)}</dd><dt>сплочённость</dt><dd>${bar(e.cohesion)}${num(e.cohesion, 2)}</dd>`;
-  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн.${e.plan.T > 50 ? " (глубокий — дольше обычных 45)" : ""}, шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
+  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн.${e.plan.T > 50 ? " (долгий — дольше обычных 45)" : ""}, шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
   h += `</dl>`;
   if (e.roster) {
     h += `<h3>Состав</h3><table><thead><tr><th>Имя</th><th>Роль</th><th>Ранг</th><th class="num">Касса</th><th class="num">Походов</th></tr></thead><tbody>` +
@@ -2455,7 +2466,8 @@ async function loadDungeon() {
   if (UI.hoverShaft) return;
   const g = await api("/api/dungeon");
   const pct0 = v => Math.round(v * 100) + "%";
-  $("#dgHint").innerHTML = `в походе ${g.out} отр., ${g.people} чел. · фронтир ${g.frontier}-й, рекорд ${g.front_max}-й` +
+  const fl = ST.state ? ST.state.frontier : g.frontier, fm = ST.state ? ST.state.front_max : g.front_max;
+  $("#dgHint").innerHTML = (g.asof != null && window.DOC_BACKEND ? `ярусы — на ${evDay(g.asof)} · ` : "") + `в походе ${g.out} отр., ${g.people} чел. · фронтир ${fl}-й, рекорд ${fm}-й` +
     (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "");
   const safe = r => r.odds_new >= 0.95 && r.odds_best >= 0.95;
   const one = r => {
@@ -3010,6 +3022,12 @@ function storyGo(c) {
   B.R.speed = c.at - B.R.head > 60 ? "30" : "10";
   storyRender("going");
 }
+function storySide(id) {
+  const el = document.getElementById(id), st = $("#story");
+  if (!el || matchMedia("(max-width: 680px)").matches) { st.classList.remove("left"); return; }
+  const hl = $(".story-focus") || el, r = hl.getBoundingClientRect();
+  st.classList.toggle("left", r.left + r.width / 2 > innerWidth / 2);
+}
 async function storyHouse(c) {
   setView("house"); window.scrollTo(0, 0);
   await loadHouse();
@@ -3020,6 +3038,7 @@ async function storyHouse(c) {
       `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома. Прибыль у каждого своя — а угроза у ворот растёт для всех.`;
     storyRender("here");
     STORY.hl = { sel: ["#hTiles .tile:nth-child(2)", "#plot-hpctl"], until: Date.now() + 6000 };
+    setTimeout(() => storySide("plot-hpctl"), 50);
     STORY.hl.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus"); });
     setTimeout(() => $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still")), 6000);
   }
@@ -3034,6 +3053,7 @@ function storyArrived() {
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   $("#story").classList.toggle("dock", narrow && c.look !== "doom");
   storyFocus(c);
+  storySide(c.look === "doom" ? "doom" : c.look);
   $("#announce").textContent = `${c.title}. ${c.note}`;
 }
 // что подсветить: угроза против гарнизона, фронтир, строки летописи в окне главы
@@ -3076,7 +3096,7 @@ $("#story").addEventListener("click", e => {
   if (!b) return;
   const B = window.DOC_BACKEND, a = b.dataset.story;
   if (a === "next") storyGo(storyNext());
-  else if (a === "skip") { const c = STORY.cur; B.seek(c.t); B.R.stopAt = c.at; B.R.speed = "10"; }
+  else if (a === "skip") { const c = STORY.cur; B.seek(Math.max(0, c.at - 1)); B.R.stopAt = c.at; B.R.speed = "10"; }
   else if (a === "free") { B.R.stopAt = null; storyStop(); if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; }
   else storyClose();
 });
