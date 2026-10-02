@@ -130,7 +130,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .doom-why { grid-column: 1 / -1; margin: 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 13.5px; font-style: italic; }
 @media (max-width: 900px) { .doom { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .doom-main { grid-column: 1 / -1; } }
 @media (max-width: 680px) { .doom-thr, .doom-gd { font-size: 32px; } .doom-v2 { font-size: 24px; } .doom { padding: 12px 14px; } }
-.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)); gap: 10px; }
 .tile { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; }
 .tile .k { color: var(--ink-3); font-size: 13px; }
 .tile .v { font-family: var(--font-head); font-size: 28px; font-weight: 700; line-height: 1.1; }
@@ -862,6 +862,21 @@ h1 { font-size: 28px; }
 .ev-kinds button[aria-pressed="true"], .sp-sw button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .ev-kinds button[aria-pressed="true"] span { color: inherit; }
 
+/* v27: плиток может быть нечётное число (голода не было — его плитки нет): последняя на телефоне — во всю ширину */
+@media (max-width: 680px) { #tiles > .tile:last-child:nth-child(odd) { grid-column: 1 / -1; } }
+@media (min-width: 1101px) { #tiles:has(> .tile:nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+/* v27: «Об игре» закрывается и сверху — кнопка × липнет к верху окна, пока его листают */
+dialog form.about-x { position: sticky; top: -18px; float: right; margin: -8px -12px 0 8px; z-index: 1; text-align: right; }
+dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px; line-height: 1; background: var(--surface); }
+#aboutTitle:focus { outline: none; }
+/* v27: «следите» — строка под полосой угрозы */
+.follow { display: block; background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 8px 14px; font-size: 14px; color: var(--ink-2); }
+.follow[hidden] { display: none; }
+.follow .fw-k { font-family: var(--font-head); font-weight: 700; font-size: 15px; color: var(--accent); margin-right: 4px; }
+.follow b { color: var(--ink); font-weight: 400; }
+.follow .fw-ev { color: var(--ink-2); }
+.follow .fw-go { white-space: nowrap; margin-left: 4px; }
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -942,6 +957,7 @@ h1 { font-size: 28px; }
     </div>
   </section>
   <section class="card doom" id="doom" aria-label="Угроза городу" tabindex="-1"></section>
+  <section class="follow" id="follow" aria-label="За кем вы следите" hidden></section>
   <section class="tiles" id="tiles" aria-label="Сводка"></section>
   <div class="vh" id="announce" aria-live="polite"></div>
 
@@ -1078,7 +1094,8 @@ h1 { font-size: 28px; }
   <div class="drawer-body" id="drawerBody"></div>
 </aside>
 
-<dialog id="about">
+<dialog id="about" aria-labelledby="aboutTitle">
+  <form method="dialog" class="about-x"><button type="submit" aria-label="Закрыть «Об игре»">×</button></form>
   <div class="about-body" id="aboutBody"></div>
   <form method="dialog"><button>Закрыть</button></form>
 </dialog>
@@ -1119,6 +1136,8 @@ h1 { font-size: 28px; }
   };
   const ready = (async () => {
     [R.meta, R.hist, R.events] = await Promise.all([getJSON("meta.json"), getJSON("history.json"), getJSON("events.json")]);
+    // «важное» — только то, что меняет город: прозвища и открытие/закрытие лавок скупщиков — в «всё»
+    for (const e of R.events) if ((e.k === "nick" || e.k === "fence" || e.k === "fence_end") && e.lv >= 2) e.lv = 1;
     // занятие дома игроком — событие летописи (глава 1 истории; в записи ядра его нет)
     if (R.meta.seat) {
       let i = R.events.findIndex(e => e.t > R.meta.seat_at); if (i < 0) i = R.events.length;
@@ -1326,12 +1345,16 @@ h1 { font-size: 28px; }
     const f1 = x => (x >= 100 ? Math.round(x) : Math.round(x * 10) / 10).toLocaleString("ru-RU");   // как compact() на странице: 135, а не 134,7
     for (const m of ms) if (m.k === "breach") { const tb = sv("threat", m.t - 1), gb = sv("guard", m.t - 1);
       add(m.t, "Прорыв из подземелья", "breach",
-        `Угроза прорвала гарнизон${tb != null && gb != null ? `: перед прорывом она была ${f1(tb)} против ${f1(gb)} у гарнизона` : ""}. В городе погибли люди — прибыль была у домов своя, а риск оказался общим.`, "doom"); }
+        `Угроза прорвала гарнизон${tb != null && gb != null ? `: перед прорывом она была ${f1(tb)} против ${f1(gb)} у гарнизона` : ""}.` +
+        (() => { const e = R.events.find(x => x.k === "breach" && x.t === m.t), n = e ? +((e.text.match(/Погибли (\d+)/) || [])[1] || 0) : 0;
+          const v = n % 10 === 1 && n % 100 !== 11 ? "погиб" : "погибли", none = (sv("guard", m.t + 1) || 0) <= 0;
+          return n ? ` В городе ${v} ${n} ${plural(n, "человек", "человека", "человек")}${none ? ", гарнизона больше нет" : ""}.` : " В городе погибли люди."; })(), "doom"); }
     const fr = R.events.filter(e => e.k === "frontier");
     const deep = fr.filter(e => e.t > R.meta.seat_at);
     const lvl = e => +(e.text.match(/(\d+)-й ярус/) || [0, 0])[1];
     if (deep.length) add(deep[0].t, `Отряды впервые дошли до ${lvl(deep[0])}-го яруса`, "first",
-      `Хорошо снабжённые отряды уходят глубже — фронтир теперь ${lvl(deep[0])}-й ярус. Чем глубже они спускаются, тем сильнее просыпается подземелье.`, "doom");
+      `Хорошо снабжённые отряды уходят глубже — фронтир теперь ${lvl(deep[0])}-й ярус.` +
+      (() => { const a = sv("threat", R.meta.seat_at), b = sv("threat", deep[0].t); return a != null && b != null ? ` Угроза у ворот с тех пор, как игрок занял дом: ${f1(a)} → ${f1(b)}.` : ""; })(), "doom");
     const waves = ms.flatMap(m => m.items.filter(x => x.k === "bankrupt"));
     if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
       `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.start); }
@@ -1341,9 +1364,9 @@ h1 { font-size: 28px; }
       add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
         `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали.` +
         (fa != null && ta != null && tb != null ? ` С тех пор как игрок занял дом, фронтир ${Math.round(fa)} → ${lvl(e)}, угроза ${f1(ta)} → ${f1(tb)}, гарнизон ${f1(ga)} → ${f1(gb)}.` : ""), "doom"); }
-    // дом игрока — посреди записи: пока город богатеет, дом живёт как бот (числа — при прибытии, из «Мой дом»)
+    // дом игрока — посреди записи: кузня, чьё снаряжение берут в поход (числа — при прибытии, из «Мой дом»)
     if (R.meta.seat) add(Math.round(R.meta.seat_at + (R.meta.ticks - R.meta.seat_at) * 0.55), `Дом игрока «${R.meta.seat_name || "—"}»`, "house",
-      "Пока город богатеет, дом игрока живёт как бот: рычагов никто не трогает.", "house");
+      "Дом игрока снабжает отряды: его снаряжение уходит с ними вниз. Рычагов никто не трогает — дом живёт как бот.", "house");
     out.sort((a, b) => a.at - b.at);
     out.push({ at: R.meta.ticks, t: R.meta.ticks, title: "Чем кончилось", k: "end", note: "", look: "verdict" });
     return out;
@@ -1416,7 +1439,8 @@ h1 { font-size: 28px; }
       if (touch && armed !== b) { armed = b; show(b, true); return; }   // на касании: сперва подпись
       armed = null;
       // веха — как ползунок: сразу в день события и на паузу (сама запись не трогается с места)
-      const t = +b.dataset.t, title = KIND_RU[MS[+b.dataset.i].k];
+      // слитая веха: в день того события, чей знак на ней (■ — прорыв), и под его именем
+      const m = MS[+b.dataset.i], it = m.items.find(x => x.k === m.k) || m.items[0], t = it.t, title = KIND_RU[it.k];
       if (R.speed !== "pause") R.lastSpeed = R.speed;
       seek(t); R.speed = "pause"; R.stopAt = null;
       hide();                                          // подпись вехи уступает сообщению «Вы на месте»
@@ -1455,7 +1479,7 @@ h1 { font-size: 28px; }
       `<dl class="kv verdict-kv"><dt>горожан</dt><dd>${fmt(z("pop"))} → ${fmt(f("pop"))}</dd>` +
       `<dt>рекорд фронтира</dt><dd>${f("front_max")}-й ярус</dd>` +
       `<dt>погибли в походах</dt><dd>${fmt(f("fallen"))}</dd>` +
-      `<dt>погибли в городе при прорывах</dt><dd>${fmt(R.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
+      `<dt>погибли в городе при ${f("breaches") === 1 ? "прорыве" : "прорывах"}</dt><dd>${fmt(R.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0))}</dd><dt>прорывов</dt><dd>${f("breaches")}</dd>` +
       `<dt>разорились домов</dt><dd>${f("bankrupt")}</dd><dt>денег в городе</dt><dd>${fmt(z("money"))} → ${fmt(f("money"))}</dd></dl>` +
       `<p class="verdict-line" id="verdictRich"></p>` +
       `<div class="verdict-go"><button type="button" class="primary" data-go="0">Смотреть с начала</button>` +
@@ -1474,14 +1498,22 @@ h1 { font-size: 28px; }
         // дом игрока — его собственная история: капитал, место среди домов, смена отрасли
         const sr = me.series || {}, w0 = sr.wealth && sr.wealth[0], q0 = sr.pctl && sr.pctl[0], m0 = sr.median && sr.median[0];
         const sw = (me.journal || []).filter(j => /сменил отрасль/.test(j[1])).map(j => (j[1].match(/«([^»]+)»/) || [])[1]).filter(Boolean);
-        pm.innerHTML = `<b>Дом игрока «${me.name}»</b> рычагов не трогал. ` + (me.alive === false ? "Дом разорился." :
-          `Капитал ${w0 != null ? `${Math.round(w0).toLocaleString("ru-RU")} → ` : ""}${Math.round(me.wealth).toLocaleString("ru-RU")}` +
-          (m0 != null && me.median ? `, но город богател быстрее (у медианного дома капитал ${Math.round(m0).toLocaleString("ru-RU")} → ${Math.round(me.median).toLocaleString("ru-RU")})` : "") +
-          (q0 != null ? `: был богаче ${Math.round(q0)}% домов, стал богаче ${Math.round(me.pctl)}%.` : `: богаче ${Math.round(me.pctl)}% домов.`) +
+        // снабженец: что он делает, что заработал и кто носит его снаряжение — тезис на одном доме
+        const esc = x => String(x).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+        const q1 = me.pctl, up = q0 == null || q1 >= q0 - 2, cap = v => Math.round(v).toLocaleString("ru-RU");
+        const who = Object.entries(me.brand || {}).filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).map(([k]) => ({ "новичок": "новички", "ветеран": "ветераны", "мастер": "мастера" })[k] || k);
+        const goods = [...new Set((me.lines || []).map(l => l.good_ru))].join(", ");
+        const fa = S.frontier[R.meta.seat_at], ta = S.threat[R.meta.seat_at];
+        pm.innerHTML = `<b>Дом игрока «${me.name}»</b> — ${esc(me.ind || "дом")}${goods ? ` (${esc(goods)})` : ""}; рычагов не трогал. ` + (me.alive === false ? "Дом разорился." :
+          `Капитал ${w0 != null ? `${cap(w0)} → ` : ""}${cap(me.wealth)}` +
+          (up ? "" : m0 != null && me.median ? `, но город богател быстрее (у медианного дома ${cap(m0)} → ${cap(me.median)})` : "") +
+          (q0 != null ? `: был богаче ${Math.round(q0)}% домов, стал богаче ${Math.round(q1)}%.` : `: богаче ${Math.round(q1)}% домов.`) +
+          (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (fa != null ? ` — и за эти годы отряды ушли с ${Math.round(fa)}-го до ${f("front_max")}-го яруса, а угроза у ворот выросла с ${fmt(ta)} до ${fmt(f("threat"))}.` : ".") : "") +
           (sw.length ? ` ${sw.length === 1 ? "Сменил отрасль" : `Менял отрасль ${sw.length} ${plural(sw.length, "раз", "раза", "раз")}`}: теперь «${sw[sw.length - 1]}».` : ""));
         pm.hidden = false;
       }
-      if (p && hs.length) p.textContent = `Прибыль — частная: богаче всех к концу дом «${hs[0].name}» (касса ${fmt(hs[0].cash)}), вторым — «${hs[1] ? hs[1].name : "—"}». Риск — общий: ${fmt(f("fallen"))} погибших внизу, ${f("bankrupt")} разорившихся домов.`;
+      const mine = me && me.alive !== false && me.cash != null ? `, у дома игрока — ${fmt(me.cash)}` : "";
+      if (p && hs.length) p.textContent = `Прибыль — частная: больше всех денег к концу у дома «${hs[0].name}» (касса ${fmt(hs[0].cash)})${mine}. Риск — общий: ${fmt(f("fallen"))} погибших внизу, ${f("bankrupt")} разорившихся домов.`;
     });
     el.onclick = e => {
       if (e.target.closest("button[data-house]")) { const v = document.querySelector('button[data-view="house"]'); if (v) v.click(); return; }
@@ -1497,6 +1529,10 @@ h1 { font-size: 28px; }
     await ready;
     for (const id of ["btnNew", "seedInput", "btnSave"]) { const el = document.getElementById(id); if (el) el.hidden = true; }
     const vk = document.getElementById("viewKind"); if (vk) vk.textContent = "запись";
+    // гость записи — не владелец дома: вкладка называется так же, как в главах и итоге
+    const hv = document.querySelector('button[data-view="house"]');
+    if (hv) for (const n of hv.childNodes) if (n.nodeType === 3 && /Мой дом/.test(n.textContent)) n.textContent = "Дом игрока";
+    const ih = document.querySelector('#intro a[data-go="house"]'); if (ih) ih.textContent = "Дом игрока";
     const bar = document.createElement("div");
     bar.className = "replaybar";
     bar.innerHTML = `<span class="rb-k">Запись мира</span>` +
@@ -1515,7 +1551,7 @@ h1 { font-size: 28px; }
       `<div class="rb-tip" id="rbTip" hidden></div></div>` +
       `<span class="rb-t" id="rbTime" aria-hidden="true"></span>` +
       `<button type="button" class="rb-key" id="rbKey" aria-expanded="false" aria-controls="rbInfo">Знаки</button>` +
-      `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>` +
+      `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и дом игрока записаны раз в 30 дней, карточки — раз в 90"></span>` +
       // во вложенном окне (claude.ai) внешний адрес страницы неизвестен — делиться нечем
       (window.self === window.top ? `<button type="button" class="rb-share" id="rbShare" aria-label="Ссылка на этот момент записи"><span class="d-only">Ссылка на момент</span><span class="m-only">Ссылка</span></button>` : "");
     const top = document.querySelector(".top");
@@ -1770,18 +1806,22 @@ function renderDoom() {
   // цвет — опасность (во сколько раз угроза сильнее), а тренд — словами рядом
   // красный — только прорыв; угроза сильнее гарнизона — оранжевый (плотнее, если разрыв растёт)
   const level = fresh ? "critical" : gd >= thr ? "good" : "warn";
-  const ago = d => d === 0 ? "сегодня" : `${num(d)} дн. назад`;
-  const over = r1 == null ? "гарнизона нет" : r1 < 1.05 ? "угроза почти равна гарнизону" : `угроза сильнее в ${num(r1, 1)} раза`;
+  // давность: дни — до года, дальше годами («5 лет назад», а не «1 878 дн.»)
+  const ago = d => d === 0 ? "сегодня" : d < 360 ? `${num(d)} дн. назад` : (y => `${num(y)} ${plural(y, "год", "года", "лет")} назад`)(Math.round(d / 360));
+  // «в 7,1 раза», «в 13 раз», «в 2 раза»: до 10 — с десятой, дальше целым
+  const times = x => { const v = x >= 10 ? Math.round(x) : Math.round(x * 10) / 10;
+    return `${num(v, Number.isInteger(v) ? 0 : 1)} ${Number.isInteger(v) ? plural(v, "раз", "раза", "раз") : "раза"}`; };
   // что значит разрыв: по правилу ядра прорыв случается в день с вероятностью (T − R) / T / breach_days
   const bd = (META && META.breach_days) || 1200;
   const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
   const risk = thr > gd ? `риск прорыва — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
-  // строка под полосой — в два яруса: вердикт (риск за год или «держит») и под ним разрыв, его ход, прорывы
+  const way = trend === "up" ? " — разрыв растёт" : trend === "down" ? " — разрыв сокращается" : trend === "flat" ? " — разрыв не меняется" : "";
+  // заголовок полосы — разрыв и его ход (меняется, когда меняется положение); цвет — по тому же числу
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : (r1 == null || r1 >= 5) ? `<span class="st serious">▲ ${risk}</span>` : `<span class="st quiet">${risk}</span>`;   // цвет — по размеру разрыва, рост — стрелкой ↗
-  const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
-  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `${over} · ${risk}`)
+      : gd <= 0 ? `<span class="st serious">▲ гарнизона нет — прорыв возможен в любой день</span>`
+        : `<span class="st ${r1 >= 5 ? "serious" : "quiet"}">▲ угроза в ${times(r1)} сильнее гарнизона${way}</span>`;
+  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : gd <= 0 ? "гарнизон погиб — держать угрозу некому" : `угроза в ${times(r1)} сильнее гарнизона${way}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
   el.dataset.level = level;
@@ -1803,9 +1843,9 @@ function renderDoom() {
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
         `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
-      `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "гарнизона нет — угрозу держать некому"}</div>` +
-      `<div class="doom-bar" aria-hidden="true"><span style="width:${Math.max(2, pct)}%"></span></div>` +
-      `<div class="doom-n">${head ? `<div class="doom-verdict">${head}</div>` : ""}<div class="doom-n2">${[fresh || gd >= thr ? "" : over, move, br].filter(Boolean).join(" · ")}</div></div>` +
+      `<div class="doom-cap">${s.soldiers ? `гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы` : "в гарнизоне ни одного солдата"}</div>` +
+      `<div class="doom-bar" aria-hidden="true"><span style="width:${pct > 0 ? Math.max(2, pct) : 0}%"></span></div>` +
+      `<div class="doom-n">${head ? `<div class="doom-verdict">${head}</div>` : ""}<div class="doom-n2">${[fresh ? br : "", gd > 0 ? risk : "", fresh ? "" : br].filter(Boolean).join(" · ")}</div></div>` +
     `</div>` +
     `<div class="doom-side">` +
       `<div class="doom-k">${ic("stairs-goal")}Фронтир</div><div class="doom-v2">${s.frontier}-й ярус</div>` +
@@ -1813,14 +1853,13 @@ function renderDoom() {
     `</div>` +
     `<div class="doom-side">` +
       `<div class="doom-k">${ic("tombstone")}Погибли в походах</div><div class="doom-v2">${num(s.fallen)}</div>` +
-      `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f ? `+${num(f.now - f.then)} за 45 дн.` : ""; })()}${(() => {
+      `<div class="doom-n">${(() => { const f = deltaCol("fallen", 45); return f && f.now > f.then ? `+${num(f.now - f.then)} за 45 дн.` : "за 45 дн. — никого"; })()}${(() => {
         const dead = ST.events.filter(e => e.k === "breach").reduce((a, e) => a + (+(e.text.match(/Погибли (\d+)/) || [0, 0])[1]), 0);
         const n = s.breaches, w = n % 10 === 1 && n % 100 !== 11 ? "прорыве" : "прорывах";
         return n ? `<br>в городе при ${num(n) === "1" ? "прорыве" : `${num(n)} прорывах`} — ещё ${num(dead)}` : "";   // «прорывов не было» — уже под полосой
       })()}</div>` +
     `</div>` +
-    doomSpark() +
-    `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
+    doomSpark();
   if (fk) { const b = $(`[data-spark="${fk}"]`, el); if (b) b.focus({ preventScroll: true }); }
   if (!el.dataset.sparkBound) { el.dataset.sparkBound = "1"; el.addEventListener("click", e => { const b = e.target.closest("[data-spark]"); if (b) { UI.sparkAll = b.dataset.spark === "all"; renderDoom(); storyRefocus(); } }); }
 }
@@ -1853,8 +1892,13 @@ function storyRefocus() {
   if (!h || Date.now() > h.until) return;
   h.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus", "still"); });
 }
+// плитка, которая за всю запись не сдвинулась с нуля (голода не было ни дня), — не показывать
+function tilesShown() {
+  const S = window.DOC_BACKEND && window.DOC_BACKEND.R.hist && window.DOC_BACKEND.R.hist.summary;
+  return TILES.filter(([k]) => !(k === "hunger" && S && S.hunger && S.hunger.every(v => !(v > 0.001))));
+}
 function buildTiles() {
-  $("#tiles").innerHTML = TILES.map(([k, label]) =>
+  $("#tiles").innerHTML = tilesShown().map(([k, label]) =>
     `<div class="tile" id="tile-${k}"><div class="k">${ic(TILE_IC[k])}${label}</div><div class="v">—</div><div class="n"></div></div>`).join("");
 }
 function renderTiles() {
@@ -1862,7 +1906,7 @@ function renderTiles() {
   if (!s) return;
   renderDoom();
   storyRefocus();
-  for (const [k, , v, n] of TILES) {
+  for (const [k, , v, n] of tilesShown()) {
     const el = $("#tile-" + k);
     $(".v", el).textContent = v(s);
     $(".n", el).innerHTML = n(s);
@@ -2553,7 +2597,9 @@ async function openEntity(id, push) {
   // в записи карточка — снимок на дату кадра (раз в 90 дней): сказать прямо, на какую
   const asof = e.gone ? `<p class="hint">${e.ended != null ? `Конец — ${evDay(e.ended + 1)}${e.why ? ": " + esc(e.why) : ""}. ` : ""}${e.seen != null ? `Ниже — последняя записанная карточка, на ${evDay(e.seen)}.` : ""}</p>`
     : e.asof != null ? `<p class="hint">Так это выглядело на ${evDay(e.asof)}; что было дальше — в летописи.</p>` : "";
-  const inChron = `<p class="drawer-act"><button type="button" class="small" id="btnEvRef">В летописи: всё про «${esc(e.name)}»</button></p>`;
+  const fol = e.kind === "S" || e.kind === "H", on = fol && UI.follow && UI.follow.id === e.id;
+  const inChron = `<p class="drawer-act"><button type="button" class="small" id="btnEvRef">В летописи: всё про «${esc(e.name)}»</button>` +
+    (fol && !e.gone ? ` <button type="button" class="small" id="btnFollow" aria-pressed="${on}">${on ? "✓ Следите — перестать" : "Следить во времени"}</button>` : "") + `</p>`;
   $("#drawerBody").innerHTML = renamed + asof + inChron + ({ S: squadCard, H: houseCard, P: personCard, F: fenceCard }[e.kind] || (e => `<dl class="kv">${lifeLine(e)}</dl>`))(e);
 }
 document.addEventListener("click", ev => {
@@ -2561,6 +2607,53 @@ document.addEventListener("click", ev => {
   UI.evRef = UI.entity; UI.evRefName = ($("#drawerTitle").textContent || "").replace(/^(дом|отряд|человек|скупщик) /, "");
   closeDrawer(); setView("world"); renderEvents();
   const c = $("#secChronicle"); c.scrollIntoView({ block: "start" }); $("#evClear").focus({ preventScroll: true });
+});
+// «следить»: отряд или дом закреплён строкой под полосой угрозы, подсвечен в шахте и летописи, хранится в адресе
+document.addEventListener("click", ev => {
+  if (!ev.target.closest("#btnFollow")) return;
+  const id = UI.entity, name = ($("#drawerTitle").textContent || "").replace(/^(дом|отряд|человек|скупщик) /, "");
+  if (UI.follow && UI.follow.id === id) { UI.follow = null; toast("Слежка снята"); }
+  else { UI.follow = { id, name }; toast(`Следите за «${name}»: строка под полосой угрозы, в шахте и летописи — рамка`); }
+  writeHash(); renderFollow(); refreshDrawer();
+});
+async function renderFollow() {
+  const el = $("#follow"), F = UI.follow;
+  let css = $("#followStyle");
+  if (!css) { css = document.createElement("style"); css.id = "followStyle"; document.head.appendChild(css); }
+  if (!el) return;
+  if (!F) { el.hidden = true; if (css) css.textContent = ""; return; }
+  const id = F.id, kind = id[0] === "S" ? "отряд" : "дом";
+  // рамка в шахте и в летописи — правилом по id (строки перерисовываются, правило остаётся)
+  if (css) css.textContent = `#shaft a.sqdot[data-id="${id}"] { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 25%, transparent); }` +
+    ` #events li:has(a.ref[data-id="${id}"]) { box-shadow: inset 3px 0 0 var(--accent); padding-left: 8px; }`;
+  let line = "", gone = null;
+  if (kind === "отряд") {
+    const rows = await api("/api/squads"), r = (Array.isArray(rows) ? rows : rows.rows || []).find(x => x.id === id);
+    const lv = UI.dg && UI.dg.rows ? UI.dg.rows.find(x => x.squads.some(q => q.id === id)) : null, q = lv && lv.squads.find(x => x.id === id);
+    if (r) { F.name = r.name.replace(/\s*\(бывш\.[^)]*\)\s*$/, "") || F.name;
+      const back = t => t >= (META.ticks || Infinity) ? "вернётся после конца записи" : `вернётся ${evDay(t)}`;
+      line = q ? `${lv.d}-й ярус, ${q.phase} · ${r.size} чел. · ${back(q.back)} · шансы ${Math.round(q.p * 100)}%`
+        : `${r.state}${r.depth ? `, ${r.depth}-й ярус` : ""} · ${r.size} чел. · сила ${num(r.power, 2)}${r.back ? ` · ${back(r.back)}` : ""}`; }
+    else gone = await api(`/api/entity?id=${id}`);
+  } else {
+    const rows = await api("/api/houses"), r = (Array.isArray(rows) ? rows : rows.rows || []).find(x => x.id === id);
+    if (r) { F.name = r.name || F.name;
+      line = `${esc(r.ind || "")} · ${r.cash != null ? `касса ${compact(r.cash)} · ` : ""}мощность ${num(r.cap, 2)} · ${r.lines ? `линий ${Array.isArray(r.lines) ? r.lines.length : r.lines}` : ""}`; }
+    else gone = await api(`/api/entity?id=${id}`);
+  }
+  if (gone) line = gone.ended != null ? `больше нет — ${evDay(gone.ended + 1)}${gone.why ? `: ${esc(gone.why)}` : ""}` : gone.born != null && gone.born > (ST.state ? ST.state.tick : 0) ? `появится ${evDay(gone.born)}` : "нет в записи на этот день";
+  const ev = ST.events.slice().reverse().find(e => (e.refs && e.refs[id]) || e.text.includes("{" + id + "}"));
+  el.innerHTML = `<span class="fw-k">Следите:</span> <b>${kind} ${ref(id, F.name)}</b> — ${line}` +
+    (ev ? `<span class="fw-ev"> · последнее: ${evDay(ev.t)} — ${linkText(ev.text, ev.refs)}</span>` : "") +
+    ` <span class="fw-go"><button type="button" class="linkish" data-fw="chron">в летописи</button> · <button type="button" class="linkish" data-fw="off" aria-label="Перестать следить">не следить ×</button></span>`;
+  el.hidden = false;
+}
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("#follow [data-fw]");
+  if (!b) return;
+  if (b.dataset.fw === "off") { UI.follow = null; writeHash(); renderFollow(); return; }
+  UI.evRef = UI.follow.id; UI.evRefName = UI.follow.name; setView("world"); renderEvents();
+  $("#secChronicle").scrollIntoView({ block: "start" }); $("#evClear").focus({ preventScroll: true });
 });
 function lifeLine(e) {
   // номер сущности нужен автору (живая версия), гостю записи — нет
@@ -2656,9 +2749,18 @@ function bindFlows() {
 
 // ---------------------------------------------------------- подземелье
 const PHASE = { "спуск": "↓", "промысел": "●", "подъём": "↑", "не вернулся": "?" };
+// под курсором вид не перерисовывается каждый опрос (строка не уезжает из-под мыши), но не дольше
+// 2 с и никогда — после перемотки: иначе шахта или дом застывают на чужом дне
+function heldUnder(key, hover) {
+  const h = (UI.held = UI.held || {})[key], now = Date.now();
+  if (hover && h && h.epoch === ST.epoch && now - h.at < 2000) return true;
+  UI.held[key] = { at: now, epoch: ST.epoch };
+  return false;
+}
 async function loadDungeon() {
-  if (UI.hoverShaft) return;
-  const g = await api("/api/dungeon");
+  if (heldUnder("shaft", UI.hoverShaft)) return;
+  const g = UI.dg = await api("/api/dungeon");
+  if (UI.follow) setTimeout(renderFollow, 0);      // строка «следите» — по тому же снимку шахты
   const pct0 = v => Math.round(v * 100) + "%";
   const fl = ST.state ? ST.state.frontier : g.frontier, fm = ST.state ? ST.state.front_max : g.front_max;
   // одна правда: черта фронтира — живая (как в полосе угрозы); ярусы — снимок, его возраст — явной меткой
@@ -2688,7 +2790,7 @@ async function loadDungeon() {
       `<span class="stock" title="${stockT}"><span class="sbar${hidden ? " rumor" : ""}"><i style="width:${Math.min(100, fill * 100)}%"></i>${rumor}</span></span>` +
       `<span class="sq">${sq}</span>` +
       `<span class="num" title="вернувшихся походов (в 45-дневных) — знание троп и ловушек">${r.know ? (r.know < 1 ? "<1" : num(Math.round(r.know), 0)) : "—"}</span>` +
-      `<span class="num" title="шансы вернуться за 45 дней с полным припасом (новичкам · сильнейшим); ниже ${pct0(g.min_odds)} не выходят">${safe(r) ? `<span class="dim safe" aria-label="надёжно">✓</span>` : `${odd(r.odds_new)} · ${odd(r.odds_best)}`}</span>` +
+      `<span class="num" title="шансы вернуться за 45 дней с полным припасом (новичкам · сильнейшим); ниже ${pct0(g.min_odds)} не выходят">${safe(r) ? `<span class="vh">надёжно</span>` : `${odd(r.odds_new)} · ${odd(r.odds_best)}`}</span>` +
       `</div>` + (r.d === fl ? `<div class="frontline">фронтир — ${fl}-й ярус</div>` : "");
   };
   // надёжные пустые ярусы выше фронтира сворачиваются в одну строку — драма у фронтира
@@ -2738,7 +2840,7 @@ function bindDungeon() {
   $("#dgLegend").innerHTML = `<div class="dg-key">` +
     `<span><b class="g">↓ ● ↑</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">?</b> не вернулся в срок</span>` +
     (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
-    `<span><b class="g">✓</b> шансы вернуться у обоих ≥ 95%</span><span><b class="g">знание</b> — сколько походов вернулось с яруса</span><span>значки и имена кликаются</span></div>`;
+    `<span><b class="g">«шансы» пусто</b> — надёжно: у обоих ≥ 95%</span><span><b class="g">знание</b> — сколько походов вернулось с яруса</span><span>значки и имена кликаются</span></div>`;
   $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}<p class="hint gloss-go">Что значат знание, шансы, слух, фронтир — <button type="button" class="linkish" data-gloss>в словаре</button>.</p></details>`;
 }
 
@@ -2798,7 +2900,7 @@ function houseData(sr, series) {
   return [idx.map(i => sr.t[i])].concat(series.map(([k]) => idx.map(i => sr[k][i])));
 }
 async function loadHouse() {
-  if (UI.hoverHouse) return;
+  if (heldUnder("house", UI.hoverHouse)) return;
   const me = await api("/api/me");
   if (!me.seat && me.mode === "choose" && !(me.pending && me.pending.length)) {
     const c = await api("/api/candidates");
@@ -2824,7 +2926,7 @@ async function loadHouse() {
     $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Дом не занят</h2><p>` +
       (me.pending && me.pending.length ? "Приказ занять дом стоит в очереди — исполнится на следующем тике."
         : me.mode ? (window.DOC_BACKEND && META.seat_at != null
-            ? `Игрок займёт дом в ${evDay(META.seat_at)}; в записи «Мой дом» виден с ${evDay(me.after + 1)} — его снимки сделаны раз в 30 дней (сейчас ${evDay(me.tick)}).`
+            ? `Игрок займёт дом в ${evDay(META.seat_at)}; в записи его экран виден с ${evDay(me.after + 1)} — его снимки сделаны раз в 30 дней (сейчас ${evDay(me.tick)}).`
             : `Игрок займёт дом после прогрева мира — с ${evDay(me.after + 1)} (сейчас ${evDay(me.tick)}).`) +
           (window.DOC_BACKEND ? ` <button type="button" id="btnToSeat">Перейти к ${evDay(me.after + 1)}</button>` : "")
           : `Сервер запущен без игрока. Запустите <code>python server.py --seat choose</code>: после прогрева мира вы выберете дом из трёх кандидатов.`) + `</p></div>`;
@@ -2855,7 +2957,6 @@ function renderHouseRisk(h) {
   const turns = (h.journal || []).filter(([, x]) => !/^за месяц/.test(x)).slice(-3).reverse();
   el.innerHTML = `<div class="hrisk-city"><span class="hrisk-k">${ic("guarded-tower")}Город у ворот</span> ${st} · ` +
       `угроза ${compact(thr)} против ${compact(gd)} · фронтир — ${s.frontier}-й ярус. ` +
-      `<span class="dim">Чем лучше снабжены отряды, тем глубже они уходят: прибыль дома — его, риск — общий.</span> ` +
       `<button type="button" class="linkish" id="hToDoom">к полосе угрозы</button></div>` +
     (turns.length ? `<div class="hrisk-turns"><span class="hrisk-k">Что менялось в доме</span><ul>` +
       turns.map(([t, x]) => `<li><span class="t">${evDay(t)}</span> ${esc(x)}</li>`).join("") + `</ul></div>` : "");
@@ -2879,13 +2980,13 @@ function renderHouse(h) {
       tile("Место", `${num(h.pctl, 0)}%`, `домов беднее (всего ${h.houses})`) +
       tile("Касса", compact(h.cash), "наличные") +
       tile("Долг", h.owed ? compact(h.owed) : "0", h.owed ? `<span class="st serious">▲ счета не оплачены</span>` : `<span class="st good">● долгов нет</span>`) +
-      tile("Мощность", num(cap, 2), `выпуск за день · линий ${h.lines.length}`) +
+      tile("Мощность", num(cap, 2), `размер мастерских · линий ${h.lines.length}`) +
       tile("Политика", window.DOC_BACKEND ? "бот" : h.player ? "игрок" : "бот", window.DOC_BACKEND ? "место игрока; рычаги не тронуты" : Object.keys(h.house_levers || {}).length
         ? Object.entries(h.house_levers).map(([k, v]) => LEVER_RU[k] ? LEVER_RU[k](v) : k).join(", ") : "дом — как у бота");
     $("#hLines").innerHTML = h.lines.map(l => {
       const lev = Object.entries(l.levers || {});
       return `<div class="lc"><h3><span>${esc(l.n)}</span><span class="tag">${l.idle || !(l.rate > 0.005) ? "стоит" : "работает"}</span></h3>` +
-        `<dl class="kv"><dt>выпуск</dt><dd>${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})</dd>` +
+        `<dl class="kv"><dt>выпуск</dt><dd>${l.idle ? `${esc(l.good_ru)}: 0 — линия стоит <span class="dim">(на ходу — ${num(l.rate, 2)} в день, мощность ${num(l.cap, 2)})</span>` : `${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})`}</dd>` +
         `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
         `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
         `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? num(l.cost, 2) : "—"} <span class="dim">(по завтрашним входам)</span></dd>` +
@@ -3136,11 +3237,11 @@ function bindIntro() {
     // первый вход с клавиатуры: фокус сразу на главной кнопке, а не через шапку и полосу записи
     if (!seen) setTimeout(() => { if (document.activeElement === document.body) $("#introClose").focus({ preventScroll: true }); }, 0);
     // вернувшийся гость — сказать, откуда продолжаем
-    else if (Math.abs(at - seat) > 60 && !readHash().t) setTimeout(() => toast(`С возвращением: запись продолжается с ${evDay(at)}. Пробел — пауза, «?» — главы.`), 1200);
-    if (!seen && !readHash().t) B.R.speed = "pause";
-    if (!seen && readHash().t) {             // гость пришёл по ссылке на момент — сказать об этом, а не «с начала 4-го»
+    else if (Math.abs(at - seat) > 60 && !sentT()) setTimeout(() => toast(`С возвращением: запись продолжается с ${evDay(at)}. Пробел — пауза, «?» — главы.`), 1200);
+    if (!seen && !sentT()) B.R.speed = "pause";
+    if (!seen && sentT()) {                  // гость пришёл по ссылке на момент — сказать об этом, а не «с начала 4-го»
       B.R.speed = "pause";
-      $("#introTitle").textContent = `Вам прислали момент записи: ${evDay(Math.max(0, parseInt(readHash().t, 10) || at))}`;
+      $("#introTitle").textContent = `Вам прислали момент записи: ${evDay(Math.max(0, parseInt(sentT(), 10) || at))}`;
       $("#introMode").textContent = `Это запись ${years} лет одного города; запись стоит на присланном дне. Смотрите отсюда или пройдите историю по главам с начала.`;
       $("#introPlain").textContent = "или история с начала";
       $("#introPlain").dataset.story = "1";
@@ -3242,8 +3343,8 @@ function storySide(id) {
   if (id) STORY.sideId = id;
   if (st.hidden || matchMedia("(max-width: 680px)").matches) { st.classList.remove("left", "up"); return; }
   const base = document.getElementById(STORY.sideId);
-  const rs = $$(".story-focus").map(x => x.getBoundingClientRect()).filter(r => r.width && r.bottom > 0 && r.top < innerHeight);
-  if (!rs.length && base) rs.push(base.getBoundingClientRect());
+  // беречь подсвеченное и сам предмет главы (в главе о доме — график капитала, о котором подпись)
+  const rs = [...$$(".story-focus"), base].filter(Boolean).map(x => x.getBoundingClientRect()).filter(r => r.width && r.bottom > 0 && r.top < innerHeight);
   const w = st.offsetWidth, h = st.offsetHeight, bar = $(".replaybar"), m = 16;
   const top = (bar && getComputedStyle(bar).position === "sticky" ? bar.getBoundingClientRect().bottom : 0) + 12;
   const cost = (x, y) => rs.reduce((a, r) => a + Math.max(0, Math.min(x + w, r.right) - Math.max(x, r.left)) * Math.max(0, Math.min(y + h, r.bottom) - Math.max(y, r.top)), 0);
@@ -3262,11 +3363,15 @@ async function storyHouse(c) {
   const h = UI.houseData;
   if (h && h.alive && STORY.cur === c) {
     const q0 = h.series && h.series.pctl ? Math.round(h.series.pctl[0]) : null;
+    // числа вместо лозунга: место дома, его капитал — и кто носит его снаряжение, пока растёт угроза
+    const who = Object.entries(h.brand || {}).filter(([, v]) => v > 1).sort((a, b) => b[1] - a[1]).map(([k]) => ({ "новичок": "новички", "ветеран": "ветераны", "мастер": "мастера" })[k] || k);
+    const S = ST.cols, i0 = S && S.t ? lowerBound(S.t, META.seat_at) : -1, ta = i0 >= 0 && S.threat ? S.threat[i0] : null;
     c.noteNow = `${c.note} Сейчас он богаче ${Math.round(h.pctl)}% домов${q0 != null ? ` (когда игрок занял его — ${q0}%)` : ""}: ` +
-      `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома. Прибыль у каждого своя — а угроза у ворот растёт для всех.`;
+      `капитал ${compact(h.wealth)} против ${compact(h.median)} у медианного дома.` +
+      (who.length ? ` Его снаряжение берут в поход ${who.join(", ")}` + (ta != null && ST.state ? ` — а угроза у ворот за это время ${compact(ta)} → ${compact(ST.state.threat)}.` : ".") : "");
     storyRender("here");
-    STORY.hl = { sel: ["#hTiles .tile:nth-child(2)", "#plot-hpctl"], until: Date.now() + 6000 };
-    setTimeout(() => storySide("plot-hpctl"), 50);
+    STORY.hl = { sel: ["#hTiles .tile:nth-child(2)", "#plot-hpctl", "#hBrand"], until: Date.now() + 6000 };
+    setTimeout(() => storySide("plot-hwealth"), 50);
     STORY.hl.sel.forEach(q => { const x = $(q); if (x) x.classList.add("story-focus"); });
     setTimeout(() => $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still")), 6000);
   }
@@ -3353,9 +3458,9 @@ const GLOSS = [
   ["Сплочённость", "от 0 до 1 — сколько походов отряд прошёл вместе; сработавшийся отряд надёжнее."],
   ["Знание", "сколько походов вернулось с яруса: тропы и ловушки известны — ходить туда безопаснее."],
   ["Запас: на деле и слух", "сколько добычи осталось на ярусе и сколько о ней думает город по рассказам вернувшихся."],
-  ["Шансы вернуться", "вероятность вернуться из похода с полным припасом: новичкам и сильнейшим отрядам; ✓ — надёжно для всех."],
+  ["Шансы вернуться", "вероятность вернуться из похода с полным припасом: новичкам и сильнейшим отрядам; пустая клетка — надёжно для всех (≥ 95%)."],
   ["Линия", "мастерская дома, выпускающая один товар."],
-  ["Мощность", "сколько единиц товара линия может выпустить за день."],
+  ["Мощность", "размер мастерских линии. Выпуск за день — мощность, умноженная на выработку ремесла (у каждого ремесла своя)."],
   ["Опорная цена", "себестоимость товара, посчитанная по рецептам от стоимости труда; рыночная цена ходит вокруг неё. «К опорной ×2» — вдвое дороже."],
   ["Стакан", "заявки на бирже: кто сколько хочет купить и продать и по какой цене."],
   ["Бид и аск", "лучшая цена покупки и лучшая цена продажи в стакане."],
@@ -3385,7 +3490,7 @@ async function openAbout(at) {
   // пустые разделы (заголовок, за которым сразу следующий) не показываем
   for (let i = html.length - 1; i >= 0; i--)
     if (html[i].startsWith("<h2>") && (i === html.length - 1 || html[i + 1].startsWith("<h2>"))) html.splice(i, 1);
-  $("#aboutBody").innerHTML = `<h2>Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. ${window.DOC_BACKEND ? "Это запись одного мира: все — боты, а один дом занят местом игрока, который рычагов не трогает." : "Сейчас — смотровая: мир живёт сам; игрок, если он есть, правит одним домом через политику."}</p>` +
+  $("#aboutBody").innerHTML = `<h2 id="aboutTitle" tabindex="-1">Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. ${window.DOC_BACKEND ? "Это запись одного мира: все — боты, а один дом занят местом игрока, который рычагов не трогает." : "Сейчас — смотровая: мир живёт сам; игрок, если он есть, правит одним домом через политику."}</p>` +
     `<p>Игрок не воюет и не торгует руками: он задаёт политику своего дома — цену к рынку, запас, разборчивость в материалах, рост мастерских, — а дом исполняет её каждый день. Экономика целиком живая: цены, разорения, походы и угроза складываются из решений сотен ботов.</p>` +
     `<h3 id="gloss" tabindex="-1">Словарь</h3><dl class="gloss">${GLOSS.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl>` +
     `<details class="credits"><summary>Благодарности: иконки, шрифты, библиотеки</summary>${html.join("")}</details>`;
@@ -3398,11 +3503,12 @@ async function openAbout(at) {
   }
   $("#about").showModal();
   if (at === "gloss") { const g = $("#gloss"); if (g) { g.scrollIntoView({ block: "start" }); g.focus({ preventScroll: true }); } }
+  else { $("#about").scrollTop = 0; $("#aboutTitle").focus({ preventScroll: true }); }   // с начала, а не со словаря
 }
 
 // ----------------------------------------------------------------- цикл
 async function fullReload() {
-  UI.hoverHouse = UI.hoverTable = false;          // после перемотки — новое состояние, даже если курсор над видом
+  UI.hoverHouse = UI.hoverTable = UI.hoverShaft = false;   // после перемотки — новое состояние, даже если курсор над видом
   UI.shaftScrolled = false;
   const h = await api(`/api/history?points=${MAX_POINTS}`);
   ST.cols = h.cols; ST.px = h.px; ST.vol = h.vol;
@@ -3441,7 +3547,7 @@ async function poll() {
       lastTable = now; UI.lastPolledTick = ST.state.tick; UI.forceTable = false;
       if (UI.view === "house") { if (!inF("#viewHouse")) loadHouse(); }
       else {
-        if (!UI.hoverTable && !inF("#tableWrap")) loadTable();
+        if (!inF("#tableWrap") && !heldUnder("table", UI.hoverTable)) loadTable();
         loadDungeon(); loadFlows();
       }
       if (!UI.hoverDrawer && !inF("#drawer")) refreshDrawer();
@@ -3470,6 +3576,7 @@ function hashParams() {
   const h = new URLSearchParams();
   if (UI.view === "house") h.set("v", "house");
   if (UI.entity) h.set("e", UI.entity);
+  if (UI.follow) h.set("f", UI.follow.id);
   if (UI.tab && UI.tab !== "market") h.set("tab", UI.tab);
   if (UI.good && UI.good !== UI.defaultGood) h.set("g", UI.good);
   const B = window.DOC_BACKEND;
@@ -3486,11 +3593,21 @@ function writeHash() {
   if (!UI.hashReady) return;                       // пока страница собирается — адрес не трогать
   const q = hashParams().toString();
   try { history.replaceState(null, "", q ? "#" + q : location.pathname + location.search); } catch (e) { /* песочница */ }
+  try { sessionStorage.setItem("doc-hash-own", q); } catch (e) { /* без памяти */ }
+}
+// день из адреса — присланный, только если адрес не записала сама эта вкладка (перезагрузка — не «вам прислали»)
+const HASH_AT_LOAD = location.hash.slice(1);
+function sentT() {
+  const t = readHash().t;
+  if (!t) return null;
+  let own = null; try { own = sessionStorage.getItem("doc-hash-own"); } catch (e) { /* без памяти */ }
+  return own != null && own === HASH_AT_LOAD ? null : t;
 }
 async function applyHash(H) {
   if (H.v === "house") setView("house");
   if (H.tab) setTab(H.tab);
   if (H.g && ST.px[H.g]) selectGood(H.g);
+  if (H.f && /^[HS]-\d+$/.test(H.f)) { UI.follow = { id: H.f, name: H.f }; renderFollow(); }
   if (H.e && /^[PHSF]-\d+$/.test(H.e)) await openEntity(H.e, true);
 }
 document.addEventListener("click", e => {          // «К содержимому»: мимо шапки — к полосе угрозы
