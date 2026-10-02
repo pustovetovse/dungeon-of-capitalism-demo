@@ -893,6 +893,26 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
   #drawerBody table th:first-child, #drawerBody table td:first-child { position: sticky; left: 0; z-index: 1; background: var(--surface); }
   #hTiles { scroll-margin-top: 12px; }
 }
+/* v29: фильтр «всё про X» — чип с ×; пустая летопись — во всю ширину строки */
+.ev-ref { font: inherit; font-size: 13px; padding: 2px 10px; min-height: 26px; border-radius: 13px; background: var(--accent); color: var(--accent-ink); border: 1px solid var(--accent); }
+.ev-ref[hidden] { display: none; }
+@media (pointer: coarse) { .ev-ref { min-height: 40px; } }
+.events li.empty { display: block; grid-column: 1 / -1; }
+.doom-verdict .trend { font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+.about-body dl.gloss .hit { background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 4px; }
+.about-body dl.gloss dt:focus { outline: none; }
+@media (pointer: coarse) { .rb-legend .rb-keys { display: none; } }   /* клавиши — тем, у кого они есть */
+/* v29: телефон — шапка в два ряда: название; вкладки и «Тема · Главы · Об игре» одной строкой */
+@media (max-width: 440px) {
+  .views button .ic { display: none; }
+  .aux button, .views button { padding: 6px 8px; font-size: 14px; }
+  .aux { gap: 4px; }
+  .top { column-gap: 6px; }
+}
+@media (max-width: 380px) { .aux button, .views button { padding: 6px 6px; font-size: 13.5px; } }
+/* v29: 900 px — пять плиток в ряд, без пустой клетки; дата снимка в полосе записи — одной строкой */
+@media (min-width: 681px) and (max-width: 1100px) { #tiles:has(> .tile:nth-child(5):last-child) { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.replaybar #rbFrame { white-space: nowrap; }
 
 </style>
 </head><body>
@@ -1000,13 +1020,14 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       </div>
       <!-- фильтры летописи: род событий (знаки — те же, что в строках) и поиск по имени -->
       <div class="ev-tools">
+        <button type="button" class="ev-ref" id="evRefChip" hidden aria-label="Снять фильтр"></button>
         <div class="ev-kinds" id="evKinds" role="group" aria-label="Род событий: можно выбрать несколько">
-          <button type="button" data-g="breach" aria-pressed="false"><span class="k-b">■</span> прорывы</button>
-          <button type="button" data-g="depth" aria-pressed="false"><span class="k-f">▼</span> глубина</button>
-          <button type="button" data-g="loss" aria-pressed="false"><span class="k-w">✕</span> потери отрядов</button>
-          <button type="button" data-g="ruin" aria-pressed="false"><span>◆</span> разорения</button>
-          <button type="button" data-g="trips" aria-pressed="false"><span>↓↑</span> походы</button>
-          <button type="button" data-g="life" aria-pressed="false"><span class="k-o">◇</span> люди и дома</button>
+          <button type="button" data-g="breach" aria-pressed="false"><span class="k-b" aria-hidden="true">■</span> прорывы</button>
+          <button type="button" data-g="depth" aria-pressed="false"><span class="k-f" aria-hidden="true">▼</span> глубина</button>
+          <button type="button" data-g="loss" aria-pressed="false"><span class="k-w" aria-hidden="true">✕</span> потери отрядов</button>
+          <button type="button" data-g="ruin" aria-pressed="false"><span aria-hidden="true">◆</span> разорения</button>
+          <button type="button" data-g="trips" aria-pressed="false"><span aria-hidden="true">↓↑</span> походы</button>
+          <button type="button" data-g="life" aria-pressed="false"><span class="k-o" aria-hidden="true">◇</span> люди и дома</button>
         </div>
         <label class="vh" for="evQuery">Найти в летописи по имени</label>
         <input type="search" id="evQuery" placeholder="имя: дом, отряд, человек…" autocomplete="off">
@@ -1294,7 +1315,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       case "/api/fallen": {           // павшие в походах к этому дню: кто, когда, где, в каком отряде
         if (!LIVES) [LIVES, GONE] = await Promise.all([getJSON("lives.json"), getJSON("gone.json")]);
         const out = [];
-        for (const id in GONE) { const g = GONE[id]; if (id[0] === "P" && g.why === "погиб" && g.ended != null && g.ended <= R.head) {
+        for (const id in GONE) { const g = GONE[id]; if (id[0] === "P" && g.why === "погиб" && g.ended != null && (g.died ? g.died.t : g.ended + 1) <= R.head) {
           const sq = (g.died && g.died.squad) || g.squad;
           out.push({ id, name: g.name, t: g.died ? g.died.t : g.ended + 1, d: g.died ? g.died.d : null, squad: sq, sq: sq && g.refs ? g.refs[sq] : null, rank: g.rank, trips: g.trips }); } }
         return out.sort((a, b) => b.t - a.t);
@@ -1335,7 +1356,9 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
     return { error: "это запись мира: приказы работают в живой версии" };
   }
 
-  window.DOC_BACKEND = { get, control, order, seek, ready, R, chapters: () => chapters() };
+  window.DOC_BACKEND = { get, control, order, seek, ready, R, chapters: () => chapters(),
+    // вехи для клавиш ] / [: день события под знаком вехи и его род
+    marks: () => milestones().map(m => { const it = m.items.find(x => x.k === m.k) || m.items[0]; return { t: it.t, title: KIND_RU[it.k] }; }).sort((a, b) => a.t - b.t) };
   document.documentElement.classList.add("is-replay");   // стили: на телефоне время ведёт нижняя полоса
 
   // вехи записи на ползунке: рекорды фронтира, разбитые отряды, прорывы, волны разорений;
@@ -1552,7 +1575,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
           (sw.length ? ` ${sw.length === 1 ? "Сменил отрасль" : `Менял отрасль ${sw.length} ${plural(sw.length, "раз", "раза", "раз")}`}: теперь «${sw[sw.length - 1]}».` : ""));
         pm.hidden = false;
       }
-      const mine = me && me.alive !== false && me.cash != null ? `, у дома игрока — ${fmt(me.cash)}` : "";
+      const mine = me && me.alive !== false && me.cash != null ? `, у дома игрока касса — ${fmt(me.cash)}` : "";   // касса с кассой; капитал — выше
       if (p && hs.length) p.textContent = `Прибыль — частная: больше всех денег к концу у дома «${hs[0].name}» (касса ${fmt(hs[0].cash)})${mine}. Риск — общий: ${fmt(f("fallen"))} погибших внизу, ${f("bankrupt")} разорившихся домов.`;
     });
     el.onclick = e => {
@@ -1582,7 +1605,8 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
       `<span class="rb-legend" aria-hidden="true">` + [["frontier", "рекорд глубины"], ["breach", "прорыв"], ["wiped", "разбит отряд"], ["bankrupt", "волна разорений"]]
         .map(([k, l]) => `<span><i class="rb-m rb-${k}"></i>${l}</span>`).join("") +
         `<span><i class="rb-wk"></i>разгон — первые ${Math.round(R.meta.seat_at / R.meta.day)} года мир идёт сам</span>` +
-        `<span class="rb-cxl"><b class="rb-cx">2</b> цифра у вехи — сколько событий в ней слилось</span></span></span>` +
+        `<span class="rb-cxl"><b class="rb-cx">2</b> цифра у вехи — сколько событий в ней слилось</span>` +
+        `<span class="rb-keys">клавиши: [ и ] — к вехе, ← → — день, пробел — пауза</span></span></span>` +
       `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
       `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="rb-speed">` +
       ["1", "3", "10", "30", "max"].map(v => `<option value="${v}"${v === "3" ? " selected" : ""}>${v === "max" ? "макс" : v + "/с"}</option>`).join("") + `</select>` +
@@ -1858,8 +1882,9 @@ function renderDoom() {
   // что значит разрыв: по правилу ядра прорыв случается в день с вероятностью (T − R) / T / breach_days
   const bd = (META && META.breach_days) || 1200;
   const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
-  const risk = thr > gd ? `<button type="button" class="linkish" data-gloss title="Риск растёт с разрывом, но не выше ~26% в год: прорыв — случай, а не срок">риск прорыва</button> — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
-  const way = trend === "up" ? " — разрыв растёт" : trend === "down" ? " — разрыв сокращается" : trend === "flat" ? " — разрыв не меняется" : "";
+  const risk = thr > gd ? `<button type="button" class="linkish" data-gloss="Риск прорыва" title="Риск растёт с разрывом, но не выше ~26% в год: прорыв — случай, а не срок">риск прорыва</button> — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
+  // ход разрыва — своей стрелкой (▲ — знак тяжести, а не роста)
+  const way = trend === "up" ? ` <span class="trend">· ↗ разрыв растёт</span>` : trend === "down" ? ` <span class="trend">· ↘ разрыв сокращается</span>` : trend === "flat" ? ` <span class="trend">· → разрыв не меняется</span>` : "";
   // заголовок полосы — разрыв и его ход (меняется, когда меняется положение); цвет — по тому же числу
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
@@ -1987,7 +2012,7 @@ function buildHeader() {
     rebuildCharts();
   };
   $("#btnAbout").onclick = () => openAbout();
-  document.addEventListener("click", e => { const g = e.target.closest("[data-gloss]"); if (g) { e.preventDefault(); openAbout("gloss"); } });
+  document.addEventListener("click", e => { const g = e.target.closest("[data-gloss]"); if (g) { e.preventDefault(); openAbout("gloss", g.dataset.gloss || ""); } });
   $("#btnSave").onclick = async () => {
     const r = await control("save");
     if (r.error) toast(r.error);
@@ -2273,6 +2298,7 @@ function evItem(e, fresh) {
 const EV_GROUP = { breach: ["breach"], depth: ["frontier"], loss: ["wiped", "missing"], ruin: ["bankrupt", "fence_end"],
   trips: ["depart", "return"], life: ["squad", "disband", "nick", "retire", "house", "fence", "seat"] };
 UI.evKinds = new Set(); UI.evQuery = ""; UI.evRef = null;
+const evPlainCase = e => diedAgree(e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id));
 const evPlain = e => e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id).toLowerCase();
 function evFiltered() { return UI.evKinds.size || UI.evQuery || UI.evRef; }
 function evPass(e) {
@@ -2283,19 +2309,23 @@ function evPass(e) {
   return true;
 }
 function evStateLine(n) {
-  const el = $("#evState");
+  const el = $("#evState"), chip = $("#evRefChip");
+  // «всё про X» из карточки — видимым чипом с ×, а не скрытым условием
+  if (chip) { chip.hidden = !UI.evRef; if (UI.evRef) chip.innerHTML = `всё про «${esc(UI.evRefName || UI.evRef)}» <span aria-hidden="true">×</span>`; chip.setAttribute("aria-label", UI.evRef ? `Снять фильтр «${UI.evRefName || UI.evRef}»` : "Снять фильтр"); }
   if (!evFiltered()) { el.hidden = true; return; }
   const what = [UI.evRef ? `«${esc(UI.evRefName || UI.evRef)}»` : "", UI.evQuery ? `поиск «${esc(UI.evQuery)}»` : "",
     UI.evKinds.size ? [...UI.evKinds].map(g => $(`#evKinds [data-g="${g}"]`).textContent.trim()).join(", ") : ""].filter(Boolean).join(" · ");
   const t0 = ST.events.length ? ST.events[0].t : 0;
   const scope = UI.evQuery ? ` · ищем в летописи с ${evDay(t0)} по ${evDay(ST.state ? ST.state.tick : 0)}` : "";
-  const steps = !n ? [UI.evKinds.size && (UI.evQuery || UI.evRef) ? `<button type="button" class="linkish" data-evstep="kinds">искать во всех родах</button>` : "",
-    UI.evQuery && UI.evKinds.size === 0 ? "" : ""].filter(Boolean).join(" · ") : "";
+  const steps = !n ? [UI.evRef && (UI.evQuery || UI.evKinds.size) ? `<button type="button" class="linkish" data-evstep="ref">снять «${esc(UI.evRefName || UI.evRef)}»</button>` : "",
+    UI.evKinds.size && (UI.evQuery || UI.evRef) ? `<button type="button" class="linkish" data-evstep="kinds">искать во всех родах</button>` : ""].filter(Boolean).join(" · ") : "";
   el.innerHTML = `${what} — ${n ? `${num(n)} ${plural(n, "событие", "события", "событий")}` : "ничего"}${n >= 300 ? " (последние 300)" : ""}${scope} ` +
     (steps ? `· ${steps} ` : "") + `<span class="ev-find" id="evFind"></span> <button type="button" class="linkish" id="evClear">сбросить</button>`;
   el.hidden = false;
   const st = $("[data-evstep=kinds]", el);
   if (st) st.onclick = () => { UI.evKinds.clear(); $$("#evKinds button").forEach(b => b.setAttribute("aria-pressed", "false")); renderEvents(); };
+  const sr = $("[data-evstep=ref]", el);
+  if (sr) sr.onclick = () => { UI.evRef = null; renderEvents(); };
   // имя есть в записи — карточки прямо отсюда (даже если в летописи о нём ни строки)
   if (UI.evQuery && UI.evQuery.length >= 2 && window.DOC_BACKEND) {
     const q = UI.evQuery;
@@ -2396,6 +2426,8 @@ async function loadEvents() {
 function addEvents(evs) {
   evs = evs.filter(e => !(e.seq <= ST.seq));        // уже показанное не повторять (ни при каком ответе API)
   if (!evs.length) return;
+  const big = ST.seq > 0 && !STORY.on ? evs.filter(e => e.lv >= 3).pop() : null;   // при первой загрузке — молчать
+  if (big && Date.now() - (UI.saidAt || 0) > 4000) { UI.saidAt = Date.now(); $("#announce").textContent = `${evDay(big.t)}: ${evPlainCase(big)}`; }
   ST.events.push(...evs);
   if (ST.events.length > 2000) {                   // обрезать сначала мелкое, важное — держать
     const cut = ST.events.length - 1500;
@@ -2492,7 +2524,8 @@ async function loadMarketQuiet() {
 }
 function renderTable() {
   // второстепенный столбец, пустой во всех строках (ни одной заявки на покупку), — не показывать
-  const cols = ((!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab]).filter(c => !c.lo || TABLE_ROWS.some(r => r[c.k])), srt = UI.sort[UI.tab];
+  const same = k => TABLE_ROWS.length > 3 && TABLE_ROWS.every(r => r[k] === TABLE_ROWS[0][k]);   // «Возраст, дн.» 3 000 у всех — не сведение
+  const cols = ((!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab]).filter(c => (!c.lo || TABLE_ROWS.some(r => r[c.k])) && !(c.k === "age" && same("age"))), srt = UI.sort[UI.tab];
   const fk = document.activeElement && document.activeElement.closest && document.activeElement.closest("#tableWrap th[data-k]");
   const focusK = fk ? fk.dataset.k : null;      // сортировка с клавиатуры: фокус остаётся на том же заголовке
   let rows = TABLE_ROWS.slice();
@@ -2805,7 +2838,7 @@ async function loadFlows() {
   const f = await api("/api/flows");
   const okBook = Math.abs(f.gap) <= 1e-6 * Math.max(1, f.cash) + 1;
   $("#bookHint").innerHTML = `за ${f.days} дн. денег в городе стало ${f.d_cash >= 0 ? "больше" : "меньше"} на ${num(Math.abs(f.d_cash))} ` +
-    (okBook ? `<span class="st good" title="приход минус расход равен изменению денег в городе">● счёт сходится</span>` : `<span class="st critical">■ расхождение ${num(f.gap)}</span>`);
+    (okBook ? (window.DOC_BACKEND ? "" : `<span class="st good" title="приход минус расход равен изменению денег в городе">● счёт сходится</span>`) : `<span class="st critical">■ расхождение ${num(f.gap)}</span>`);
   const sec = (title, rows, note) => {
     rows = rows.filter(r => Math.round(r.d30) || Math.round(r.d360) || Math.round(r.all));   // статьи из одних нулей — шум
     const tot = rows.reduce((a, r) => a + Math.max(0, r.d30), 0) || 1;
@@ -2917,7 +2950,7 @@ function bindDungeon() {
     `<span><b class="g">↓ ● ↑</b> спуск · промысел · подъём</span><span><b class="g" style="color:var(--critical)">?</b> не вернулся в срок</span>` +
     (META.full ? `<span>${bar(60, 85)} запас яруса на деле, черта — слух</span>` : `<span>${bar(70)} запас — по слухам</span>`) +
     `<span><b class="g">«шансы» пусто</b> — надёжно: у обоих ≥ 95%</span><span><b class="g">знание</b> — сколько походов вернулось с яруса</span><span>значки и имена кликаются</span></div>`;
-  $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}<p class="hint gloss-go">Что значат знание, шансы, слух, фронтир — <button type="button" class="linkish" data-gloss>в словаре</button>.</p></details>`;
+  $("#dgLegend").innerHTML = `<details class="dg-keyd"${matchMedia("(max-width: 680px)").matches ? "" : " open"}><summary>Как читать шахту</summary>${$("#dgLegend").innerHTML}<p class="hint gloss-go">Что значат <button type="button" class="linkish" data-gloss="Знание">знание</button>, <button type="button" class="linkish" data-gloss="Шансы">шансы</button>, <button type="button" class="linkish" data-gloss="Запас">слух</button>, <button type="button" class="linkish" data-gloss="Фронтир">фронтир</button> — в словаре.</p></details>`;
 }
 
 // ------------------------------------------------------------- мой дом (И2)
@@ -3289,7 +3322,7 @@ function bindIntro() {
     ? `Это запись ${years} лет одного города. Первые три года мир разгоняется сам; в начале 4-го игрок занимает дом — отсюда и смотрим. Выберите главу или смотрите подряд.`
     : "Мир живёт на сервере прямо сейчас: один день игры — один шаг расчёта.";
   $("#introCtl").textContent = replay
-    ? "Клавиши: пробел — пауза, ← и → — день назад и вперёд (с Shift — 45 дней). Год — 360 дней."
+    ? "Клавиши: пробел — пауза, ← и → — день назад и вперёд (с Shift — 45 дней), [ и ] — к прежней и следующей вехе, ? — главы. Год — 360 дней."
     : META.control ? "Клавиши: пробел — пауза, → — день вперёд (с Shift — 45 дней). Год — 360 дней, поход — 45."
       : "Управлять временем может только хозяин мира; вы смотрите. Год — 360 дней, поход — 45.";
   let seen = false;
@@ -3301,6 +3334,8 @@ function bindIntro() {
     $("#doom").focus({ preventScroll: true });   // фокус не теряется на спрятанной кнопке
     try { localStorage.setItem(INTRO_KEY, "1"); } catch (e) { /* без памяти */ }
   };
+  UI.closeIntro = closeIntro;
+
   // запись: в первый раз время стоит, пока гость не выберет главу или «Смотреть»
   if (B && replay) {
     const at = B.R.head;
@@ -3317,7 +3352,10 @@ function bindIntro() {
     if (!seen && !sentT()) B.R.speed = "pause";
     if (!seen && sentT()) {                  // гость пришёл по ссылке на момент — сказать об этом, а не «с начала 4-го»
       B.R.speed = "pause";
-      $("#introTitle").textContent = `Вам прислали момент записи: ${evDay(Math.max(0, parseInt(sentT(), 10) || at))}`;
+      // и что в этот день случилось (событие-веха в пределах трёх дней) — гость сразу знает, на что смотрит
+      const st = Math.max(0, parseInt(sentT(), 10) || at), WHAT = { breach: "прорыв из подземелья", frontier: "новый рекорд глубины", wiped: "разбит отряд" };
+      const ev = (B.R.events || []).find(x => x.lv >= 3 && WHAT[x.k] && x.t <= st && st - x.t <= 3);
+      $("#introTitle").textContent = `Вам прислали момент записи: ${evDay(st)}${ev ? ` — ${WHAT[ev.k]}` : ""}`;
       $("#introMode").textContent = `Это запись ${years} лет одного города; запись стоит на присланном дне. Смотрите отсюда или пройдите историю по главам с начала.`;
       $("#introPlain").textContent = "или история с начала";
       $("#introPlain").dataset.story = "1";
@@ -3366,6 +3404,7 @@ function bindIntro() {
     const pl = $("#introPlain");
     if (pl && B && B.R.head >= B.R.meta.ticks) pl.textContent = "или смотреть с начала";
     else if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
+    if (B && B.R.speed !== "pause") { B.R.lastSpeed = B.R.speed; B.R.speed = "pause"; }   // пока выбирают главу — время стоит
     $("#intro").hidden = false;
     $("#intro").scrollIntoView({ block: "start" });
     $("#introClose").focus({ preventScroll: true });   // открылось — фокус туда, где выбор
@@ -3460,7 +3499,8 @@ async function storyHouse(c) {
 function storyArrived() {
   storyRender("here");
   const c = STORY.cur, narrow = matchMedia("(max-width: 680px)").matches;
-  if (c.look === "house") { $("#story").classList.remove("dock"); storyHouse(c); return; }   // подпись — в потоке над плитками дома
+  // глава о доме: на компьютере подпись — в углу; на телефоне — закреплена над нижней полосой (страница листается к плиткам)
+  if (c.look === "house") { $("#story").classList.toggle("dock", narrow); storyHouse(c); return; }
   if (UI.view === "house") setView("world");      // после главы про дом — обратно в «Мир»
   const el = c && document.getElementById(narrow && c.look === "doom" ? "story" : c.look);
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
@@ -3533,7 +3573,7 @@ const GLOSS = [
   ["Риск прорыва", "вероятность прорыва за год при нынешнем разрыве. Он растёт с разрывом, но медленно и не выше ~26% в год: при угрозе вдвое сильнее гарнизона — около 14%, в десять раз — около 24%. Прорыв — случай, а не срок: можно годами жить под угрозой и не дождаться его."],
   ["Ярус", "уровень подземелья. Чем глубже, тем богаче добыча и тем сильнее просыпается подземелье."],
   ["Фронтир", "самый глубокий ярус, с которого отряды возвращаются. Если туда долго не ходят, черта отступает."],
-  ["Поход", "45 дней внизу: отряд берёт припас, спускается, добывает и возвращается — или нет."],
+  ["Поход", "отряд берёт припас, спускается, добывает и возвращается — или нет. Обычный поход — около 45 дней; на мелкие ярусы ходят вылазками на несколько дней, в глубину — до 135."],
   ["Сила", "боевая ценность бойца: снаряжение с учётом износа плюс опыт; у отряда — средняя по бойцам."],
   ["Сплочённость", "от 0 до 1 — сколько походов отряд прошёл вместе; сработавшийся отряд надёжнее."],
   ["Знание", "сколько походов вернулось с яруса: тропы и ловушки известны — ходить туда безопаснее."],
@@ -3551,7 +3591,7 @@ const GLOSS = [
   ["Скупщик", "выкупает добычу у вернувшихся отрядов и продаёт её на бирже."],
   ["г.4 д.41", "год 4, день 41; в году 360 дней. Запись идёт с первого дня мира."],
 ];
-async function openAbout(at) {
+async function openAbout(at, term) {
   const r = await api("/api/credits");
   const md = r.text.replace(/<!--[\s\S]*?-->/g, "");
   const html = [];
@@ -3574,7 +3614,7 @@ async function openAbout(at) {
     if (html[i].startsWith("<h2>") && (i === html.length - 1 || html[i + 1].startsWith("<h2>"))) html.splice(i, 1);
   $("#aboutBody").innerHTML = `<h2 id="aboutTitle" tabindex="-1">Dungeon of Capitalism</h2><p>Город у входа в подземелье. Игрок — глава торгового дома-снабженца; авантюристы машинные. Чем лучше город снабжает отряды, тем глубже они лезут — и тем ближе гибель города. ${window.DOC_BACKEND ? "Это запись одного мира: все — боты, а один дом занят местом игрока, который рычагов не трогает." : "Сейчас — смотровая: мир живёт сам; игрок, если он есть, правит одним домом через политику."}</p>` +
     `<p>Игрок не воюет и не торгует руками: он задаёт политику своего дома — цену к рынку, запас, разборчивость в материалах, рост мастерских, — а дом исполняет её каждый день. Экономика целиком живая: цены, разорения, походы и угроза складываются из решений сотен ботов.</p>` +
-    `<h3 id="gloss" tabindex="-1">Словарь</h3><dl class="gloss">${GLOSS.map(([t, d]) => `<dt>${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl>` +
+    `<h3 id="gloss" tabindex="-1">Словарь</h3><dl class="gloss">${GLOSS.map(([t, d], i) => `<dt id="gl-${i}" tabindex="-1">${esc(t)}</dt><dd>${esc(d)}</dd>`).join("")}</dl>` +
     `<details class="credits"><summary>Благодарности: иконки, шрифты, библиотеки</summary>${html.join("")}</details>`;
   // запись: пока читают «Об игре», время стоит
   const B = window.DOC_BACKEND;
@@ -3584,7 +3624,12 @@ async function openAbout(at) {
     $("#about").addEventListener("close", () => { if (B.R.speed === "pause") B.R.speed = was; }, { once: true });
   }
   $("#about").showModal();
-  if (at === "gloss") { const g = $("#gloss"); if (g) { g.scrollIntoView({ block: "start" }); g.focus({ preventScroll: true }); } }
+  if (at === "gloss") {
+    // ссылка со словом — сразу на него (и подсветить); иначе — к началу словаря
+    const i = term ? GLOSS.findIndex(([t]) => t.toLowerCase().startsWith(term.toLowerCase())) : -1;
+    const g = i >= 0 ? $("#gl-" + i) : $("#gloss");
+    if (g) { g.scrollIntoView({ block: i >= 0 ? "center" : "start" }); g.focus({ preventScroll: true }); if (i >= 0) { g.classList.add("hit"); if (g.nextElementSibling) g.nextElementSibling.classList.add("hit"); } }
+  }
   else { $("#about").scrollTop = 0; $("#aboutTitle").focus({ preventScroll: true }); }   // с начала, а не со словаря
 }
 
@@ -3718,7 +3763,7 @@ document.addEventListener("doc-arrived", e => {
       d.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   }
 });
-// клавиши: пробел — пауза / пуск; → — день вперёд (Shift — 45 дней); в записи ← — назад; ? — вводная
+// клавиши: пробел — пауза / пуск; → — день вперёд (Shift — 45 дней); в записи ← — назад, ] / [ — к вехе; ? — вводная
 document.addEventListener("keydown", e => {
   if (e.ctrlKey || e.metaKey || e.altKey || !META || !ST.state) return;
   const t = e.target;
@@ -3729,9 +3774,21 @@ document.addEventListener("keydown", e => {
   } else if (e.key === "ArrowRight" && META.control && !(t.closest && t.closest("#tabs"))) {
     e.preventDefault(); e.shiftKey ? control("skip", 45) : control("step");
   } else if (e.key === "ArrowLeft" && window.DOC_BACKEND && !(t.closest && t.closest("#tabs"))) {
-    e.preventDefault(); window.DOC_BACKEND.seek(ST.state.tick - (e.shiftKey ? 45 : 1));
+    e.preventDefault(); const B = window.DOC_BACKEND;
+    if (B.R.speed !== "pause") { B.R.lastSpeed = B.R.speed; B.R.speed = "pause"; }   // шаг назад на ходу съедался бы просмотром
+    B.seek(ST.state.tick - (e.shiftKey ? 45 : 1));
+  } else if ((e.key === "]" || e.key === "[" || e.key === "ъ" || e.key === "х") && window.DOC_BACKEND && window.DOC_BACKEND.marks) {
+    // ] / [ (на русской раскладке ъ / х) — к следующей / прежней вехе: в её день и на паузу
+    e.preventDefault(); const B = window.DOC_BACKEND, h = B.R.head, fwd = e.key === "]" || e.key === "ъ";
+    const ms = B.marks(), m = fwd ? ms.find(x => x.t > h) : ms.slice().reverse().find(x => x.t < h);
+    if (!m) { toast(fwd ? "Дальше вех нет — впереди конец записи" : "Раньше вех нет"); return; }
+    if (B.R.speed !== "pause") B.R.lastSpeed = B.R.speed;
+    B.seek(m.t, true); B.R.speed = "pause"; B.R.stopAt = null;
+    setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t: m.t, title: m.title } })), 0);
   } else if (e.key === "?") {
     $("#btnHelp").click();
+  } else if (e.key === "Escape" && !$("#intro").hidden && !$("#drawer").classList.contains("open") && $("#story").hidden) {
+    if (UI.closeIntro) UI.closeIntro();   // Esc — свернуть вводную
   }
 });
 
@@ -3750,7 +3807,9 @@ async function main() {
     renderEvents();
   });
   let qT = null;
-  $("#evQuery").addEventListener("input", e => { clearTimeout(qT); qT = setTimeout(() => { UI.evQuery = e.target.value.trim().toLowerCase(); renderEvents(); }, 180); });
+  // новый поиск заменяет «всё про X» (иначе два условия складываются в «ничего»)
+  $("#evQuery").addEventListener("input", e => { clearTimeout(qT); qT = setTimeout(() => { UI.evQuery = e.target.value.trim().toLowerCase(); if (UI.evQuery) UI.evRef = null; renderEvents(); }, 180); });
+  $("#evRefChip").addEventListener("click", () => { UI.evRef = null; renderEvents(); $("#evQuery").focus(); });
   $("#evFilter").addEventListener("click", e => {
     const b = e.target.closest("button[data-lv]");
     if (!b) return;
