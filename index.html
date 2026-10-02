@@ -623,6 +623,28 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
 }
 .lwc { position: relative; isolation: isolate; }   /* слои Lightweight Charts (z-index 50) — внутри графика, не поверх подписей и полосы */
 
+/* история: подсветка того, о чём говорит глава */
+.story-focus { outline: 2px solid var(--accent); outline-offset: 4px; border-radius: 4px; animation: storyPulse 1.4s ease-out 2; }
+@keyframes storyPulse { 0% { outline-color: transparent; } 40% { outline-color: var(--accent); } 100% { outline-color: var(--accent); } }
+@media (prefers-reduced-motion: reduce) { .story-focus { animation: none; } }
+.events li.story-focus { outline-offset: -2px; background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.intro-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.intro-cta #introPlain { margin: 0; }
+/* телефон: подпись главы — в потоке над полосой угрозы, а не поверх полэкрана */
+@media (max-width: 680px) {
+  .story { position: static; width: auto; margin: 0 0 12px; box-shadow: none; }
+  .story:not([hidden]) { scroll-margin-top: 8px; }
+  .intro-text .intro-cta { order: 3; }
+  .intro-cta #introClose { flex: 1 1 100%; }
+}
+/* вехи: число событий — в пилюле, читаемо */
+.rb-m .rb-c { right: -6px; top: -7px; font: 700 10.5px/1 var(--font-text); font-variant-numeric: lining-nums tabular-nums;
+  padding: 1px 3px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); }
+/* разгон — штриховкой по самой дорожке, а не плитой над ней */
+.rb-warm { top: 9px; height: 6px; background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-3) 45%, transparent) 0 3px, transparent 3px 6px); }
+.rb-wk { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--ink-3) 55%, transparent) 0 3px, transparent 3px 6px); }
+@media (max-width: 1000px) { .tablewrap:not(.allcols) .lo2 { display: none; } .tbl-cols { margin: 0 0 8px; } }
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -1024,7 +1046,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     const bk = R.events.filter(e => e.k === "bankrupt").map(e => e.t);
     for (let i = 0; i < bk.length; i++) {            // волна: 4 разорения за 60 дней
       let j = i; while (j + 1 < bk.length && bk[j + 1] - bk[i] <= 60) j++;
-      if (j - i + 1 >= 4) { const n = j - i + 1; raw.push({ t: bk[i], k: "bankrupt", n, text: `${n} ${plural(n, "дом разорился", "дома разорились", "домов разорились")} за ${bk[j] - bk[i] + 1} дн.` }); i = j; }
+      if (j - i + 1 >= 4) { const n = j - i + 1; raw.push({ t: bk[i], end: bk[j], k: "bankrupt", n, text: `${n} ${plural(n, "дом разорился", "дома разорились", "домов разорились")} за ${bk[j] - bk[i] + 1} дн.` }); i = j; }
     }
     raw.sort((a, b) => a.t - b.t);
     const out = [];
@@ -1042,7 +1064,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
   // k — род главы, note — подпись для режима «история», look — куда смотреть на странице
   function chapters() {
     const ms = milestones(), out = [];
-    const add = (at, title, k, note, look) => out.push({ at, t: Math.max(0, at - 5), title, k, note, look });
+    const add = (at, title, k, note, look, from) => out.push({ at, t: Math.max(0, (from != null ? from : at) - 5), title, k, note, look, from });
     add(R.meta.seat_at, `Игрок занимает дом «${R.meta.seat_name || "—"}»`, "seat",
       `Игрок занял дом «${R.meta.seat_name || "—"}» — и дальше рычагов не трогает: дом живёт как бот. Угроза из подземелья уже сильнее гарнизона — следите за полосой угрозы.`, "doom");
     for (const m of ms) if (m.k === "breach") add(m.t, "Прорыв из подземелья", "breach",
@@ -1053,8 +1075,8 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     if (deep.length) add(deep[0].t, `Отряды впервые дошли до ${lvl(deep[0])}-го яруса`, "first",
       `Хорошо снабжённые отряды уходят глубже — фронтир теперь ${lvl(deep[0])}-й ярус. Чем глубже они спускаются, тем сильнее просыпается подземелье.`, "doom");
     const waves = ms.flatMap(m => m.items.filter(x => x.k === "bankrupt"));
-    if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
-      `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle"); }
+    if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
+      `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.t); }
     if (fr.length) { const e = fr[fr.length - 1]; add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
       `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали. Смотрите, сколько угрозы это разбудило.`, "doom"); }
     out.sort((a, b) => a.at - b.at);
@@ -1085,7 +1107,9 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     const ms = MS = placeMarks();
     const esc = x => x.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
     box.innerHTML = ms.map((m, i) => {
-      const what = m.items.map(x => `${short(x.t)}, ${KIND_RU[x.k]}: ${x.text}`).join("; ");
+      // в имени кнопки — не абзац: две первые вехи и «и ещё N» (полный список — в подсказке)
+      const what = m.items.slice(0, 2).map(x => `${short(x.t)}, ${KIND_RU[x.k]}: ${x.text}`).join("; ") +
+        (m.items.length > 2 ? `; и ещё ${m.items.length - 2}` : "");
       return `<button type="button" class="rb-m rb-${m.k}" style="left:${(m.t / R.meta.ticks * 100).toFixed(2)}%" data-t="${m.t}" data-i="${i}" ` +
         `tabindex="${i === 0 ? 0 : -1}" aria-label="${m.items.length > 1 ? "Вехи — " : "Веха — "}${esc(what)}">` +
         (m.items.length > 1 ? `<span class="rb-c" aria-hidden="true">${m.items.length}</span>` : "") + `</button>`;
@@ -1314,7 +1338,7 @@ const UI = { good: "weapon", pxMode: "line", evLevel: 2, tab: "market", sort: {}
 let DAY = 360;
 const fmtDay = t => `год ${Math.floor(t / DAY) + 1}, день ${(t % DAY) + 1}`;
 const shortDay = t => `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
-const evDay = t => `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
+const evDay = t => (typeof META !== "undefined" && META && META.replay && META.ticks && t >= META.ticks) ? "конец записи" : `г.${Math.floor(t / DAY) + 1} д.${(t % DAY) + 1}`;
 const nf0 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 0 });
 const nf2 = new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 });
 function num(v, d) {
@@ -1838,7 +1862,7 @@ function rebuildCharts() {
 
 // ------------------------------------------------------------ летопись
 function evItem(e, fresh) {
-  return `<li class="lv${e.lv} k-${e.k}${fresh ? " fresh" : ""}"><span class="t">${evDay(e.t)}</span><span class="x">${linkText(e.text, e.refs)}</span></li>`;
+  return `<li data-t="${e.t}" class="lv${e.lv} k-${e.k}${fresh ? " fresh" : ""}"><span class="t">${evDay(e.t)}</span><span class="x">${linkText(e.text, e.refs)}</span></li>`;
 }
 function renderEvents() {
   const list = ST.events.filter(e => e.lv >= UI.evLevel).slice(-300).reverse();
@@ -1869,8 +1893,8 @@ function evRuns(list) {
     const n = j - i + 1;
     if (n < 3) { out.push(evItem(list[i])); continue; }
     const run = list.slice(i, j + 1), span = run[0].t - run[n - 1].t + 1;
-    out.push(`<li class="lv2 k-bankrupt ev-run"><span class="t">${evDay(run[0].t)}</span><span class="x"><details>` +
-      `<summary>${n} ${plural(n, "дом разорился", "дома разорились", "домов разорились")} за ${num(span)} дн.</summary>` +
+    out.push(`<li data-t="${run[0].t}" data-t0="${run[n - 1].t}" class="lv2 k-bankrupt ev-run"><span class="t">${evDay(run[0].t)}</span><span class="x"><details>` +
+      `<summary>${n} ${plural(n, "разорение", "разорения", "разорений")} подряд — за ${num(span)} дн.</summary>` +
       `<div class="ev-sub">${run.map(e => `<div><span class="t">${evDay(e.t)}</span> ${linkText(e.text, e.refs)}</div>`).join("")}</div>` +
       `</details></span></li>`);
     i = j;
@@ -1931,8 +1955,8 @@ const COLS = {
     { k: "d30", l: "За 30 дн.", n: 1, f: v => `<span class="${v > 0.005 ? "up" : v < -0.005 ? "down" : ""}">${pct(v)}</span>` },
     { k: "vol", l: "Объём/день", n: 1, lo: 1, f: v => num(v, 1) },
     { k: "bid", l: "Бид", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") }, { k: "ask", l: "Аск", n: 1, lo: 1, f: v => (v ? num(v, 2) : "—") },
-    { k: "depth_b", l: "Спрос в стакане", n: 1, lo: 1, f: v => (v == null ? "—" : num(v, 0)) },
-    { k: "depth_a", l: "Предложение", n: 1, lo: 1, f: v => (v == null ? "—" : num(v, 0)) },
+    { k: "depth_b", l: "Спрос в стакане", n: 1, lo: 1, lo2: 1, f: v => (v == null ? "—" : num(v, 0)) },
+    { k: "depth_a", l: "Предложение", n: 1, lo: 1, lo2: 1, f: v => (v == null ? "—" : num(v, 0)) },
   ],
   houses: [
     { k: "name", l: "Дом", f: (v, r) => ref(r.id, v) + (r.player ? ' <span class="tag">игрок</span>' : "") },
@@ -2007,20 +2031,21 @@ function renderTable() {
   }
   const head = cols.map(c => {
     const on = srt && srt.k === c.k;
-    return `<th data-k="${c.k}" class="${c.n ? "num" : ""}${c.lo ? " lo" : ""}${on ? " sorted" + (srt.asc ? " asc" : "") : ""}" aria-sort="${on ? (srt.asc ? "ascending" : "descending") : "none"}">` +
+    return `<th data-k="${c.k}" class="${c.n ? "num" : ""}${c.lo ? " lo" : ""}${c.lo2 ? " lo2" : ""}${on ? " sorted" + (srt.asc ? " asc" : "") : ""}" aria-sort="${on ? (srt.asc ? "ascending" : "descending") : "none"}">` +
       `<button type="button" class="th-sort">${c.l}</button></th>`;
   }).join("");
   // телефон: первые 20 строк и «Показать все» — вместо простыни на тысячи пикселей
   const total = rows.length, narrow = matchMedia("(max-width: 680px)").matches;
   if (narrow && !(UI.showAll || {})[UI.tab] && total > 20) rows = rows.slice(0, 20);
   const body = rows.map(r => `<tr data-g="${r.g || ""}"${UI.tab === "market" && r.g === UI.good ? ' class="sel"' : ""}>` +
-    cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}${c.lo ? " lo" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
+    cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}${c.lo ? " lo" : ""}${c.lo2 ? " lo2" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
   $("#tableWrap").innerHTML = (rows.length ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`) +
     (rows.length < total ? `<button type="button" class="tbl-more" id="tblMore">Показать все ${total}</button>` : "");
   // телефон: второстепенные столбцы (стакан, вид) спрятаны — таблица не уезжает вбок
-  const lo = cols.some(c => c.lo) && narrow;
+  // планшет (≤1000 px): прячется только стакан; телефон — все второстепенные
+  const lo = (cols.some(c => c.lo) && narrow) || (cols.some(c => c.lo2) && matchMedia("(max-width: 1000px)").matches);
   $("#tableWrap").classList.toggle("allcols", !!(UI.allCols || {})[UI.tab]);
-  if (lo) $("#tableWrap").insertAdjacentHTML("afterbegin", `<button type="button" class="tbl-cols ghost small" id="tblCols" aria-pressed="${!!(UI.allCols || {})[UI.tab]}">${(UI.allCols || {})[UI.tab] ? "Только главные столбцы" : "Все столбцы: опорная, объём, стакан"}</button>`);
+  if (lo) $("#tableWrap").insertAdjacentHTML("afterbegin", `<button type="button" class="tbl-cols ghost small" id="tblCols" aria-pressed="${!!(UI.allCols || {})[UI.tab]}">${(UI.allCols || {})[UI.tab] ? "Только главные столбцы" : (narrow ? "Все столбцы: опорная, объём, стакан" : "Все столбцы: стакан")}</button>`);
   const cb = $("#tblCols");
   if (cb) cb.onclick = () => { UI.allCols = Object.assign(UI.allCols || {}, { [UI.tab]: !(UI.allCols || {})[UI.tab] }); renderTable(); };
   const more = $("#tblMore");
@@ -2383,7 +2408,9 @@ async function loadHouse() {
     $("#houseEmpty").hidden = false;
     $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Дом не занят</h2><p>` +
       (me.pending && me.pending.length ? "Приказ занять дом стоит в очереди — исполнится на следующем тике."
-        : me.mode ? `Игрок займёт дом после прогрева мира — с ${evDay(me.after + 1)} (сейчас ${evDay(me.tick)}).` +
+        : me.mode ? (window.DOC_BACKEND && META.seat_at != null
+            ? `Игрок займёт дом в ${evDay(META.seat_at)}; в записи «Мой дом» виден с ${evDay(me.after + 1)} — его снимки сделаны раз в 30 дней (сейчас ${evDay(me.tick)}).`
+            : `Игрок займёт дом после прогрева мира — с ${evDay(me.after + 1)} (сейчас ${evDay(me.tick)}).`) +
           (window.DOC_BACKEND ? ` <button type="button" id="btnToSeat">Перейти к ${evDay(me.after + 1)}</button>` : "")
           : `Сервер запущен без игрока. Запустите <code>python server.py --seat choose</code>: после прогрева мира вы выберете дом из трёх кандидатов.`) + `</p></div>`;
     const go = $("#btnToSeat");
@@ -2457,7 +2484,7 @@ function renderHouse(h) {
     $("#hBook").innerHTML = h.book.length ? `<table><thead><tr><th>Сторона</th><th>Товар</th><th class="num">Цена</th><th class="num">Кол-во</th></tr></thead><tbody>` +
       h.book.map(b => `<tr><td>${b.side}</td><td>${esc(b.g)}</td><td class="num">${num(b.px, 2)}</td><td class="num">${num(b.q, 1)}</td></tr>`).join("") + `</tbody></table>` : `<p class="empty">заявок нет</p>`;
     const br = Object.entries(h.brand || {});
-    $("#hBrand").innerHTML = br.length ? `<dl class="kv">${br.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${num(v, 1)}</dd>`).join("")}</dl>` : `<p class="empty">отряды пока не знают дом</p>`;
+    $("#hBrand").innerHTML = br.length ? `<dl class="kv">${br.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${num(v, 1)}</dd>`).join("")}</dl>` : `<p class="empty">славы у отрядов нет: снаряжения этого дома они в поход не брали</p>`;
   }
   renderHouseRisk(h);
   const jr = (h.journal || []).slice().reverse(), jm = jr.filter(([, x]) => /^за месяц/.test(x)), jk = jr.filter(([, x]) => !/^за месяц/.test(x));
@@ -2677,6 +2704,12 @@ function bindIntro() {
     $("#introClose").textContent = "Смотреть историю по главам";
     $("#introChapters").before($("#introClose"));
     $("#introClose").insertAdjacentHTML("afterend", `<button type="button" id="introPlain" class="ghost">${Math.abs(at - seat) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(at)}`}</button>`);
+    const cta = document.createElement("div"); cta.className = "intro-cta";
+    $("#introClose").before(cta); cta.append($("#introClose"), $("#introPlain"));
+    // первый вход с клавиатуры: фокус сразу на главной кнопке, а не через шапку и полосу записи
+    if (!seen) setTimeout(() => { if (document.activeElement === document.body) $("#introClose").focus({ preventScroll: true }); }, 0);
+    // вернувшийся гость — сказать, откуда продолжаем
+    else if (Math.abs(at - seat) > 60 && !readHash().t) setTimeout(() => toast(`С возвращением: запись продолжается с ${evDay(at)}. Пробел — пауза, «?» — главы.`), 1200);
     if (!seen && !readHash().t) B.R.speed = "pause";
     B.ready.then(() => {
       const ch = B.chapters ? B.chapters() : [];
@@ -2727,8 +2760,10 @@ const STORY = { on: false, ch: [], cur: null };
 const storyNext = () => STORY.ch.find(c => c.at > window.DOC_BACKEND.R.head + 1);
 function storyStart() { STORY.on = true; storyGo(STORY.ch[0]); }
 function storyStop() {
+  const had = $("#story").contains(document.activeElement);
   STORY.on = false; STORY.cur = null;
   $("#story").hidden = true;
+  if (had) { const p = $("#rbPlay"); if (p) p.focus({ preventScroll: true }); }   // фокус — не на <body>
 }
 function storyGo(c) {
   const B = window.DOC_BACKEND;
@@ -2747,9 +2782,22 @@ function storyGo(c) {
 }
 function storyArrived() {
   storyRender("here");
-  const c = STORY.cur, el = c && document.getElementById(c.look === "doom" ? "doom" : c.look);
+  const c = STORY.cur, narrow = matchMedia("(max-width: 680px)").matches;
+  const el = c && document.getElementById(narrow && c.look === "doom" ? "story" : c.look);
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  storyFocus(c);
   $("#announce").textContent = `${c.title}. ${c.note}`;
+}
+// что подсветить: угроза против гарнизона, фронтир, строки летописи в окне главы
+function storyFocus(c) {
+  $$(".story-focus").forEach(x => x.classList.remove("story-focus"));
+  const pick = { seat: ["#doom .doom-v", "#doom .doom-bar"], breach: ["#doom .doom-alarm", "#doom .doom-v"],
+    first: ["#doom .doom-side"], deep: ["#doom .doom-side"], wave: [] }[c.k] || [];
+  const els = pick.map(q => $(q)).filter(Boolean);
+  if (c.k === "wave" || c.k === "breach")
+    for (const li of $$("#events > li[data-t]")) { const t = +li.dataset.t, t0 = +(li.dataset.t0 || li.dataset.t); if (t >= (c.from != null ? c.from : c.at) - 3 && t0 <= c.at + 3 && li.classList.contains(c.k === "breach" ? "k-breach" : "k-bankrupt")) els.push(li); }
+  els.forEach(x => x.classList.add("story-focus"));
+  setTimeout(() => els.forEach(x => x.classList.remove("story-focus")), 6000);
 }
 function storyRender(state) {
   const c = STORY.cur, el = $("#story");
@@ -2766,7 +2814,8 @@ function storyRender(state) {
       `<button type="button" class="ghost story-x" data-story="close" aria-label="Закрыть историю">×</button>` +
     `</div>`;
   el.hidden = false;
-  if (had || state === "here") { const b = $("[data-story=next]", el) || $("[data-story=free]", el); if (b && (had || document.activeElement === document.body)) b.focus({ preventScroll: true }); }
+  const ae = document.activeElement, idle = !ae || ae === document.body || ae.id === "doom" || (ae.closest && ae.closest("#intro"));
+  if (state === "here" && (had || idle)) { const b = $("[data-story=next]", el) || $("[data-story=free]", el); if (b) b.focus({ preventScroll: true }); }
 }
 $("#story").addEventListener("click", e => {
   const b = e.target.closest("button[data-story]");
