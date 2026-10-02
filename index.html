@@ -28,7 +28,7 @@
   color-scheme: light;
   --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
   --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
-  --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%;
+  --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%; --depth-ink: #4a3414;
   --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
 }
 @media (prefers-color-scheme: light) {
@@ -36,7 +36,7 @@
     color-scheme: light;
     --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
     --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
-    --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%;
+    --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%; --depth-ink: #4a3414;
     --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
   }
 }
@@ -201,7 +201,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .lvl.dark .sbar { opacity: .6; }
 .lvl.front { background: var(--surface-2); }
 .frontline { font-size: 12px; font-weight: 700; color: var(--accent); border-top: 2px solid var(--accent); padding: 2px 4px 4px; text-align: right; letter-spacing: .02em; }
-.lvl:not(.front) { background: color-mix(in srgb, #000 calc(var(--dp, 0) * var(--depth-k, 16%)), transparent); }
+.lvl:not(.front) { background: color-mix(in srgb, var(--depth-ink, #000) calc(var(--dp, 0) * var(--depth-k, 16%)), transparent); }
 .sbar { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
 .sbar.rumor i { opacity: .55; }
 .sbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--s1); border-radius: 3px; }
@@ -718,6 +718,22 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 .sp-sw button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--accent); }
 /* ровное превосходство угрозы без роста — спокойнее: тяжёлая рамка остаётся за ростом, ×10 и прорывом */
 .doom[data-level=warn][data-sev="1"]:not(.rising) { border-color: color-mix(in srgb, var(--serious) 30%, var(--line)); }
+/* мелочи по детектору: дата в подсвеченной строке не прижата к рамке; цели ≥ 24 px; число у вехи не залезает на соседа */
+.events li.story-focus { padding-left: 7px; padding-right: 6px; }
+.events li.ev-run summary { min-height: 24px; padding: 2px 0; }
+.th-sort { min-width: 24px; justify-content: flex-start; }
+.rb-m .rb-c { right: -3px; }
+@media (max-width: 680px) { .story.dock { bottom: calc(var(--rbh, 108px) + 10px); } }
+
+/* ровное превосходство угрозы — нейтральная рамка: оранжевый — только рост разрыва и ×10, красный — прорыв */
+.doom[data-level=warn][data-sev="1"]:not(.rising), .doom[data-level=warn][data-sev="2"]:not(.rising) { border-width: 1px; border-color: var(--line); background: var(--surface); }
+/* раскрытие группы в летописи — не «▼» (это знак рекорда глубины), а шеврон */
+.events li.ev-run summary { list-style: none; }
+.events li.ev-run summary::-webkit-details-marker { display: none; }
+.events li.ev-run summary::before { content: "› ◆ "; }
+.events li.ev-run details[open] > summary::before { content: "⌄ ◆ "; }
+/* «Все столбцы» — видно, что кнопка */
+.tbl-cols { border: 1px solid var(--line) !important; background: var(--surface-2) !important; }
 
 </style>
 </head><body>
@@ -1651,7 +1667,7 @@ function doomSpark() {
   if (UI.sparkAll && seat != null && seat > t[j0] && seat < t[t.length - 1]) { const i = lowerBound(t, seat); marks += `<line class="sp-s" x1="${x(i)}" x2="${x(i)}" y1="0" y2="${H}"></line>`; }
   return `<div class="doom-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${marks}` +
     `<polyline class="sp-t" points="${line(T)}"></polyline><polyline class="sp-g" points="${line(G)}"></polyline></svg>` +
-    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${/sp-b/.test(marks) ? ` <i class="sp-kb"></i>прорыв` : ""}${/sp-s/.test(marks) ? ` <i class="sp-ks"></i>игрок занял дом` : ""} — ` +
+    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${/sp-b/.test(marks) ? ` <i class="sp-kb"></i>прорыв` : ""}${/sp-s/.test(marks) ? ` <i class="sp-ks"></i>игрок занял дом` : ""} ` +
     `<span class="sp-sw" role="group" aria-label="Период графика"><button type="button" data-spark="year" aria-pressed="${!UI.sparkAll}">за год</button>` +
     `<button type="button" data-spark="all" aria-pressed="${!!UI.sparkAll}">вся запись</button></span></span></div>`;
 }
@@ -1926,7 +1942,7 @@ function buildMultiples() {
         Object.assign({}, axis, { space: 90, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
         Object.assign({}, axis, { size: 56, values: (u, vals) => vals.map(compact) }),
       ],
-      series: [{ label: "день", value: (u, v) => (v == null ? "—" : fmtDay(Math.round(v))) }]
+      series: [{ label: "день", value: (u, v) => (v == null ? "—" : evDay(Math.round(v)) === "конец записи" ? "конец записи" : fmtDay(Math.round(v))) }]
         .concat(m.series.map(([, label, c], i) => ({ label, stroke: c ? css(c) : colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
       hooks: { setSelect: [u => { if (u.select.width > 0) PLOTS[m.id].zoomed = true; }] },
     };
@@ -2286,14 +2302,14 @@ async function openEntity(id, push) {
   }
   UI.refLabel = null;
   // в записи карточка — снимок на дату кадра (раз в 90 дней): сказать прямо, на какую
-  const asof = e.gone ? `<p class="hint">${e.ended != null ? `Конец — ${evDay(e.ended)}${e.why ? ": " + esc(e.why) : ""}. ` : ""}${e.seen != null ? `Ниже — последняя записанная карточка, на ${evDay(e.seen)}.` : ""}</p>`
+  const asof = e.gone ? `<p class="hint">${e.ended != null ? `Конец — ${evDay(e.ended + 1)}${e.why ? ": " + esc(e.why) : ""}. ` : ""}${e.seen != null ? `Ниже — последняя записанная карточка, на ${evDay(e.seen)}.` : ""}</p>`
     : e.asof != null ? `<p class="hint">Так это выглядело на ${evDay(e.asof)}; что было дальше — в летописи.</p>` : "";
   $("#drawerBody").innerHTML = renamed + asof + ({ S: squadCard, H: houseCard, P: personCard, F: fenceCard }[e.kind] || (e => `<dl class="kv">${lifeLine(e)}</dl>`))(e);
 }
 function lifeLine(e) {
   // номер сущности нужен автору (живая версия), гостю записи — нет
   return (window.DOC_BACKEND ? "" : `<dt>id</dt><dd>${e.id}</dd>`) + `<dt>начало</dt><dd>${evDay(e.born)}</dd>` +
-    (e.ended != null ? `<dt>конец</dt><dd>${evDay(e.ended)} — ${esc(e.why || "")}</dd>` : "");
+    (e.ended != null ? `<dt>конец</dt><dd>${evDay(e.ended + 1)} — ${esc(e.why || "")}</dd>` : "");
 }
 function fenceCard(e) {
   return `<p>Скупщик выкупает добычу у вернувшихся отрядов и перепродаёт её домам на бирже.</p><dl class="kv">${lifeLine(e)}</dl>`;
@@ -2507,7 +2523,7 @@ function housePlot(id, series, range) {
     scales: { x: { time: false }, y: range ? { range } : { range: (u, lo, hi) => [Math.min(0, lo), hi > 0 ? hi * 1.08 : 1] } },
     axes: [Object.assign({}, ax, { space: 90, values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
            Object.assign({}, ax, { size: 56, values: (u, vals) => vals.map(compact) })],
-    series: [{ label: "день", value: (u, v) => (v == null ? "—" : fmtDay(Math.round(v))) }]
+    series: [{ label: "день", value: (u, v) => (v == null ? "—" : evDay(Math.round(v)) === "конец записи" ? "конец записи" : fmtDay(Math.round(v))) }]
       .concat(series.map(([, label], i) => ({ label, stroke: colors[i], width: 2, value: (u, v) => (v == null ? "—" : compact(v)) }))),
   }, [[]].concat(series.map(() => [])), el);
   HP[id] = { u, el, series };
@@ -2846,6 +2862,13 @@ function bindIntro() {
     // вернувшийся гость — сказать, откуда продолжаем
     else if (Math.abs(at - seat) > 60 && !readHash().t) setTimeout(() => toast(`С возвращением: запись продолжается с ${evDay(at)}. Пробел — пауза, «?» — главы.`), 1200);
     if (!seen && !readHash().t) B.R.speed = "pause";
+    if (!seen && readHash().t) {             // гость пришёл по ссылке на момент — сказать об этом, а не «с начала 4-го»
+      B.R.speed = "pause";
+      $("#introTitle").textContent = `Вам прислали момент записи: ${evDay(Math.max(0, parseInt(readHash().t, 10) || at))}`;
+      $("#introMode").textContent = `Это запись ${years} лет одного города; запись стоит на присланном дне. Смотрите отсюда или пройдите историю по главам с начала.`;
+      $("#introPlain").textContent = "или история с начала";
+      $("#introPlain").dataset.story = "1";
+    }
     B.ready.then(() => {
       const ch = B.chapters ? B.chapters() : [];
       if (!ch.length) return;
@@ -2855,6 +2878,7 @@ function bindIntro() {
       box.hidden = false;
       STORY.ch = ch;
       $("#introClose").textContent = `Смотреть историю: ${ch.length} ${plural(ch.length, "глава", "главы", "глав")}`;
+      if ($("#introPlain").dataset.story) { $("#introClose").textContent = "Смотреть отсюда"; $("#introClose").dataset.here = "1"; }
       box.onclick = e => {
         const b = e.target.closest("button[data-t]");
         if (!b) return;
@@ -2865,6 +2889,7 @@ function bindIntro() {
     });
   }
   $("#introClose").onclick = () => {
+    if (B && replay && $("#introClose").dataset.here) { delete $("#introClose").dataset.here; closeIntro(); B.R.speed = "3"; return; }
     if (B && replay && STORY.ch.length) {
       closeIntro();
       const nx = STORY.started && storyNext();
@@ -2875,12 +2900,18 @@ function bindIntro() {
     closeIntro();
   };
   const plain = $("#introPlain");
-  if (plain) plain.onclick = () => { if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; closeIntro(); };
+  if (plain) plain.onclick = () => {
+    closeIntro();
+    if (plain.dataset.story && STORY.ch.length) { storyStart(); return; }
+    if (B.R.head >= B.R.meta.ticks) { B.seek(0); }        // в конце записи — с начала
+    B.R.speed = "3";
+  };
   $("#btnHelp").onclick = () => {
     setView("world");
     if (B && STORY.started && STORY.ch.length) { const nx = storyNext(); $("#introClose").textContent = nx ? `Продолжить историю: глава ${STORY.ch.indexOf(nx) + 1} из ${STORY.ch.length}` : `Смотреть историю: ${STORY.ch.length} глав`; }
     const pl = $("#introPlain");
-    if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
+    if (pl && B && B.R.head >= B.R.meta.ticks) pl.textContent = "или смотреть с начала";
+    else if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
     $("#intro").hidden = false;
     $("#intro").scrollIntoView({ block: "start" });
   };
@@ -2944,8 +2975,8 @@ function storyFocus(c) {
     for (const li of $$("#events > li[data-t]")) { const t = +li.dataset.t, t0 = +(li.dataset.t0 || li.dataset.t); if (t >= (c.from != null ? c.from : c.at) - 3 && t0 <= c.at + 3 && li.classList.contains(c.k === "breach" ? "k-breach" : "k-bankrupt")) els.push(li); }
   els.forEach(x => x.classList.add("story-focus"));
   // строки летописи — первую подсвеченную в окно (внутренняя прокрутка летописи тоже)
-  const li = els.find(x => x.tagName === "LI");
-  if (li) li.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  const li = els.find(x => x.tagName === "LI"), box = $("#events");
+  if (li && box.scrollHeight > box.clientHeight) box.scrollTop = Math.max(0, li.offsetTop - box.offsetTop - box.clientHeight / 3);
   setTimeout(() => els.forEach(x => x.classList.remove("story-focus")), 6000);
 }
 function storyRender(state) {
