@@ -114,7 +114,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .doom-gd { font-size: 40px; color: var(--ink); }
 .doom-vs { font-size: 16px; color: var(--ink-3); font-weight: 600; }
 .doom-num { display: inline-flex; flex-direction: column; }
-.doom-num small { font-family: var(--font-body); font-size: 12.5px; font-weight: 400; color: var(--ink-3); line-height: 1.2; margin-top: 2px; }
+.doom-num small { font-family: var(--font-text); font-size: 12.5px; font-weight: 400; color: var(--ink-3); line-height: 1.2; margin-top: 2px; }
 .doom-v2 { font-family: var(--font-head); font-size: 30px; font-weight: 700; line-height: 1.1; margin: 2px 0 6px; }
 .doom-cap { color: var(--ink-2); font-size: 13px; margin-bottom: 4px; }
 .doom-bar { height: 8px; border-radius: 4px; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); overflow: hidden; margin-bottom: 8px; }
@@ -279,7 +279,7 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .rb-tip { position: absolute; top: calc(100% + 6px); width: 240px; z-index: 7; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 13px; color: var(--ink-2); box-shadow: 0 4px 14px rgba(0, 0, 0, .25); pointer-events: none; }
 .rb-tip b { color: var(--ink); }
 .verdict { border-color: var(--accent); }
-.verdict h2 { margin-bottom: 6px; }
+.verdict h2 { margin-bottom: 6px; font-size: 30px; }
 .verdict-line { font-size: 17px; margin: 0 0 10px; }
 .kv.verdict-kv { grid-template-columns: max-content 1fr max-content 1fr; column-gap: 18px; }
 .verdict-go { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
@@ -505,8 +505,8 @@ td.num, .num, .tile .n, .doom-n { font-variant-numeric: lining-nums tabular-nums
 /* разгон мира (до места игрока) — тонкой подложкой под началом дорожки */
 .rb-warm { position: absolute; left: 8px; top: 2px; height: 20px; border-radius: 3px; background: color-mix(in srgb, var(--ink-3) 14%, transparent); pointer-events: none; }
 .rb-wk { display: inline-block; width: 18px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; background: color-mix(in srgb, var(--ink-3) 22%, transparent); }
-.rb-m .rb-c { position: absolute; right: -2px; top: -5px; font: 700 9.5px/1 var(--font-body); color: var(--ink-3); pointer-events: none; }
-.verdict-me { font-size: 15.5px; margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 0 4px 4px 0; }
+.rb-m .rb-c { position: absolute; right: -2px; top: -5px; font: 700 9.5px/1 var(--font-text); color: var(--ink-3); pointer-events: none; }
+.verdict-me { font-size: 15.5px; margin: 0 0 12px; padding: 10px 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; }
 .verdict-line:first-of-type { font-weight: 700; }
 .pl.ro .pl-head { align-items: baseline; }
 .pl-val { color: var(--ink); font-variant-numeric: lining-nums tabular-nums; }
@@ -534,6 +534,40 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
   .replaybar .rb-t { min-width: 0; }
   .replaybar .rb-f { font-size: 12px; max-width: 9.5em; line-height: 1.2; }
 }
+
+/* полоса угрозы: год угрозы и гарнизона мелким графиком */
+.doom-spark { margin-top: 8px; max-width: 520px; }
+.doom-spark svg { display: block; width: 100%; height: 34px; overflow: visible; }
+.doom-spark polyline { fill: none; stroke-width: 1.6; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+.doom-spark .sp-t { stroke: var(--serious); }
+.doom-spark .sp-g { stroke: var(--good); }
+.doom-spark .sp-b { fill: color-mix(in srgb, var(--critical) 28%, transparent); }
+.sp-cap { display: block; color: var(--ink-3); font-size: 12px; margin-top: 2px; }
+.sp-cap i { display: inline-block; width: 12px; height: 2px; vertical-align: 3px; margin: 0 3px 0 6px; }
+.sp-cap i:first-child { margin-left: 0; }
+.sp-kt { background: var(--serious); } .sp-kg { background: var(--good); }
+.sp-kb { height: 8px !important; vertical-align: -1px !important; width: 6px !important; background: color-mix(in srgb, var(--critical) 45%, transparent); }
+
+/* летопись: прорыв и рекорд глубины — заметнее прозвищ */
+.events li.k-breach { background: color-mix(in srgb, var(--critical) 9%, transparent); }
+.events li.k-breach .x { font-weight: 700; color: var(--ink); }
+.events li.k-frontier .x, .events li.k-wiped .x { font-weight: 600; }
+/* фокус на секции — заголовок не под липкой полосой записи */
+@media (min-width: 681px) { .is-replay main > section, .is-replay main .card { scroll-margin-top: calc(var(--rbh, 60px) + 12px); } }
+/* вводная открыта — тезис уже сказан в ней, в полосе угрозы не повторять */
+#intro:not([hidden]) ~ #doom .doom-why { display: none; }
+/* телефон: главы — лентой, справа — затухание: видно, что лента листается */
+@media (max-width: 680px) {
+  .chapters { -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent); mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .replaybar .rb-key { min-height: 40px; padding: 4px 10px; font-size: 14px; }
+  .replayinfo.show { display: block; position: fixed; left: 8px; right: 8px; bottom: calc(var(--rbh, 108px) + 6px); z-index: 7;
+    border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 24px rgba(0, 0, 0, .3); padding: 10px 12px; font-size: 13.5px; }
+  .replayinfo.show .rb-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
+}
+@media (min-width: 681px) { .replaybar .rb-key { display: none; } }
+/* светлая тема: дальние ярусы на затемнённой подложке — текст на ступень темнее (контраст ≥ 4,5) */
+:root[data-theme="light"] .lvl.dark .d, :root[data-theme="light"] .lvl.dark .num, :root[data-theme="light"] .lvl.dark .dim { color: var(--ink-2); }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .lvl.dark .d, :root:not([data-theme="dark"]) .lvl.dark .num, :root:not([data-theme="dark"]) .lvl.dark .dim { color: var(--ink-2); } }
 
 </style>
 </head><body>
@@ -652,7 +686,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
       </div>
       <div class="dg-legend" id="dgLegend"></div>
       <div class="dg-head"><span>ярус</span><span id="dgStockHead">запас: на деле · слух</span><span>отряды внизу</span><span class="num">знание</span><span class="num" title="шансы вернуться за 45 дней: отряд новичков · сильнейший отряд">шансы: нов. · сильн.</span></div>
-      <div class="shaft" id="shaft"></div>
+      <div class="shaft" id="shaft" role="group" aria-label="Ярусы подземелья: отряды и кнопки — стрелками"></div>
     </section>
     <section class="card flows" id="flowsCard">
       <div class="card-head">
@@ -928,7 +962,9 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
   // вехи записи на ползунке: рекорды фронтира, разбитые отряды, прорывы, волны разорений;
   // события ближе 30 дней друг к другу — одна веха; клик — за 5 дней до неё
   function milestones() {
-    const raw = R.events.filter(e => e.lv >= 3).map(e => ({ t: e.t, k: e.k, text: e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id) }));
+    // подпись вехи уже говорит «рекорд глубины» / «прорыв» — из текста убрать повтор
+    const trim = t => t.replace(/^Фронтир: новый рекорд — /, "").replace(/^Прорыв из подземелья! /, "");
+    const raw = R.events.filter(e => e.lv >= 3).map(e => ({ t: e.t, k: e.k, text: trim(e.text.replace(/\{([PHSF]-\d+)\}/g, (_m, id) => (e.refs && e.refs[id]) || id)) }));
     const bk = R.events.filter(e => e.k === "bankrupt").map(e => e.t);
     for (let i = 0; i < bk.length; i++) {            // волна: 4 разорения за 60 дней
       let j = i; while (j + 1 < bk.length && bk[j + 1] - bk[i] <= 60) j++;
@@ -1068,7 +1104,8 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
       `<dt>разорились домов</dt><dd>${f("bankrupt")}</dd><dt>денег в городе</dt><dd>${fmt(z("money"))} → ${fmt(f("money"))}</dd></dl>` +
       `<p class="verdict-line" id="verdictRich"></p>` +
       `<div class="verdict-go"><button type="button" class="primary" data-go="0">Смотреть с начала</button>` +
-      `<button type="button" data-go="${R.meta.seat_at}">С момента, когда игрок занял дом</button></div>`;
+      `<button type="button" data-go="${R.meta.seat_at}">С момента, когда игрок занял дом</button>` +
+      `<button type="button" data-house="1">Дом игрока к концу</button></div>`;
     el.hidden = false;
     const an = document.getElementById("announce");
     if (an) an.textContent = `Запись кончилась. ${verdict}`;
@@ -1092,6 +1129,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
       if (p && hs.length) p.textContent = `Прибыль — частная: богаче всех к концу дом «${hs[0].name}» (касса ${fmt(hs[0].cash)}), вторым — «${hs[1] ? hs[1].name : "—"}». Риск — общий: ${fmt(f("fallen"))} погибших внизу, ${f("bankrupt")} разорившихся домов.`;
     });
     el.onclick = e => {
+      if (e.target.closest("button[data-house]")) { const v = document.querySelector('button[data-view="house"]'); if (v) v.click(); return; }
       const b = e.target.closest("button[data-go]");
       if (!b) return;
       seek(+b.dataset.go); R.speed = "3";
@@ -1119,7 +1157,8 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
       `<button type="button" class="rb-play" id="rbPlay">Пауза</button>` +
       `<label class="vh" for="rbSpeed">Скорость записи</label><select id="rbSpeed" class="rb-speed">` +
       ["1", "3", "10", "30", "max"].map(v => `<option value="${v}"${v === "3" ? " selected" : ""}>${v === "max" ? "макс" : v + "/с"}</option>`).join("") + `</select>` +
-      `<span class="rb-t" id="rbTime"></span>` +
+      `<span class="rb-t" id="rbTime" aria-hidden="true"></span>` +
+      `<button type="button" class="rb-key m-only" id="rbKey" aria-expanded="false" aria-controls="rbInfo">Знаки</button>` +
       `<span class="rb-f" id="rbFrame" title="Сводка и графики — на каждый день; таблицы, подземелье, деньги и «Мой дом» записаны раз в 30 дней, карточки — раз в 90"></span>` +
       // во вложенном окне (claude.ai) внешний адрес страницы неизвестен — делиться нечем
       (window.self === window.top ? `<button type="button" class="rb-share" id="rbShare" aria-label="Ссылка на этот момент записи"><span class="d-only">Ссылка на момент</span><span class="m-only">Ссылка</span></button>` : "");
@@ -1127,7 +1166,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     top.after(bar);
     // описание записи и легенда вех — строкой под полосой, не в липкой части
     const info = document.createElement("div");
-    info.className = "replayinfo";
+    info.className = "replayinfo"; info.id = "rbInfo";
     info.appendChild(bar.querySelector(".rb-n"));
     bar.after(info);
     new ResizeObserver(() => document.documentElement.style.setProperty("--toph", top.offsetHeight + "px")).observe(top);
@@ -1142,7 +1181,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
       h.set("t", R.head);
       const url = location.origin + location.pathname + location.search + "#" + h.toString();
       const say = m => (window.docToast ? window.docToast(m) : null);
-      try { await navigator.clipboard.writeText(url); say(`Ссылка на ${short(R.head)} скопирована: по ней запись откроется на этом дне`); }
+      try { await navigator.clipboard.writeText(url); say(`Ссылка на ${R.head >= R.meta.ticks ? "конец записи" : short(R.head)} скопирована: по ней запись откроется на этом дне`); }
       catch (e) { say("Скопируйте ссылку из адресной строки"); try { history.replaceState(null, "", "#" + h.toString()); } catch (e2) { /* как есть */ } }
     };
     const sl = bar.querySelector("#rbSlider"), tm = bar.querySelector("#rbTime"), fr = bar.querySelector("#rbFrame");
@@ -1155,6 +1194,9 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
     sp.onchange = () => { R.lastSpeed = sp.value; R.speed = sp.value; };
     let drag = false;
     const narrow = matchMedia("(max-width: 680px)");
+    // телефон: легенда вех — по кнопке «Знаки» (строка описания под полосой там не показывается)
+    const key = bar.querySelector("#rbKey");
+    if (key) key.onclick = () => { const on = !info.classList.contains("show"); info.classList.toggle("show", on); key.setAttribute("aria-expanded", String(on)); };
     sl.addEventListener("input", () => { drag = true; tm.textContent = label(+sl.value); });
     sl.addEventListener("change", () => { drag = false; seek(+sl.value); });
     const tickUI = () => {
@@ -1168,7 +1210,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
         // дата — в шапке; здесь — пока тянут ползунок (куда перенесёт), а на телефоне всегда:
         // шапка там уезжает при прокрутке, а полоса прибита к низу
         if (sl.getAttribute("aria-valuetext") !== lb) sl.setAttribute("aria-valuetext", lb);
-        const tt = narrow.matches ? (R.head >= R.meta.ticks ? "конец" : short(R.head)) : "";
+        const tt = R.head >= R.meta.ticks ? (narrow.matches ? "конец" : "конец записи") : narrow.matches ? short(R.head) : label(R.head);
         if (tm.textContent !== tt) tm.textContent = tt;
         showVerdict(R.head >= R.meta.ticks);
         const f = `таблицы обновлены ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
@@ -1271,7 +1313,7 @@ function applyTheme(t) {
   if (t) document.documentElement.setAttribute("data-theme", t);
   else document.documentElement.removeAttribute("data-theme");
   const b = document.getElementById("btnTheme");   // кнопка говорит, какая тема сейчас
-  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `Тема<span class="d-only">: ${dark ? "тёмная" : "светлая"}</span>`; b.setAttribute("aria-label", dark ? "Тема: тёмная" : "Тема: светлая"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
+  if (b) { const dark = currentTheme() === "dark"; b.innerHTML = `Тема<span class="d-only">: ${dark ? "тёмная" : "светлая"}</span>`; b.setAttribute("aria-label", dark ? "Тема сейчас тёмная — включить светлую" : "Тема сейчас светлая — включить тёмную"); b.title = dark ? "Включить светлую тему" : "Включить тёмную тему"; }
 }
 function currentTheme() {
   const t = document.documentElement.getAttribute("data-theme");
@@ -1364,11 +1406,15 @@ function renderDoom() {
   const level = fresh ? "critical" : gd >= thr ? "good" : "warn";
   const ago = d => d === 0 ? "сегодня" : `${num(d)} дн. назад`;
   const over = r1 == null ? "гарнизона нет" : r1 < 1.05 ? "угроза почти равна гарнизону" : `угроза сильнее в ${num(r1, 1)} раза`;
-  const head = fresh ? `<span class="st critical">■ прорыв ${ago(since)}${lost ? ` — погибли ${lost} человек` : ""}</span>`
+  // что значит разрыв: по правилу ядра прорыв случается в день с вероятностью (T − R) / T / breach_days
+  const bd = (META && META.breach_days) || 1200;
+  const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
+  const risk = thr > gd ? `риск прорыва — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
+  const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
-      : `<span class="st serious">▲ ${over}</span>`;
+      : `<span class="st serious">▲ ${over}</span> · ${risk}`;
   const move = trend == null ? "" : trend === "up" ? "↗ разрыв за 45 дн. растёт" : trend === "down" ? "↘ разрыв за 45 дн. сокращается" : "→ разрыв за 45 дн. не меняется";
-  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : over)
+  const br = fresh ? (gd >= thr ? "гарнизон теперь сильнее угрозы" : `${over} · ${risk}`)
     : s.breaches ? `последний прорыв — ${evDay(lastBreach != null ? lastBreach : s.tick)}${since != null ? ` (${ago(since)})` : ""}` : "прорывов не было";
   const pct = Math.round(Math.min(cover, 1) * 100);
   el.dataset.level = level;
@@ -1380,14 +1426,15 @@ function renderDoom() {
   }
   el.classList.toggle("fresh", fresh);
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
-    (fresh ? `<div class="doom-alarm" role="status">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
+    (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
     `<div class="doom-main">` +
       `<div class="doom-k">${ic("guarded-tower")}Сила ${known ? "угрозы по вестям" : "угрозы из подземелья"} и гарнизона</div>` +
       `<div class="doom-v"><span class="doom-num"><span class="doom-thr">${compact(thr)}</span><small>угроза</small></span>` +
         `<span class="doom-vs">против</span><span class="doom-num"><span class="doom-gd">${compact(gd)}</span><small>гарнизон</small></span></div>` +
       `<div class="doom-cap">гарнизон из ${s.soldiers} ${plural(s.soldiers, "солдата", "солдат", "солдат")} покрывает ${pct}% угрозы</div>` +
       `<div class="doom-bar" aria-hidden="true"><span style="width:${Math.max(2, pct)}%"></span></div>` +
-      `<div class="doom-n">${head}${move ? ` · ${move}` : ""} · ${br}</div>` +
+      `<div class="doom-n">${[head, move, br].filter(Boolean).join(" · ")}</div>` +
+      doomSpark() +
     `</div>` +
     `<div class="doom-side">` +
       `<div class="doom-k">${ic("stairs-goal")}Фронтир</div><div class="doom-v2">${s.frontier}-й ярус</div>` +
@@ -1402,6 +1449,25 @@ function renderDoom() {
       })()}</div>` +
     `</div>` +
     `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
+}
+// год угрозы и гарнизона мелким графиком: видно, как долго тянется разрыв и где был прорыв
+function doomSpark() {
+  const T = (META.full ? ST.cols.threat : ST.cols.known) || ST.cols.threat, G = ST.cols.guard, t = ST.cols.t, B = ST.cols.breaches;
+  if (!T || !G || !t || t.length < 10) return "";
+  const j0 = lowerBound(t, t[t.length - 1] - 360), n = t.length - j0;
+  if (n < 10) return "";
+  const step = Math.max(1, Math.floor(n / 180)), W = 300, H = 34;
+  let mx = 0;
+  for (let i = j0; i < t.length; i++) mx = Math.max(mx, T[i], G[i]);
+  if (!(mx > 0)) return "";
+  const x = i => ((t[i] - t[j0]) / Math.max(1, t[t.length - 1] - t[j0]) * W).toFixed(1);
+  const y = v => (H - 2 - v / mx * (H - 4)).toFixed(1);
+  const line = c => { const a = []; for (let i = j0; i < t.length; i += step) a.push(`${x(i)},${y(c[i])}`); a.push(`${x(t.length - 1)},${y(c[t.length - 1])}`); return a.join(" "); };
+  let marks = "";
+  if (B) for (let i = Math.max(j0, 1); i < t.length; i++) if (B[i] > B[i - 1]) marks += `<rect class="sp-b" x="${(+x(i) - 3).toFixed(1)}" y="0" width="6" height="${H}"></rect>`;
+  return `<div class="doom-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${marks}` +
+    `<polyline class="sp-t" points="${line(T)}"></polyline><polyline class="sp-g" points="${line(G)}"></polyline></svg>` +
+    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${marks ? ` <i class="sp-kb"></i>прорыв` : ""} — за ${n > 300 ? "год" : num(t[t.length - 1] - t[j0]) + " дн."}</span></div>`;
 }
 function buildTiles() {
   $("#tiles").innerHTML = TILES.map(([k, label]) =>
@@ -1712,6 +1778,19 @@ function renderEvents() {
 }
 // в «важном» подряд идущие разорения — одной строкой «волны» с раскрытием, иначе они
 // заслоняют прорывы, рекорды глубины и разбитые отряды
+function shaftTabs() {
+  const dots = $$("#shaft .sqdot, #shaft button"), cur = dots.indexOf(document.activeElement);
+  dots.forEach((a, i) => (a.tabIndex = i === (cur >= 0 ? cur : 0) ? 0 : -1));
+}
+$("#shaft").addEventListener("keydown", e => {
+  const dots = $$("#shaft .sqdot, #shaft button"), i = dots.indexOf(document.activeElement);
+  if (i < 0) return;
+  const j = e.key === "ArrowDown" || e.key === "ArrowRight" ? Math.min(dots.length - 1, i + 1) : e.key === "ArrowUp" || e.key === "ArrowLeft" ? Math.max(0, i - 1)
+    : e.key === "Home" ? 0 : e.key === "End" ? dots.length - 1 : -1;
+  if (j < 0) return;
+  e.preventDefault(); e.stopPropagation();
+  dots[i].tabIndex = -1; dots[j].tabIndex = 0; dots[j].focus();
+});
 function evRuns(list) {
   if (UI.evLevel < 2) return list.map(e => evItem(e));
   const out = [];
@@ -1911,6 +1990,8 @@ function showDrawer() {
   const d = $("#drawer");
   if (d.classList.contains("open")) return;
   UI.drawerFrom = document.activeElement;
+  UI.drawerFromId = UI.drawerFrom && UI.drawerFrom.dataset ? UI.drawerFrom.dataset.id || null : null;
+  UI.drawerFromBox = UI.drawerFrom && UI.drawerFrom.closest ? (UI.drawerFrom.closest("[id]") || {}).id || null : null;
   d.inert = false;
   d.classList.add("open");
   $("#scrim").hidden = false;                         // страница за карточкой — притушена и неактивна
@@ -1924,7 +2005,14 @@ function closeDrawer() {
   $("#scrim").hidden = true;
   d.setAttribute("aria-hidden", "true");
   d.inert = true;
-  if (UI.drawerFrom && document.contains(UI.drawerFrom)) UI.drawerFrom.focus({ preventScroll: true });
+  let back = UI.drawerFrom && document.contains(UI.drawerFrom) ? UI.drawerFrom : null;
+  if (!back && UI.drawerFromId) {
+    const box = UI.drawerFromBox && document.getElementById(UI.drawerFromBox);
+    back = (box || document).querySelector(`[data-id="${CSS.escape(UI.drawerFromId)}"]`);
+    if (back && back.tabIndex < 0) { (box || document).querySelectorAll("[tabindex='0']").forEach(x => { if (x !== back && box && box.contains(x)) x.tabIndex = -1; }); back.tabIndex = 0; }
+  }
+  if (!back && UI.drawerFromBox) back = document.getElementById(UI.drawerFromBox);
+  if (back) back.focus({ preventScroll: true });
   UI.drawerFrom = null;
 }
 $("#drawerClose").onclick = closeDrawer;
@@ -1959,7 +2047,7 @@ async function openEntity(id, push) {
   // в летописи имя может быть новее карточки (снимок раз в 90 дней) или старше её
   const lab = UI.refLabel ? UI.refLabel.replace(/\s*\(бывш\.[^)]*\)\s*$/, "") : null;
   let renamed = "";
-  if (lab && lab !== e.name && !e.name.includes(lab)) {
+  if (lab && lab !== e.name && !e.name.includes(lab) && !lab.includes(e.name)) {
     const ns = (e.names || []).map(n => n.name), iL = ns.lastIndexOf(lab), iN = ns.lastIndexOf(e.name);
     renamed = `<p class="hint">${iL >= 0 && iN >= 0 && iL > iN ? `На карточке — прежнее название; в летописи уже новое — «${esc(lab)}».`
       : iL >= 0 && iN >= 0 ? `В летописи — прежнее название «${esc(lab)}»; позже — «${esc(e.name)}».`
@@ -2108,7 +2196,11 @@ async function loadDungeon() {
   }
   if (UI.shaftAll) parts.unshift(`<div class="lvl-fold"><span>все ярусы</span><button type="button" class="ghost small" data-shaft="fold">свернуть надёжные</button></div>`);
   const sh = $("#shaft");
+  const fid = sh.contains(document.activeElement) ? document.activeElement.dataset.id || document.activeElement.dataset.shaft : null;
   sh.innerHTML = parts.join("");
+  const again = fid && sh.querySelector(`[data-id="${CSS.escape(fid)}"], [data-shaft="${CSS.escape(fid)}"]`);
+  if (again) again.focus({ preventScroll: true });
+  shaftTabs();
   // к фронтиру — пока шахту не прокрутили руками
   if (!UI.shaftScrolled) { const f = $(".lvl.front", sh); if (f) sh.scrollTop = Math.max(0, f.offsetTop - sh.offsetTop - sh.clientHeight / 2); }
 }
@@ -2497,7 +2589,8 @@ function bindIntro() {
   // запись: в первый раз время стоит, пока гость не выберет главу или «Смотреть»
   if (B && replay) {
     const at = B.R.head;
-    $("#introClose").textContent = `Смотреть с ${evDay(at)}`;
+    const seat = META.seat_at != null ? META.seat_at : at;
+    $("#introClose").textContent = Math.abs(at - seat) <= 60 ? "Смотреть: игрок только что занял дом" : `Продолжить с ${evDay(at)}`;
     $("#introChapters").before($("#introClose"));
     if (!seen && !readHash().t) B.R.speed = "pause";
     B.ready.then(() => {
@@ -2666,7 +2759,8 @@ document.addEventListener("click", e => {          // «К содержимом�
 // запись дошла до главы или вехи и встала: сказать, где мы, и как идти дальше
 document.addEventListener("doc-arrived", e => {
   const { t, title } = e.detail || {};
-  toast(`Вы на месте: ${title || "веха"} — ${evDay(t)}. Пробел — смотреть дальше.`);
+  const go = matchMedia("(pointer: coarse)").matches ? "«Пуск» внизу — смотреть дальше" : "Пробел — смотреть дальше";
+  toast(`Вы на месте: ${title || "веха"} — ${evDay(t)}. ${go}.`);
   $("#announce").textContent = `${title || "Веха"}, ${evDay(t)}. Запись на паузе.`;
   // итог перехода — на виду: если полоса угрозы ушла за край, вернуть её в окно
   const d = $("#doom");
