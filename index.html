@@ -20,7 +20,7 @@
   --accent: #c9a25a;
   --accent-ink: #1b1508;
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --down: #e66767;
-  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #da6666;
+  --good: #0ca30c; --warn: #fab219; --serious: #ec835a; --critical: #da6666; --depth-k: 30%;
   --font-text: "Old Standard TT", "Alegreya", Georgia, serif;
   --font-head: "Cormorant", "Alegreya", Georgia, serif;
 }
@@ -28,7 +28,7 @@
   color-scheme: light;
   --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
   --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
-  --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
+  --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%;
   --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
 }
 @media (prefers-color-scheme: light) {
@@ -36,7 +36,7 @@
     color-scheme: light;
     --bg: #f4efe6; --surface: #fbf8f2; --surface-2: #efe8dc; --line: #d9cfbf; --grid: #e8e0d2;
     --ink: #1f1a14; --ink-2: #4f463b; --ink-3: #6f6456; --accent: #866120; --accent-ink: #fff8ea;
-    --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e;
+    --good: #097809; --warn: #895e03; --serious: #b44215; --critical: #c12e2e; --depth-k: 13%;
     --s1: #2a78d6; --s2: #eb6834; --s3: #19a271; --s4: #bf8200; --down: #e34948;   /* линии графиков ≥ 3:1 к пергаменту */
   }
 }
@@ -200,7 +200,8 @@ main { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-widt
 .lvl.dark .d, .lvl.dark .num { color: var(--ink-3); }   /* дальние ярусы приглушены цветом, а не прозрачностью: значки состояния сохраняют контраст */
 .lvl.dark .sbar { opacity: .6; }
 .lvl.front { background: var(--surface-2); }
-.frontline { font-size: 12px; color: var(--accent); border-top: 1px dashed var(--accent); padding: 1px 4px 3px; text-align: right; }
+.frontline { font-size: 12px; font-weight: 700; color: var(--accent); border-top: 2px solid var(--accent); padding: 2px 4px 4px; text-align: right; letter-spacing: .02em; }
+.lvl:not(.front) { background: color-mix(in srgb, #000 calc(var(--dp, 0) * var(--depth-k, 16%)), transparent); }
 .sbar { position: relative; display: block; height: 8px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line); }
 .sbar.rumor i { opacity: .55; }
 .sbar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--s1); border-radius: 3px; }
@@ -335,6 +336,8 @@ td.wrap { white-space: normal; min-width: 180px; }
   transform: translateX(100%); visibility: hidden; transition: transform .18s ease-out, visibility 0s .18s;
   display: flex; flex-direction: column; box-shadow: -8px 0 30px rgba(0, 0, 0, .35);
 }
+.scrim { position: fixed; inset: 0; z-index: 19; background: rgba(20, 14, 8, .32); }
+.scrim[hidden] { display: none; }
 /* закрытый ящик спрятан целиком: иначе его тень лежит полосой у правого края */
 .drawer.open { transform: none; visibility: visible; transition: transform .18s ease-out; }
 .drawer-head h2:focus { outline: none; }
@@ -521,6 +524,17 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
 @media (max-width: 900px) { .hrisk { grid-template-columns: minmax(0, 1fr); } }
 .grid2:has(#flowsCard) { align-items: start; }
 
+/* в записи рычаги — обычным текстом: общий .ro (курсив, приглушённо) читался как «выключено» */
+.pl.ro { color: inherit; font-size: inherit; font-style: normal; }
+.pl.ro .pl-head b { font-weight: 600; }
+/* 681–1100 px: полоса записи в одну строку — «таблицы обновлены» короче, ссылка не переносится */
+@media (min-width: 681px) and (max-width: 1100px) {
+  .replaybar { gap: 6px 10px; }
+  .replaybar .rb-k { display: none; }
+  .replaybar .rb-t { min-width: 0; }
+  .replaybar .rb-f { font-size: 12px; max-width: 9.5em; line-height: 1.2; }
+}
+
 </style>
 </head><body>
 <!-- icons:begin (собирает icons/sprite.py) -->
@@ -702,6 +716,7 @@ button.linkish:focus-visible { outline: 2px solid var(--accent); outline-offset:
   </div>
 </main>
 
+<div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle" aria-hidden="true" inert>
   <div class="drawer-head">
     <button type="button" id="drawerBack" class="ghost" title="Назад" hidden>←</button>
@@ -1898,6 +1913,7 @@ function showDrawer() {
   UI.drawerFrom = document.activeElement;
   d.inert = false;
   d.classList.add("open");
+  $("#scrim").hidden = false;                         // страница за карточкой — притушена и неактивна
   d.setAttribute("aria-hidden", "false");
   $("#drawerTitle").focus({ preventScroll: true });
 }
@@ -1905,6 +1921,7 @@ function closeDrawer() {
   const d = $("#drawer");
   UI.drawer = []; UI.panel = null; UI.entity = null; writeHash();
   d.classList.remove("open");
+  $("#scrim").hidden = true;
   d.setAttribute("aria-hidden", "true");
   d.inert = true;
   if (UI.drawerFrom && document.contains(UI.drawerFrom)) UI.drawerFrom.focus({ preventScroll: true });
@@ -1919,6 +1936,7 @@ $("#drawer").addEventListener("keydown", e => {   // Tab по кругу вну�
   if (e.shiftKey && (i <= 0)) { e.preventDefault(); f[f.length - 1].focus(); }
   else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
 });
+$("#scrim").onclick = () => $("#drawerClose").click();
 $("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
 
@@ -1964,7 +1982,7 @@ function fenceCard(e) {
 function squadCard(e) {
   let h = `<dl class="kv">${lifeLine(e)}`;
   if (e.roster) h += `<dt>сила</dt><dd>${num(e.power, 2)}</dd><dt>сплочённость</dt><dd>${bar(e.cohesion)}${num(e.cohesion, 2)}</dd>`;
-  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн., шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
+  if (e.plan) h += `<dt>поход</dt><dd>${e.plan.d}-й ярус, ${e.plan.T} дн.${e.plan.T > 50 ? " (глубокий — дольше обычных 45)" : ""}, шансы ${Math.round(e.plan.p * 100)}%, вернётся ${evDay(e.plan.back)}</dd>`;
   h += `</dl>`;
   if (e.roster) {
     h += `<h3>Состав</h3><table><thead><tr><th>Имя</th><th>Роль</th><th>Ранг</th><th class="num">Касса</th><th class="num">Походов</th></tr></thead><tbody>` +
@@ -2066,7 +2084,9 @@ async function loadDungeon() {
       `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · вернётся ${evDay(s.back)} · шансы ${pct0(s.p)}" aria-label="${esc(s.name)}: ${s.phase}">${PHASE[s.phase] || "●"}</a>`).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
-    return `<div class="${cls.join(" ")}">` +
+    // глубже — темнее: шахта читается как спуск, а не как таблица
+    const dp = Math.min(1, r.d / Math.max(1, g.rows[g.rows.length - 1].d)).toFixed(2);
+    return `<div class="${cls.join(" ")}" style="--dp:${dp}">` +
       `<span class="d" title="добыча: ${esc(r.goods.join(", "))}">${r.d}</span>` +
       `<span class="stock" title="${stockT}"><span class="sbar${hidden ? " rumor" : ""}"><i style="width:${Math.min(100, fill * 100)}%"></i>${rumor}</span></span>` +
       `<span class="sq">${sq}</span>` +
