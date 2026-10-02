@@ -1022,16 +1022,21 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 .mine-tag { color: var(--ink-2); font-size: 0.92em; white-space: nowrap; }
 .verdict-q { margin: 6px 0 0; color: var(--ink); }
 /* v34: третий ряд тезиса до игрока — словами; «↑ к верхним ярусам» поверх точек шахты, не под ними */
-.thesis .th-none { position: absolute; left: 56px; top: 50%; transform: translateY(-50%); color: var(--ink-3); font-size: 13px; font-style: italic; pointer-events: none; }
+.thesis .th-none { position: absolute; left: 56px; top: 38%; transform: translateY(-50%); color: var(--ink-3); font-size: 13px; font-style: italic; pointer-events: none; }
 .shaft-up { z-index: 6; box-shadow: 0 2px 0 var(--surface-2); }
 .rb-go .tip-t { white-space: nowrap; flex: none; }   /* v34: дата вехи — одной строкой («г.1 / д.197» — круг 24) */
-.about-body dl.gloss { grid-template-columns: minmax(7em, 13em) 1fr; }   /* v34: столбец слов — не по самому длинному */
+@media (min-width: 521px) { .about-body dl.gloss { grid-template-columns: minmax(7em, 13em) 1fr; } }   /* v34: столбец слов — не по самому длинному; на телефоне — слово над толкованием (v35) */
 body:has(#story:not([hidden])) #houseNote { display: none; }   /* v34: глава о доме уже говорит то же — без повтора подряд */
 /* v34: состав отряда на 360 px — «Походов» не обрезан (круг 24): плотнее, а при нехватке — своя прокрутка */
 .roster-wrap { max-width: 100%; overflow-x: auto; }
 @media (max-width: 420px) { table.roster th, table.roster td { padding-left: 4px; padding-right: 4px; font-size: 13px; } }
 /* v34: точка отряда на касании — цель 24×32 без роста строк шахты (круг 24: 24×24 мало) */
 @media (pointer: coarse) { #shaft a.sqdot { position: relative; } #shaft a.sqdot::after { content: ""; position: absolute; inset: -4px 0; } }
+/* v35: по кругу 25 */
+.verdict > .verdict-q { order: 1; }   /* телефон: ответ на вопрос тезиса — после жирной первой строки, как на компьютере */
+.doom[data-level=critical] .doom-alarm.story-focus { outline: none; }   /* прорыв: красная рамка полосы и так подсветка — без второй, золотой */
+@media (max-width: 680px) { .rb-marks .rb-m.rb-wiped::before, .rb-marks .rb-m.rb-wiped::after { width: 3px; left: 10px; } }   /* ✕, а не ромб */
+#shaft a.sqdot.gone { opacity: .38; filter: grayscale(1); }   /* отряда к этому дню нет — по снимку ярусов */
 
 </style>
 </head><body>
@@ -1429,7 +1434,13 @@ body:has(#story:not([hidden])) #houseNote { display: none; }   /* v34: глав�
       case "/api/market": { const fr = await frame(); return Object.assign({}, fr.market, { asof: fr.tick }); }   // стакан — на день снимка
       case "/api/houses": return (await frame()).houses;
       case "/api/squads": return (await frame()).squads;
-      case "/api/dungeon": { const fr = await frame(); return Object.assign({}, fr.dungeon, { asof: fr.tick }); }   // снимок — и на какой день
+      case "/api/dungeon": {          // снимок — и на какой день; отряд, которого к этому дню уже нет, помечен (круг 25: точка выглядела живой)
+        const fr = await frame();
+        if (!LIVES) [LIVES, GONE] = await Promise.all([getJSON("lives.json"), getJSON("gone.json")]);
+        const rows = (fr.dungeon.rows || []).map(r => !r.squads ? r : Object.assign({}, r, { squads: r.squads.map(q => {
+          const l = LIVES[q.id]; return l && l[1] != null && l[1] <= R.head ? Object.assign({}, q, { gone: l[1] }) : q; }) }));
+        return Object.assign({}, fr.dungeon, { rows, asof: fr.tick });
+      }
       case "/api/flows": return (await frame()).flows;
       case "/api/myhouse": {
         const f = await frame();
@@ -1822,11 +1833,11 @@ body:has(#story:not([hidden])) #houseNote { display: none; }   /* v34: глав�
       const all = [];
       for (const x of MS.flatMap(m => m.items).sort((a, b) => a.t - b.t)) {
         const g = all[all.length - 1], lv = y => (y.text.match(/(\d+)-й ярус/) || [])[1];
-        if (g && x.k === "frontier" && g.k === "frontier" && x.t - g.t <= 30 && lv(x) && lv(g)) { g.from = g.from || lv(g); g.t = x.t; g.text = `${g.from}-й → ${lv(x)}-й ярус`; g.n = (g.n || 1) + 1; }
+        if (g && x.k === "frontier" && g.k === "frontier" && x.t - g.t <= 30 && lv(x) && lv(g)) { g.from = g.from || lv(g); g.t = x.t; g.text = `${g.from}-й → ${lv(x)}-й ярус`; g.grp = true; }   // свой признак: у волны разорений n — число домов
         else all.push(Object.assign({}, x));
       }
       box.innerHTML = `<b class="rb-list-h">Вехи записи — коснитесь, чтобы перейти</b>` + all.map((x, j) =>
-        `<button type="button" class="rb-go${x.t <= R.head ? " past" : ""}" data-t="${x.t}" data-k="${x.k}"><i class="rb-m rb-${x.k}" aria-hidden="true"></i><span class="tip-t">${short(x.t)}</span> <span>${esc2(x.n ? "рекорды глубины" : KIND_RU[x.k])}: ${esc2(x.text)}</span></button>`).join("");
+        `<button type="button" class="rb-go${x.t <= R.head ? " past" : ""}" data-t="${x.t}" data-k="${x.k}"><i class="rb-m rb-${x.k}" aria-hidden="true"></i><span class="tip-t">${short(x.t)}</span> <span>${esc2(x.grp ? "рекорды глубины" : KIND_RU[x.k])}: ${esc2(x.text)}</span></button>`).join("");
       // открыть у сегодняшнего дня: последняя прошедшая веха — на виду, а не начало записи
       const last = [...box.querySelectorAll(".rb-go.past")].pop();
       if (last) requestAnimationFrame(() => { const sc = box.closest(".replayinfo") || box; if (sc.scrollHeight > sc.clientHeight) sc.scrollTop = Math.max(0, last.offsetTop - sc.clientHeight / 2); });
@@ -1856,7 +1867,7 @@ body:has(#story:not([hidden])) #houseNote { display: none; }   /* v34: глав�
         if (tm.textContent !== tt) tm.textContent = tt;
         showVerdict(R.head >= R.meta.ticks);
         // простыми словами (круг 24: «таблицы — на г.4 д.31» непонятно): снимок раз в 30 дней, вот его день
-        const f = `снимок таблиц — ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;
+        const f = `${matchMedia("(max-width: 1200px)").matches ? "снимок" : "снимок таблиц"} — ${short(Math.min(at(R.meta.frames, R.head), R.meta.ticks - 1))}`;   // 900 px: не обрезается (круг 25)
         if (fr.textContent !== f) fr.textContent = f;
         const pt = R.head >= R.meta.ticks ? "Заново" : R.speed === "pause" ? "Пуск" : "Пауза";
         if (pl.textContent !== pt) pl.textContent = pt;
@@ -1922,11 +1933,12 @@ function focusKey(box) {
   const a = document.activeElement;
   if (!box || !a || a === box || !box.contains(a)) return null;
   for (const k of FOCUS_KEYS) { const v = a.getAttribute(k); if (v != null && v !== "") return [k, v]; }
+  if (a.hasAttribute("data-fallen")) return ["data-fallen", ""];   // признак без значения («кто они») — тоже ключ (круг 25)
   return ["", ""];
 }
 function focusBack(box, key, roving) {
   if (!key) return;
-  const t = key[0] ? box.querySelector(`[${key[0]}="${CSS.escape(key[1])}"]`) : null;
+  const t = key[0] ? box.querySelector(key[1] === "" ? `[${key[0]}]` : `[${key[0]}="${CSS.escape(key[1])}"]`) : null;
   if (!t) { if (box.tabIndex < 0) box.tabIndex = -1; box.focus({ preventScroll: true }); return; }
   if (roving) box.querySelectorAll('[tabindex="0"]').forEach(x => { if (x !== t) x.tabIndex = -1; });
   if (roving) t.tabIndex = 0;
@@ -2531,13 +2543,14 @@ function buildThesis() {
   TH.u.forEach(u => u.destroy()); TH.u = [];
   TH.d = thesisData();
   if (!TH.d) return;
-  const ax = axisStyle(), H = [96, 60, 60];
+  const ax = axisStyle(), H = [96, 60, 72];   // третий ряд — не тоньше 50 px поля графика (круг 25: «17/0» слипались)
   if (!TH.d.mine) $("#th-crow").hidden = true;
   const mk = (id, series, data, i, last) => {
     const el = $("#" + id);
     el.innerHTML = "";
     const u = new uPlot({
       width: el.clientWidth || 600, height: H[i] + (last ? 22 : 0), legend: { show: false },
+      padding: [8, 28, 0, 0],   // одно поле справа у всех рядов: ряд с подписью оси времени иначе у́же на 25 px — события не на одной вертикали (круг 25)
       cursor: { sync: { key: "thesis" }, drag: { x: false, y: false }, points: { size: 7 } },
       // ось — от нуля до данных, без запаса вдвое (фронтир 38 на оси 0–76 — круг 24)
       scales: { x: { time: false }, y: { range: (u, lo, hi) => [0, Math.max(1, hi) * 1.08] } },
@@ -2554,7 +2567,7 @@ function buildThesis() {
   mk("th-b", [{ label: "фронтир", stroke: css("--c-adv"), width: 2, paths: uPlot.paths && uPlot.paths.stepped ? uPlot.paths.stepped({ align: 1 }) : undefined }], [d.x, d.fr], 1, !d.mine);
   if (d.mine) mk("th-c", [{ label: "со снаряжением дома игрока", stroke: css("--accent"), width: 2, fill: "color-mix(in srgb, " + css("--accent") + " 18%, transparent)" }], [d.x, d.mine], 2, true);
   thesisVal(null); thMineNote(d);
-  $("#thesisNote").textContent = window.DOC_BACKEND && META.seat_at != null ? "пунктир — игрок занял дом; красная полоса — прорыв. Наведите — значения на тот день." : "красная полоса — прорыв";
+  $("#thesisNote").textContent = window.DOC_BACKEND && META.seat_at != null ? `пунктир — игрок занял дом; красная полоса — прорыв. ${matchMedia("(hover: none)").matches ? "Коснитесь" : "Наведите"} — значения на тот день.` : "красная полоса — прорыв";
   TH.u.forEach(u => ro.observe(u.root.parentElement));
 }
 function renderThesis() {
@@ -2863,7 +2876,10 @@ async function loadMarketQuiet() {
 function renderTable() {
   // второстепенный столбец, пустой во всех строках (ни одной заявки на покупку), — не показывать
   const same = k => TABLE_ROWS.length > 3 && TABLE_ROWS.every(r => r[k] === TABLE_ROWS[0][k]);   // «Возраст, дн.» 3 000 у всех — не сведение
-  const cols = ((!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab]).filter(c => (!c.lo || TABLE_ROWS.some(r => r[c.k])) && !(c.k === "age" && same("age"))), srt = UI.sort[UI.tab];
+  // и любой столбец, пустой или нулевой во всех строках («Покупка» — везде «—», «Спрос в стакане» — 0; круг 25)
+  const empty = c => TABLE_ROWS.length > 3 && TABLE_ROWS.every(r => r[c.k] == null || r[c.k] === 0 || r[c.k] === "");
+  const all = (!META.full && COLS_PLAYER[UI.tab]) || COLS[UI.tab];
+  const cols = all.filter((c, i) => (!c.lo || TABLE_ROWS.some(r => r[c.k])) && !(c.k === "age" && same("age")) && !(i > 0 && empty(c))), srt = UI.sort[UI.tab];
   const fk = document.activeElement && document.activeElement.closest && document.activeElement.closest("#tableWrap th[data-k]");
   const focusK = fk ? fk.dataset.k : null;      // сортировка с клавиатуры: фокус остаётся на том же заголовке
   let rows = TABLE_ROWS.slice();
@@ -2943,6 +2959,7 @@ function showDrawer() {
   UI.drawerFrom = document.activeElement;
   UI.drawerFromId = UI.drawerFrom && UI.drawerFrom.dataset ? UI.drawerFrom.dataset.id || null : null;
   UI.drawerFromBox = UI.drawerFrom && UI.drawerFrom.closest ? (UI.drawerFrom.closest("[id]") || {}).id || null : null;
+  UI.drawerFromKey = UI.drawerFrom && UI.drawerFrom.getAttribute ? FOCUS_KEYS.map(k => [k, UI.drawerFrom.getAttribute(k)]).find(([, v]) => v != null) || null : null;
   d.inert = false;
   ["#viewWorld", "#viewHouse", ".top", ".replaybar", "#story"].forEach(q => { const x = $(q); if (x) x.inert = true; });
   d.classList.add("open");
@@ -2964,6 +2981,8 @@ function closeDrawer() {
     back = (box || document).querySelector(`[data-id="${CSS.escape(UI.drawerFromId)}"]`);
     if (back && back.tabIndex < 0) { (box || document).querySelectorAll("[tabindex='0']").forEach(x => { if (x !== back && box && box.contains(x)) x.tabIndex = -1; }); back.tabIndex = 0; }
   }
+  // перерисованная кнопка (полоса угрозы пересобирается каждый опрос) — по тому же ключу
+  if (!back && UI.drawerFromKey) back = document.querySelector(UI.drawerFromKey[1] === "" ? `[${UI.drawerFromKey[0]}]` : `[${UI.drawerFromKey[0]}="${CSS.escape(UI.drawerFromKey[1])}"]`);
   if (!back && UI.drawerFromBox) back = document.getElementById(UI.drawerFromBox);
   if (back) back.focus({ preventScroll: true });
   UI.drawerFrom = null;
@@ -3227,7 +3246,7 @@ async function loadDungeon() {
   UI.mineDown = mine.length ? { n: mine.length, of: allSq, deep: Math.max(...mine) } : null;
   $("#dgHint").innerHTML = `в походе ${g.out} отр., ${g.people} чел. · фронтир ${fl}-й, рекорд ${fm}-й` +
     (g.best ? ` · сильнейший — ${ref(g.best, g.best_name)}` : "") +
-    (mine.length && window.DOC_BACKEND ? `<br><span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>снаряжение дома игрока — у ${mine.length} из ${allSq} ${plural(allSq, "отряда", "отрядов", "отрядов")} внизу, глубже всех — на ${Math.max(...mine)}-м ярусе</span>` : "");
+    (mine.length && window.DOC_BACKEND ? `<br><span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>снаряжение дома игрока — у ${mine.length} из ${allSq} ${plural(allSq, "отряда", "отрядов", "отрядов")} внизу, глубже всех — на ${Math.max(...mine)}-м ярусе${lag > 5 ? ` (по снимку ${evDay(g.asof)})` : ""}</span>` : "");
   const safe = r => r.odds_new >= 0.95 && r.odds_best >= 0.95;
   const one = r => {
     const cls = ["lvl"];
@@ -3239,7 +3258,9 @@ async function loadDungeon() {
     const rumor = !hidden && r.rumor != null ? `<b style="left:${Math.min(100, r.rumor * 100)}%"></b>` : "";
     const fill = hidden ? (r.rumor != null ? r.rumor : 1) : r.stock;
     const sq = r.squads.slice(0, 12).map(s =>
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}${s.mine ? " · со снаряжением дома игрока" : ""}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}${s.mine ? ", со снаряжением дома игрока" : ""}">${PHASE[s.phase] || "●"}</a>`).join("") +
+      // отряда к этому дню уже нет (снимок ярусов старше): бледной точкой, с днём конца — карточка не спорит с шахтой
+      (s.gone != null ? `<a class="ref sqdot gone${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · по снимку ярусов — ${s.phase}; отряда нет с ${evDay(s.gone)}" aria-label="${esc(s.name)}: по снимку — ${s.phase}, ${r.d}-й ярус; отряда нет с ${evDay(s.gone)}">${PHASE[s.phase] || "●"}</a>` :
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}${s.mine ? " · со снаряжением дома игрока" : ""}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}${s.mine ? ", со снаряжением дома игрока" : ""}">${PHASE[s.phase] || "●"}</a>`)).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     // глубже — темнее: шахта читается как спуск, а не как таблица
@@ -3701,7 +3722,8 @@ function bindIntro() {
     const cta = document.createElement("div"); cta.className = "intro-cta";
     $("#introClose").before(cta); cta.append($("#introClose"), $("#introPlain"));
     // первый вход с клавиатуры: фокус сразу на главной кнопке, а не через шапку и полосу записи
-    if (!seen) setTimeout(() => { if (document.activeElement === document.body) $("#introClose").focus({ preventScroll: true }); }, 0);
+    // фокус на кнопку истории — для клавиатуры; на касании кольцо фокуса при загрузке выглядит как нажатие (круг 25)
+    if (!seen && !matchMedia("(hover: none)").matches) setTimeout(() => { if (document.activeElement === document.body) $("#introClose").focus({ preventScroll: true }); }, 0);
     // вернувшийся гость — сказать, откуда продолжаем
     else if (Math.abs(at - seat) > 60 && !sentT()) setTimeout(() => toast(`С возвращением: запись продолжается с ${evDay(at)}. Пробел — пауза, «?» — главы.`), 1200);
     if (!seen && !sentT()) B.R.speed = "pause";
@@ -3865,9 +3887,9 @@ function storyArrived() {
   // глава о доме: на компьютере подпись — в углу; на телефоне — закреплена над нижней полосой (страница листается к плиткам)
   if (c.look === "house") { $("#story").classList.toggle("dock", narrow); storyHouse(c); return; }
   if (UI.view === "house") setView("world");      // после главы про дом — обратно в «Мир»
-  const el = c && document.getElementById(narrow && c.look === "doom" ? "story" : c.look);
+  const el = c && document.getElementById(c.look);   // телефон: подпись закреплена над полосой, страница — к предмету главы
   if (el && !$("#viewWorld").hidden) el.scrollIntoView({ block: "start", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-  $("#story").classList.toggle("dock", narrow && c.look !== "doom");
+  $("#story").classList.toggle("dock", narrow);       // круг 25: глава о прорыве на телефоне теряла подпись (она стояла в потоке вверху)
   storyFocus(c);
   storySide(c.look === "doom" ? "doom" : c.look);
   $("#announce").textContent = `${c.title}. ${c.note}`;
@@ -3901,7 +3923,7 @@ function storyRender(state) {
     `<div class="story-go">` +
       (state === "here" && nx ? `<button type="button" class="primary" data-story="next">Дальше: ${esc(nx.title)} →</button>` : "") +
       (state === "going" ? `<button type="button" data-story="skip">Сразу туда</button>` : "") +
-      `<button type="button" class="ghost" data-story="free">Смотреть без остановок</button>` +
+      `<button type="button" class="ghost" data-story="free">Закрыть главы, смотреть подряд</button>` +
       `<button type="button" class="ghost story-x" data-story="close" aria-label="Закрыть историю">×</button>` +
     `</div>`;
   el.hidden = false;
@@ -4030,7 +4052,8 @@ async function poll() {
     ST.state = r.state;
     addEvents(r.events);
     renderHeader(); renderTiles();
-    if (UI.seat && !document.hidden && $("#awayCard").hidden) writeSeen(ST.state.tick);
+    // игра без сервера догоняет прошедшее время: пока догоняет — день «видел» не двигать, иначе сводки не будет
+    if (UI.seat && !document.hidden && $("#awayCard").hidden && !(window.DOC_PLAY && ST.state.skip > 0)) writeSeen(ST.state.tick);
     const now = performance.now();
     if (added) {
       pushPx(from);
@@ -4138,7 +4161,7 @@ document.addEventListener("keydown", e => {
   if (e.ctrlKey || e.metaKey || e.altKey || !META || !ST.state) return;
   const t = e.target;
   if (t.closest && t.closest("input, select, textarea, [contenteditable], dialog[open]")) return;
-  if (e.key === " " && !(t.closest && t.closest("button, a"))) {
+  if (e.key === " " && !(t.closest && t.closest("button, a") && !t.closest(".rb-m"))) {   // на вехе дорожки пробел — тоже пауза/пуск
     e.preventDefault();
     if (META.control) control("speed", ST.state.speed !== "pause" ? "pause" : (UI.lastSpeed || "3"));
   } else if (e.key === "ArrowRight" && META.control && !(t.closest && t.closest("#tabs"))) {
@@ -4155,10 +4178,7 @@ document.addEventListener("keydown", e => {
     if (B.R.speed !== "pause") B.R.lastSpeed = B.R.speed;
     B.seek(m.t, true); B.R.speed = "pause"; B.R.stopAt = null;
     setTimeout(() => document.dispatchEvent(new CustomEvent("doc-arrived", { detail: { t: m.t, title: m.title } })), 0);
-    // фокус пропал с перерисовкой (был на строке, которой больше нет) — на веху на дорожке, а не на <body> (круг 24)
-    setTimeout(() => { if (document.activeElement && document.activeElement !== document.body) return;
-      const bs = $$("#rbMarks .rb-m"); const near = bs.reduce((a, x) => (!a || Math.abs(+x.dataset.t - m.t) < Math.abs(+a.dataset.t - m.t) ? x : a), null);
-      if (near) near.focus({ preventScroll: true }); }, 400);
+    // фокус — не на веху дорожки: пробел после ] должен оставаться «пауза/пуск» (круг 25), <body> его так и понимает
   } else if (e.key === "?") {
     $("#btnHelp").click();
   } else if (e.key === "Escape" && !$("#intro").hidden && !$("#drawer").classList.contains("open") && $("#story").hidden) {
@@ -4235,9 +4255,11 @@ main().catch(err => {
   main.insertBefore(box, main.firstChild);
 });
 // прототип интерфейса игрока (PLAYER-UI.md) — только в серверной игре и только по ?ui=play: смотровая не меняется
-if (!window.DOC_BACKEND && new URLSearchParams(location.search).get("ui") === "play") {
-  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = "/static/play.css"; document.head.appendChild(l);
-  const s = document.createElement("script"); s.src = "/static/play.js"; document.body.appendChild(s);
+// (и всегда — в игре без сервера, play.html: window.DOC_PLAY); пути — рядом с app.js
+if (!window.DOC_BACKEND && (window.DOC_PLAY || new URLSearchParams(location.search).get("ui") === "play")) {
+  const base = (document.querySelector('script[src$="app.js"]') || {}).src || "/static/app.js";
+  const l = document.createElement("link"); l.rel = "stylesheet"; l.href = new URL("play.css", base).href; document.head.appendChild(l);
+  const s = document.createElement("script"); s.src = new URL("play.js", base).href; document.body.appendChild(s);
 }
 
 </script>
