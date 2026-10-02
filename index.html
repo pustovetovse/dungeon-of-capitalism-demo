@@ -705,6 +705,19 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
 .sqdot { font-weight: 700; }
 #drawerTitle .dk { display: block; font-family: var(--font-text); font-size: 12.5px; font-weight: 400; color: var(--ink-3); letter-spacing: .02em; }
 @media (max-width: 680px) { td.wrap { min-width: 110px; } }
+.events li.story-focus .t { color: var(--ink-2); }   /* на подсветке даты — темнее: контраст ≥ 4,5 */
+.tablewrap table.short { width: auto; min-width: min(100%, 560px); }
+.verdict > .story-k { color: var(--ink-3); font-size: 12.5px; margin-bottom: 2px; }
+/* телефон: главная кнопка вводной — в палец; «или просто подряд» — видно, что это кнопка */
+@media (max-width: 680px) { #introClose { min-height: 44px; } }
+#introPlain { text-decoration: underline; text-underline-offset: 3px; color: var(--accent); }
+.doom-spark .sp-s { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+.sp-ks { background: var(--accent) !important; width: 2px !important; height: 10px !important; vertical-align: -1px !important; }
+.sp-sw { display: inline-flex; gap: 2px; vertical-align: 0; }
+.sp-sw button { font: inherit; font-size: 12px; padding: 1px 7px; min-height: 24px; border-radius: 4px; background: transparent; border: 1px solid var(--line); color: var(--ink-2); }
+.sp-sw button[aria-pressed="true"] { background: var(--surface-2); color: var(--ink); border-color: var(--accent); }
+/* ровное превосходство угрозы без роста — спокойнее: тяжёлая рамка остаётся за ростом, ×10 и прорывом */
+.doom[data-level=warn][data-sev="1"]:not(.rising) { border-color: color-mix(in srgb, var(--serious) 30%, var(--line)); }
 
 </style>
 </head><body>
@@ -1138,8 +1151,14 @@ button.primary:focus-visible, .seg button.on:focus-visible, .views button.on:foc
     const waves = ms.flatMap(m => m.items.filter(x => x.k === "bankrupt"));
     if (waves.length) { const w = waves.sort((a, b) => b.n - a.n)[0]; add(w.end != null ? w.end : w.t, `Волна разорений: ${w.n} ${plural(w.n, "дом", "дома", "домов")}`, "wave",
       `Биржа отсеивает слабых: ${w.text.replace(/\.$/, "")}. Кто выжил — забирает их покупателей.`, "secChronicle", w.t); }
-    if (fr.length) { const e = fr[fr.length - 1]; add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
-      `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали. Смотрите, сколько угрозы это разбудило.`, "doom"); }
+    // глава глубины — числами, а не прилагательным: что выросло с тех пор, как игрок занял дом
+    const S = R.hist && R.hist.summary, sv = (k, t) => S && S[k] ? S[k][Math.min(t, S[k].length - 1)] : null;
+    const f1 = x => (Math.round(x * 10) / 10).toLocaleString("ru-RU");
+    if (fr.length) { const e = fr[fr.length - 1], s0 = R.meta.seat_at;
+      const fa = sv("frontier", s0), ta = sv("threat", s0), tb = sv("threat", e.t), ga = sv("guard", s0), gb = sv("guard", e.t);
+      add(e.t, `Глубже всех: ${lvl(e)}-й ярус`, "deep",
+        `Отряды дошли до ${lvl(e)}-го яруса — глубже за всю запись не бывали.` +
+        (fa != null && ta != null && tb != null ? ` С тех пор как игрок занял дом, фронтир ${Math.round(fa)} → ${lvl(e)}, угроза ${f1(ta)} → ${f1(tb)}, гарнизон ${f1(ga)} → ${f1(gb)}.` : ""), "doom"); }
     out.sort((a, b) => a.at - b.at);
     out.push({ at: R.meta.ticks, t: R.meta.ticks, title: "Чем кончилось", k: "end", note: "", look: "verdict" });
     return out;
@@ -1585,6 +1604,7 @@ function renderDoom() {
   el.classList.toggle("fresh", fresh);
   // насколько угроза сильнее гарнизона — ступенями: при ×5 и ×10 полоса заметно тяжелеет
   el.dataset.sev = fresh ? "0" : r1 == null ? "3" : r1 >= 10 ? "3" : r1 >= 5 ? "2" : r1 > 1 ? "1" : "0";
+  const fk = el.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.spark : null;
   el.innerHTML = `<h2 class="vh">Угроза городу</h2>` +
     (fresh ? `<div class="doom-alarm">■ Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""} — ${ago(since)}</div>` : "") +
     `<div class="doom-main">` +
@@ -1609,12 +1629,14 @@ function renderDoom() {
       })()}</div>` +
     `</div>` +
     `<p class="doom-why">Чем лучше город снабжает отряды, тем глубже они уходят — и тем сильнее просыпается подземелье. Прибыль у домов своя, риск — общий.</p>`;
+  if (fk) { const b = $(`[data-spark="${fk}"]`, el); if (b) b.focus({ preventScroll: true }); }
+  if (!el.dataset.sparkBound) { el.dataset.sparkBound = "1"; el.addEventListener("click", e => { const b = e.target.closest("[data-spark]"); if (b) { UI.sparkAll = b.dataset.spark === "all"; renderDoom(); storyRefocus(); } }); }
 }
 // год угрозы и гарнизона мелким графиком: видно, как долго тянется разрыв и где был прорыв
 function doomSpark() {
   const T = (META.full ? ST.cols.threat : ST.cols.known) || ST.cols.threat, G = ST.cols.guard, t = ST.cols.t, B = ST.cols.breaches;
   if (!T || !G || !t || t.length < 10) return "";
-  const j0 = lowerBound(t, t[t.length - 1] - 360), n = t.length - j0;
+  const j0 = UI.sparkAll ? 0 : lowerBound(t, t[t.length - 1] - 360), n = t.length - j0;
   if (n < 10) return "";
   const step = Math.max(1, Math.floor(n / 180)), W = 300, H = 34;
   let mx = 0;
@@ -1625,9 +1647,13 @@ function doomSpark() {
   const line = c => { const a = []; for (let i = j0; i < t.length; i += step) a.push(`${x(i)},${y(c[i])}`); a.push(`${x(t.length - 1)},${y(c[t.length - 1])}`); return a.join(" "); };
   let marks = "";
   if (B) for (let i = Math.max(j0, 1); i < t.length; i++) if (B[i] > B[i - 1]) marks += `<rect class="sp-b" x="${(+x(i) - 3).toFixed(1)}" y="0" width="6" height="${H}"></rect>`;
+  const seat = META.seat_at;          // вся запись: где игрок занял дом
+  if (UI.sparkAll && seat != null && seat > t[j0] && seat < t[t.length - 1]) { const i = lowerBound(t, seat); marks += `<line class="sp-s" x1="${x(i)}" x2="${x(i)}" y1="0" y2="${H}"></line>`; }
   return `<div class="doom-spark"><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">${marks}` +
     `<polyline class="sp-t" points="${line(T)}"></polyline><polyline class="sp-g" points="${line(G)}"></polyline></svg>` +
-    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${marks ? ` <i class="sp-kb"></i>прорыв` : ""} — за ${n > 300 ? "год" : num(t[t.length - 1] - t[j0]) + " дн."}</span></div>`;
+    `<span class="sp-cap"><i class="sp-kt"></i>угроза <i class="sp-kg"></i>гарнизон${/sp-b/.test(marks) ? ` <i class="sp-kb"></i>прорыв` : ""}${/sp-s/.test(marks) ? ` <i class="sp-ks"></i>игрок занял дом` : ""} — ` +
+    `<span class="sp-sw" role="group" aria-label="Период графика"><button type="button" data-spark="year" aria-pressed="${!UI.sparkAll}">за год</button>` +
+    `<button type="button" data-spark="all" aria-pressed="${!!UI.sparkAll}">вся запись</button></span></span></div>`;
 }
 // подсветка главы истории — снова после перерисовки (полоса угрозы пересобирается каждый опрос)
 function storyRefocus() {
@@ -1941,7 +1967,13 @@ function evItem(e, fresh) {
 }
 function renderEvents() {
   const list = ST.events.filter(e => e.lv >= UI.evLevel).slice(-300).reverse();
-  $("#events").innerHTML = list.length ? evRuns(list).join("") : `<li class="empty">пока тихо</li>`;
+  const ae = document.activeElement, ol = $("#events");
+  const fid = ol.contains(ae) ? (ae.dataset.id || (ae.tagName === "SUMMARY" ? "summary:" + ae.closest("li").dataset.t : null)) : null;
+  ol.innerHTML = list.length ? evRuns(list).join("") : `<li class="empty">пока тихо</li>`;
+  if (fid) {
+    const again = fid.startsWith("summary:") ? $(`li[data-t="${fid.slice(8)}"] summary`, ol) : $(`.ref[data-id="${CSS.escape(fid)}"]`, ol);
+    if (again) again.focus({ preventScroll: true });
+  }
   evTabs();
 }
 // в «важном» подряд идущие разорения — одной строкой «волны» с раскрытием, иначе они
@@ -1961,17 +1993,32 @@ $("#shaft").addEventListener("keydown", e => {
 });
 function evRuns(list) {
   if (UI.evLevel < 2) return list.map(e => evItem(e));
-  const out = [];
+  // волна — как на вехах и в главах: 4 и больше разорений за 60 дней (одно правило на всё)
+  const bk = ST.events.filter(e => e.k === "bankrupt").sort((a, b) => a.t - b.t), wave = new Map();
+  for (let i = 0; i < bk.length; i++) {
+    let j = i; while (j + 1 < bk.length && bk[j + 1].t - bk[i].t <= 60) j++;
+    if (j - i + 1 >= 4) { for (let k = i; k <= j; k++) wave.set(bk[k].seq, i); i = j; }
+  }
+  const group = (run, title) => `<li data-t="${run[0].t}" data-t0="${run[run.length - 1].t}" class="lv2 k-bankrupt ev-run"><span class="t">${evDay(run[0].t)}</span><span class="x"><details>` +
+    `<summary>${title}</summary>` +
+    `<div class="ev-sub">${run.map(e => `<div><span class="t">${evDay(e.t)}</span> ${linkText(e.text, e.refs)}</div>`).join("")}</div></details></span></li>`;
+  const out = [], done = new Set();
   for (let i = 0; i < list.length; i++) {
+    const e = list[i];
+    if (e.k === "bankrupt" && wave.has(e.seq)) {
+      const w = wave.get(e.seq);
+      if (done.has(w)) continue;
+      done.add(w);
+      const run = list.filter(x => x.k === "bankrupt" && wave.get(x.seq) === w), n = run.length;
+      out.push(group(run, `Волна разорений: ${n} ${plural(n, "дом", "дома", "домов")} за ${num(run[0].t - run[n - 1].t + 1)} дн.`));
+      continue;
+    }
     let j = i;
-    while (list[i].k === "bankrupt" && j + 1 < list.length && list[j + 1].k === "bankrupt") j++;
+    while (e.k === "bankrupt" && j + 1 < list.length && list[j + 1].k === "bankrupt" && !wave.has(list[j + 1].seq)) j++;
     const n = j - i + 1;
-    if (n < 3) { out.push(evItem(list[i])); continue; }
-    const run = list.slice(i, j + 1), span = run[0].t - run[n - 1].t + 1;
-    out.push(`<li data-t="${run[0].t}" data-t0="${run[n - 1].t}" class="lv2 k-bankrupt ev-run"><span class="t">${evDay(run[0].t)}</span><span class="x"><details>` +
-      `<summary>${n} ${plural(n, "разорение", "разорения", "разорений")} подряд — за ${num(span)} дн.</summary>` +
-      `<div class="ev-sub">${run.map(e => `<div><span class="t">${evDay(e.t)}</span> ${linkText(e.text, e.refs)}</div>`).join("")}</div>` +
-      `</details></span></li>`);
+    if (n < 3) { out.push(evItem(e)); continue; }
+    const run = list.slice(i, j + 1);
+    out.push(group(run, `${n} ${plural(n, "разорение", "разорения", "разорений")} за ${num(run[0].t - run[n - 1].t + 1)} дн.`));
     i = j;
   }
   return out;
@@ -2038,7 +2085,7 @@ const COLS = {
     { k: "ind", l: "Отрасль" },
     { k: "lines", l: "Линии", w: 1, lo: 1, f: v => v.map(x => `${esc(x.n)} ${num(x.cap, 1)}`).join(", ") },
     { k: "cap", l: "Мощность", n: 1, f: v => num(v, 1) }, { k: "cash", l: "Касса", n: 1, f: compact },
-    { k: "owed", l: "Долг", n: 1, f: v => (v ? compact(v) : "—") }, { k: "age", l: "Возраст, дн.", n: 1, f: v => num(v) },
+    { k: "owed", l: "Долг", n: 1, lo: 1, f: v => (v ? compact(v) : "—") }, { k: "age", l: "Возраст, дн.", n: 1, lo: 1, f: v => num(v) },
   ],
   squads: [
     { k: "name", l: "Отряд", w: 1, f: (v, r) => ref(r.id, v) }, { k: "leader_name", l: "Вожак", lo: 1, f: (v, r) => ref(r.leader, v) },
@@ -2114,7 +2161,7 @@ function renderTable() {
   if (narrow && !(UI.showAll || {})[UI.tab] && total > 20) rows = rows.slice(0, 20);
   const body = rows.map(r => `<tr data-g="${r.g || ""}"${UI.tab === "market" && r.g === UI.good ? ' class="sel"' : ""}>` +
     cols.map(c => `<td class="${c.n ? "num" : ""}${c.w ? " wrap" : ""}${c.lo ? " lo" : ""}${c.lo2 ? " lo2" : ""}">${c.f ? c.f(r[c.k], r) : esc(r[c.k] ?? "—")}</td>`).join("") + "</tr>").join("");
-  $("#tableWrap").innerHTML = (rows.length ? `<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`) +
+  $("#tableWrap").innerHTML = (rows.length ? `<table${cols.length <= 3 ? ' class="short"' : ""}><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>` : `<div class="empty">пусто</div>`) +
     (rows.length < total ? `<button type="button" class="tbl-more" id="tblMore">Показать все ${total}</button>` : "");
   // телефон: второстепенные столбцы (стакан, вид) спрятаны — таблица не уезжает вбок
   // планшет (≤1000 px): прячется только стакан; телефон — все второстепенные
@@ -2205,6 +2252,8 @@ $("#drawer").addEventListener("keydown", e => {   // Tab по кругу вну�
   else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
 });
 $("#scrim").onclick = () => $("#drawerClose").click();
+// широкий экран: статьи денег раскрыты — карточка денег рядом с высокой шахтой не пустует
+if (matchMedia("(min-width: 1100px)").matches && $("#flowMore")) $("#flowMore").open = true;
 $("#drawerBack").onclick = () => { UI.drawer.pop(); const id = UI.drawer.pop(); if (id) openEntity(id, true); };
 document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) $("#drawerClose").click(); });
 
@@ -2559,7 +2608,7 @@ function renderHouse(h) {
         `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
         `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
         `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? num(l.cost, 2) : "—"} <span class="dim">(по завтрашним входам)</span></dd>` +
-        `<dt>прибыль</dt><dd><span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (сглажено)</dd>` +
+        `<dt>прибыль</dt><dd>${l.idle || !(l.rate > 0.005) ? `<span class="dim">${num(l.profit, 1)} в день — по прошлым продажам; линия стоит</span>` : `<span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (сглажено)`}</dd>` +
         `<dt>входы завтра</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
         `<div class="lev">${lev.length ? lev.map(([k, v]) => `<span class="tag mine">${LEVER_RU[k] ? LEVER_RU[k](v) : k}</span>`).join("")
           : `<span class="tag">как у бота</span>`}</div>` +
@@ -2810,14 +2859,18 @@ function bindIntro() {
         const b = e.target.closest("button[data-t]");
         if (!b) return;
         const c = ch.find(x => String(x.t) === b.dataset.t);
-        B.seek(+b.dataset.t); B.R.speed = "3";
-        if (c && c.at < B.R.meta.ticks) { B.R.stopAt = c.at; B.R.stopTitle = c.title; }
         closeIntro(); window.scrollTo(0, 0);
+        if (c) { STORY.on = true; B.seek(c.t); storyGo(c); }
       };
     });
   }
   $("#introClose").onclick = () => {
-    if (B && replay && STORY.ch.length) { closeIntro(); storyStart(); return; }
+    if (B && replay && STORY.ch.length) {
+      closeIntro();
+      const nx = STORY.started && storyNext();
+      if (nx) { STORY.on = true; storyGo(nx); } else storyStart();
+      return;
+    }
     if (B && replay && B.R.speed === "pause" && B.R.head < B.R.meta.ticks) B.R.speed = "3";
     closeIntro();
   };
@@ -2825,6 +2878,7 @@ function bindIntro() {
   if (plain) plain.onclick = () => { if (B.R.head < B.R.meta.ticks) B.R.speed = "3"; closeIntro(); };
   $("#btnHelp").onclick = () => {
     setView("world");
+    if (B && STORY.started && STORY.ch.length) { const nx = storyNext(); $("#introClose").textContent = nx ? `Продолжить историю: глава ${STORY.ch.indexOf(nx) + 1} из ${STORY.ch.length}` : `Смотреть историю: ${STORY.ch.length} глав`; }
     const pl = $("#introPlain");
     if (pl && B) pl.textContent = Math.abs(B.R.head - (META.seat_at != null ? META.seat_at : B.R.head)) <= 60 ? "или просто подряд" : `или продолжить с ${evDay(B.R.head)}`;
     $("#intro").hidden = false;
@@ -2846,7 +2900,7 @@ function bindIntro() {
 // переносит), встаёт на ней и подписывает, что случилось и куда смотреть; «Дальше» — к следующей
 const STORY = { on: false, ch: [], cur: null };
 const storyNext = () => STORY.ch.find(c => c.at > window.DOC_BACKEND.R.head + 1);
-function storyStart() { STORY.on = true; storyGo(STORY.ch[0]); }
+function storyStart() { STORY.on = true; STORY.started = true; storyGo(STORY.ch[0]); }
 function storyStop() {
   const had = $("#story").contains(document.activeElement);
   STORY.on = false; STORY.cur = null;
@@ -2856,10 +2910,12 @@ function storyStop() {
 function storyGo(c) {
   const B = window.DOC_BACKEND;
   if (!c) { storyStop(); return; }
-  STORY.cur = c;
+  STORY.cur = c; STORY.started = true; STORY.hl = null;
+  $$(".story-focus").forEach(x => x.classList.remove("story-focus", "still"));
   if (c.k === "end") {                               // конец — сразу к итогу
     B.seek(B.R.meta.ticks); B.R.stopAt = null; storyStop();
-    setTimeout(() => { const v = $("#verdict"); if (v) { v.scrollIntoView({ block: "start" }); v.focus && v.setAttribute("tabindex", "-1"); v.focus({ preventScroll: true }); } }, 900);
+    setTimeout(() => { const v = $("#verdict"); if (v) {
+      if (!$(".story-k", v)) v.insertAdjacentHTML("afterbegin", `<div class="story-k">Глава ${STORY.ch.length} из ${STORY.ch.length} · конец записи</div>`); v.scrollIntoView({ block: "start" }); v.focus && v.setAttribute("tabindex", "-1"); v.focus({ preventScroll: true }); } }, 900);
     return;
   }
   const gap = c.at - B.R.head;
@@ -2887,6 +2943,9 @@ function storyFocus(c) {
   if (c.k === "wave" || c.k === "breach")
     for (const li of $$("#events > li[data-t]")) { const t = +li.dataset.t, t0 = +(li.dataset.t0 || li.dataset.t); if (t >= (c.from != null ? c.from : c.at) - 3 && t0 <= c.at + 3 && li.classList.contains(c.k === "breach" ? "k-breach" : "k-bankrupt")) els.push(li); }
   els.forEach(x => x.classList.add("story-focus"));
+  // строки летописи — первую подсвеченную в окно (внутренняя прокрутка летописи тоже)
+  const li = els.find(x => x.tagName === "LI");
+  if (li) li.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
   setTimeout(() => els.forEach(x => x.classList.remove("story-focus")), 6000);
 }
 function storyRender(state) {
@@ -2998,14 +3057,17 @@ async function poll() {
       if (now - lastCharts > 700) { renderMultiples(); lastCharts = now; }
     }
     // под курсором таблица и карточка не перерисовываются: иначе клик уходит в пустоту
-    if (now - lastTable > 2500) {
-      lastTable = now;
-      if (UI.view === "house") loadHouse();
+    // и под фокусом клавиатуры тоже — иначе фокус падает на <body>; на паузе (день не сменился) — незачем
+    const inF = sel => { const el = $(sel); return !!el && el.contains(document.activeElement); };
+    const moved = ST.state.tick !== UI.lastPolledTick;
+    if (now - lastTable > 2500 && (moved || UI.forceTable)) {
+      lastTable = now; UI.lastPolledTick = ST.state.tick; UI.forceTable = false;
+      if (UI.view === "house") { if (!inF("#viewHouse")) loadHouse(); }
       else {
-        if (!UI.hoverTable) loadTable();
+        if (!UI.hoverTable && !inF("#tableWrap")) loadTable();
         loadDungeon(); loadFlows();
       }
-      if (!UI.hoverDrawer) refreshDrawer();
+      if (!UI.hoverDrawer && !inF("#drawer")) refreshDrawer();
     }
   } catch (e) {
     $("#tps").textContent = "нет связи с сервером…";
