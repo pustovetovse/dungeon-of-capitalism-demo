@@ -2061,7 +2061,7 @@ const ic = n => !n ? "" : `<svg class="ic" aria-hidden="true"><use href="#i-${n}
 const TILE_IC = { pop: "village", hunger: "bread", adv: "hooded-figure", squads: "three-friends", houses: "anvil",
   money: "two-coins" };
 const HTILE_IC = { "Капитал": "chest", "Место": "podium-winner", "Касса": "two-coins", "Долг": "wooden-sign",
-  "Мощность": "anvil-impact", "Политика": "quill-ink", "Порядки": "quill-ink" };
+  "Мощность": "anvil-impact", "Политика": "quill-ink", "Порядки": "quill-ink", "Ваши приказы": "quill-ink" };
 const TILES = [
   ["pop", "Горожан", s => num(s.pop), s => `мест в жилье ${num(s.housing)}`],
   ["hunger", "Голод", s => (s.hunger * 100).toFixed(0) + "%", s => {
@@ -2079,6 +2079,8 @@ const TILES = [
 const ask = (text, ok) => (window.DOC_ASK ? window.DOC_ASK(text, ok) : Promise.resolve(confirm(text)));
 // запись — о доме игрока (третье лицо); игра — о вашем доме
 const MINE = (rec, live) => (window.DOC_BACKEND ? rec : live);
+// слово мира для «бот не тронут» (решение автора, И-10): в игре дом ведёт приказчик по обычаю дома; запись — как была
+const BOTW = () => MINE("как у бота", "по обычаю дома");
 const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
 // изменение ряда за последние n дней (по рядам истории)
 function deltaCol(k, n) {
@@ -2138,7 +2140,7 @@ function renderDoom() {
   el.classList.toggle("rising", false);           // рост — стрелкой и словом, не цветом
   if (fresh && UI.saidBreach !== lastBreach) {       // о прорыве — вслух, один раз
     UI.saidBreach = lastBreach;
-    $("#announce").textContent = `Прорыв из подземелья${lost ? `: погибли ${lost} человек` : ""}.`;
+    $("#announce").textContent = `Прорыв из подземелья${lost ? `: ${diedAgree(`погибли ${lost}`)} ${plural(lost, "человек", "человека", "человек")}` : ""}.`;
   }
   el.classList.toggle("fresh", fresh);
   // насколько угроза сильнее гарнизона — ступенями: при ×5 и ×10 полоса заметно тяжелеет
@@ -3357,7 +3359,7 @@ const HP = {};                       // графики дома: капитал,
 const LEVER_RU = {
   markup: v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(Math.round(v * 100))}% к рынку`, cover: v => `запас ${num(v, 0)} дн.`,
   stock: v => `закупка впрок ×${num(v, 1)}`, wtp_ref: v => `сырьё не дороже ×${num(v, 1)} обычной цены`,
-  quality: v => `разборчивость ${num(v, 2)}`, grow: v => ({ hold: "мощность не трогать", down: "мощность только вниз", auto: "мощность как у бота" }[v] || v),
+  quality: v => `разборчивость ${num(v, 2)}`, grow: v => ({ hold: "мощность не трогать", down: "мощность только вниз", auto: "мощность " + BOTW() }[v] || v),
   switch: v => (v ? "менять отрасль в беде" : "отрасль не менять"), open: v => (v ? "открывать линии" : "линии не открывать"),
 };
 function bindViews() {
@@ -3515,26 +3517,27 @@ function renderHouse(h) {
       tile("Мощность", num(cap, 2), `размер мастерских · линий ${h.lines.length}`) +
       // игра: «Порядки» — ваши правила поверх бота; считаются и рычаги линий, не только дома (круг игры Г1)
       (() => { const nl = (h.lines || []).reduce((a, l) => a + Object.keys(l.levers || {}).length, 0), hl = Object.keys(h.house_levers || {});
-        return tile(window.DOC_BACKEND ? "Политика" : "Порядки", window.DOC_BACKEND ? "бот" : !h.player ? "бот" : nl || hl.length ? "ваши" : "как у бота",
+        return tile(window.DOC_BACKEND ? "Политика" : "Ваши приказы", window.DOC_BACKEND ? "бот" : !h.player ? "бот" : nl || hl.length ? "ваши" : "по обычаю",
           window.DOC_BACKEND ? "место игрока; рычаги не тронуты"
             : [hl.length ? hl.map(k => LEVER_RU[k] ? LEVER_RU[k](h.house_levers[k]) : k).join(", ") : "", nl ? `рычагов линий изменено: ${nl}` : "",
-               (h.queued || []).length ? `в очереди: ${(h.queued || []).length}, исполнится ${evDay(h.queued[0].at + 1)}` : ""].filter(Boolean).join("; ") || "приказов ещё не было: дом живёт по правилам бота"); })();
+               (h.queued || []).length ? `в очереди: ${(h.queued || []).length}, исполнится ${evDay(h.queued[0].at + 1)}` : ""].filter(Boolean).join("; ") || "приказов ещё не было: дом ведёт приказчик по обычаю дома"); })();
     const lsl = $("#hLines").scrollLeft;   // игра на телефоне: линии — каруселью, перерисовка не листает к первой
+    const capG = `<button type="button" class="linkish" data-gloss="Мощность">мощность</button>`;   // что это за число — в словаре (круг игры Г8)
     $("#hLines").innerHTML = h.lines.map(l => {
       const lev = Object.entries(l.levers || {});
       // состояние — знаком и цветом, как остальные статусы (круг игры Г3: «стоит» выглядело как «работает»)
       const stop = l.idle || !(l.rate > 0.005);
       return `<div class="lc"><h3><span>${esc(l.n)}</span><span class="tag ${stop ? "lc-stop" : "lc-run"}">${stop ? "▲ стоит" : "● работает"}</span></h3>` +
-        `<dl class="kv"><dt>выпуск</dt><dd>${l.idle ? `${esc(l.good_ru)}: 0 — линия стоит <span class="dim">(на ходу — ${num(l.rate, 2)} в день, мощность ${num(l.cap, 2)})</span>` : `${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})`}</dd>` +
-        `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
+        `<dl class="kv"><dt>выпуск</dt><dd>${l.idle ? `${esc(l.good_ru)}: 0 — линия стоит <span class="dim">(на ходу — ${num(l.rate, 2)} в день, ${capG} ${num(l.cap, 2)})</span>` : `${esc(l.good_ru)}, ${num(l.rate, 2)} в день на ходу (${capG} ${num(l.cap, 2)})`}</dd>` +
+        `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · ${l.cover >= 999 ? "склад не продаётся" : `запас ${num(l.cover, 1)} дн.`}</dd>` +
         `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
         `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? `${num(l.cost, 2)} <span class="dim">(по сырью на завтра)</span>` : l.idle ? `— <span class="dim">(линия стоит, сырьё не берёт)</span>` : "—"}</dd>` +
-        `<dt>прибыль</dt><dd>${l.idle || !(l.rate > 0.005) ? `<span class="dim">сейчас 0 — линия стоит; до остановки — ${num(l.profit, 1)} в день</span>` : `<span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (в среднем)`}</dd>` +
-        `<dt>входы завтра</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
+        `<dt>прибыль</dt><dd>${l.idle || !(l.rate > 0.005) ? `<span class="dim">сейчас 0 — линия стоит; до остановки — ${num(l.profit, 1)} в день</span>` : `<span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (в среднем)${l.profit_now != null && Math.abs(l.profit_now - l.profit) >= 0.5 ? `; <span class="dim">по нынешним ценам и продажам ≈</span> <span class="${l.profit_now > 0 ? "up" : l.profit_now < 0 ? "down" : ""}">${num(l.profit_now, 1)}</span>` : ""}`}</dd>` +
+        `<dt>сырьё на 1 шт.</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
         `<div class="lev">${lev.length ? lev.map(([k, v]) => `<span class="tag mine">${LEVER_RU[k] ? LEVER_RU[k](v) : k}</span>`).join("")
-          : `<span class="tag">как у бота</span>`}` +
+          : `<span class="tag">${BOTW()}</span>`}` +
           // приказ в очереди по этой линии — сразу на карточке, а не через день (круг игры Г3)
-          (h.queued || []).filter(o => o.args && o.args.trade === l.t).map(o => `<span class="tag lc-q">◇ в очереди: ${o.kind === "lever" ? (o.args.value == null ? "как у бота" : LEVER_RU[o.args.key] ? LEVER_RU[o.args.key](o.args.value) : o.args.key) : o.kind === "build" ? "достроить" : "срезать"}</span>`).join("") + `</div>` +
+          (h.queued || []).filter(o => o.args && o.args.trade === l.t).map(o => `<span class="tag lc-q">◇ в очереди: ${o.kind === "lever" ? (o.args.value == null ? BOTW() : LEVER_RU[o.args.key] ? LEVER_RU[o.args.key](o.args.value) : o.args.key) : o.kind === "build" ? "достроить" : "срезать"}</span>`).join("") + `</div>` +
         (h.player ? `<div class="lc-act"><button type="button" data-policy="${l.t}">${window.DOC_BACKEND ? "Рычаги линии" : "Настроить"}</button></div>` : "") + `</div>`;
     }).join("");
     if (lsl) $("#hLines").scrollLeft = lsl;
@@ -3566,11 +3569,16 @@ function renderHouse(h) {
   const TN = Object.fromEntries((h.lines || []).map(l => [l.t, l.n]));
   const tn = t => esc(TN[t] || t);
   const qd = h.queued || [];   // в очереди (игра): исполнятся в начале следующего дня, до того — «Отменить»
-  $("#hOrders").innerHTML = h.orders.length || qd.length ? `<table><thead><tr><th>День</th><th>Приказ</th><th>Итог</th></tr></thead><tbody>` +
-    qd.slice().reverse().concat(h.orders.slice().reverse()).map(o => {
+  // отменённые — строкой «✕ отменён» (решение автора, И-16в): стол приказов отмену не пишет (переигровка её не видит),
+  // поэтому помнит страница — до перезагрузки
+  const cx = (UI.cancelled || []).filter(o => o.house === h.id);
+  const done = h.orders.concat(cx).sort((x, y) => (x.cx != null ? x.cx : x.t) - (y.cx != null ? y.cx : y.t));
+  $("#hOrders").innerHTML = done.length || qd.length ? `<table><thead><tr><th>День</th><th>Приказ</th><th>Итог</th></tr></thead><tbody>` +
+    qd.slice().reverse().concat(done.reverse()).map(o => {
       const a = o.args || {};
-      const what = o.kind === "lever" ? `${a.trade ? tn(a.trade) + ": " : ""}${a.value == null ? `${esc(a.key)} — как у бота` : (LEVER_RU[a.key] ? LEVER_RU[a.key](a.value) : esc(a.key))}`
+      const what = o.kind === "lever" ? `${a.trade ? tn(a.trade) + ": " : ""}${a.value == null ? `${esc(((LEVERS.find(l => l.key === a.key) || {}).label || a.key).replace(/\s*\(.*\)$/, "").replace(/^./, c => c.toLowerCase()))} — ${BOTW()}` : (LEVER_RU[a.key] ? LEVER_RU[a.key](a.value) : esc(a.key))}`
         : o.kind === "build" ? `${tn(a.trade)} +${num(a.add, 2)}` : o.kind === "cut" ? `${tn(a.trade)} до ${num(a.cap, 2)}` : "";
+      if (o.cx != null) return `<tr><td>${evDay(o.cx)}</td><td>${KIND[o.kind] || o.kind}${what ? " · " + what : ""}</td><td><span class="st">✕ отменён</span></td></tr>`;
       if (o.queued && o.t == null) return `<tr><td>${evDay(o.at + 1)}</td><td>${KIND[o.kind] || o.kind}${what ? " · " + what : ""}</td><td><span class="st">◇ в очереди</span> <button type="button" class="linkish" data-ocancel="${o.n}">Отменить</button></td></tr>`;
       // игра: день исполнения — тот же, что обещан в очереди («в начале дня» после приказа), а не день отдачи (круг Г2)
       return `<tr><td>${evDay(window.DOC_BACKEND ? o.t : o.t + 1)}</td><td>${KIND[o.kind] || o.kind}${what ? " · " + what : ""}</td><td>${o.ok ? `<span class="st good">● исполнен</span>` : `<span class="st serious">▲ ${esc(o.why)}</span>`}</td></tr>`;
@@ -3608,15 +3616,21 @@ async function checkAway() {
     `<dt>место среди домов</dt><dd>${num(r.pctl0, 0)}% → ${num(r.pctl1, 0)}% домов беднее` +
       (Math.round(r.pctl1) !== Math.round(r.pctl0) ? ` <span class="st ${r.pctl1 > r.pctl0 ? "good" : "serious"}">${r.pctl1 > r.pctl0 ? "▲ выше" : "▼ ниже"}</span>` : "") + `</dd>` +
     `<dt>касса</dt><dd>${compact(r.cash0)} → ${compact(r.cash1)}</dd>` +
+    // игра: отстали — почему (линии, что стояли за это время, и приказы, что держат цену; решение автора, И-15а)
+    ((() => { const lag = r.pctl1 < r.pctl0 - 2 || (r.median0 != null && (r.wealth1 - r.wealth0) < (r.median1 - r.median0));
+      const c = lag && window.DOC_LAG ? window.DOC_LAG(UI.houseData || {}, r.idle) : "";
+      return c ? `<dt>почему</dt><dd>${esc(c.replace(/^Причина: /, ""))}</dd>` : ""; })()) +
     ((r.goods || []).length ? `<dt>цены ваших товаров</dt><dd>${r.goods.map(g => `${esc(g.g)} ${num(g.px0, 2)} → ${num(g.px1, 2)}`).join("; ")}</dd>` : "") +
     (r.orders.length ? `<dt>приказов исполнено</dt><dd>${r.orders.filter(o => o.ok).length} из ${r.orders.length}</dd>` : "") +
     (r.town ? `<dt>город</dt><dd>внизу погибли ${num(r.town.fallen)}${r.town.mine_dead ? `, из них с вашим снаряжением — ${num(r.town.mine_dead)}` : ""}` +
       `${r.town.breaches ? `; прорывов — ${num(r.town.breaches)}` : ""}; фронтир ${r.town.front0}-й → ${r.town.front1}-й` +
       (r.town.threat0 != null ? `; угроза по вестям ${f1n(r.town.threat0)} → ${f1n(r.town.threat1)}` : "") + `</dd>` : "") + `</dl>` +
-    (r.journal.length ? `<h3>Что делала политика и что случилось</h3><ul class="hist">${r.journal.slice(-12).reverse().map(([t, x]) => `<li><span class="t">${evDay(t)}</span><span>${esc(x)}</span></li>`).join("")}</ul>` : "") +
+    (r.journal.length ? `<h3>${MINE("Что делала политика", "Что делал приказчик")} и что случилось</h3><ul class="hist">${r.journal.slice(-12).reverse().map(([t, x]) => `<li><span class="t">${evDay(t)}</span><span>${esc(x)}</span></li>`).join("")}</ul>` : "") +
     (r.world.length ? `<h3>В мире</h3><ul class="hist">${r.world.slice().reverse().map(e => `<li><span class="t">${evDay(e.t)}</span><span>${linkText(e.text, e.refs)}</span></li>`).join("")}</ul>` : "");
   $("#awayCard").hidden = false;
   $("#awayOk").onclick = () => { $("#awayCard").hidden = true; writeSeen(ST.state.tick); };
+  // показанная сводка — уже прочитанная: без «Понятно» следующий вход считал от старой отметки — «180 дн.», «270 дн.» (круг игры Г9)
+  writeSeen(ST.state.tick);
   if (UI.view !== "house") $("#choosebar").hidden = true;
 }
 
@@ -3668,21 +3682,21 @@ function openPolicy(h, t) {
     const shown = mine ? cur : (bv != null ? bv : blank ? "" : (lv.def != null ? lv.def : ""));
     const ctrl = lv.type === "sel"
       ? `<select data-k="${lv.key}"${ro ? " disabled" : ""}>${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>`
-      : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${typeof shown === "number" ? +shown.toFixed(2) : shown}"${blank ? ` placeholder="например, ${num(lv.def === 0 ? 0.1 : lv.def, 2)}"` : ""}${ro ? " disabled" : ""}>`;
+      : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${typeof shown === "number" ? +shown.toFixed(2) : shown}"${blank ? ` placeholder="${num(lv.def === 0 ? 0.1 : lv.def, 2)}"` : ""}${ro ? " disabled" : ""}>`;
     // запись: рычаг — значением, без полей и кнопок (менять нечего)
     if (noOrders) return `<div class="pl ro" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
       `<span class="pl-val">${mine ? lv.fmt(cur) : "как у бота" + (bv != null && !/как у бота/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : lv.botText ? ": " + lv.botText : "")}</span></div></div>`;
     return `<div class="pl" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
-      `<span class="tag${mine ? " mine" : ""}">${mine ? "ваше: " + lv.fmt(cur) : "как у бота" + (bv != null && !/как у бота/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : bv == null && lv.botText ? ": " + lv.botText : "")}</span></div>` +
+      `<span class="tag${mine ? " mine" : ""}">${mine ? "ваше: " + lv.fmt(cur) : BOTW() + (bv != null && !/как у бота|по обычаю/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : bv == null && lv.botText ? ": " + lv.botText : "")}</span></div>` +
       `<div class="pl-ctrl">${ctrl}<button type="button" data-act="set"${ro ? " disabled" : ""}>Приказать</button>` +
-      `<button type="button" data-act="bot" class="ghost"${ro || !mine ? " disabled" : ""}>Как у бота</button></div>` +
+      `<button type="button" data-act="bot" class="ghost"${ro || !mine ? " disabled" : ""}>${MINE("Как у бота", "По обычаю дома")}</button></div>` +
       `<ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
   };
   const hrow = lv => {
     const cur = (h.house_levers || {})[lv.key];
     const shown = cur === undefined ? true : cur;
     if (noOrders) return `<div class="pl ro"><div class="pl-head"><b>${lv.label}</b><span class="pl-val">${(lv.opts.find(([v]) => v === shown) || [0, "как у бота"])[1]}</span></div></div>`;
-    return `<div class="pl" data-hk="${lv.key}"><div class="pl-head"><b>${lv.label}</b><span class="tag${cur !== undefined ? " mine" : ""}">${cur !== undefined ? "ваше" : "как у бота"}</span></div>` +
+    return `<div class="pl" data-hk="${lv.key}"><div class="pl-head"><b>${lv.label}</b><span class="tag${cur !== undefined ? " mine" : ""}">${cur !== undefined ? "ваше" : BOTW()}</span></div>` +
       `<div class="pl-ctrl"><select data-hk="${lv.key}"${ro ? " disabled" : ""}>${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>` +
       `<button type="button" data-act="hset"${ro ? " disabled" : ""}>Приказать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`;
   };
@@ -3694,7 +3708,7 @@ function openPolicy(h, t) {
     `<h3>Разовые действия</h3>` +
     `<div class="pl" data-k="build"><div class="pl-head"><b>Достроить мощность</b><span class="tag">сейчас ${num(l.cap, 2)}</span></div>` +
     `<div class="pl-ctrl"><input type="number" data-k="build" min="0.05" max="5" step="0.05" value="0.2"${ro ? " disabled" : ""}><button type="button" data-act="build"${ro ? " disabled" : ""}>Строить</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>` +
-    `<div class="pl" data-k="cut"><div class="pl-head"><b>Срезать мощность до</b><span class="tag">0 — закрыть линию</span></div>` +
+    `<div class="pl" data-k="cut"><div class="pl-head"><b>Срезать мощность до</b><span class="tag">0 — линия закроется</span></div>` +
     `<div class="pl-ctrl"><input type="number" data-k="cut" min="0" max="${l.cap}" step="0.05" value="${Math.max(0, l.cap * 0.8).toFixed(2)}"${ro ? " disabled" : ""}><button type="button" data-act="cut"${ro ? " disabled" : ""}>Срезать</button></div><ul class="pl-prev"></ul><div class="pl-res"></div></div>`) +
     `<h3>Рычаги дома</h3>` + HOUSE_LEVERS_UI.map(hrow).join("");
   showDrawer();
@@ -3702,7 +3716,10 @@ function openPolicy(h, t) {
 }
 const parseVal = (el) => {
   if (el.tagName === "SELECT") return el.value === "true" ? true : el.value === "false" ? false : el.value;
-  const v = parseFloat(String(el.value).trim().replace(",", ".").replace("−", "-"));   // игра: поле текстовое, запятая — как в тексте
+  // игра: поле текстовое, запятая — как в тексте; число целиком, а не начало строки (круг игры Г9: «2,,5» молча было ×2)
+  const t = String(el.value).trim().replace(",", ".").replace("−", "-");
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)$/.test(t)) return null;
+  const v = parseFloat(t);
   return Number.isNaN(v) ? null : v;
 };
 let prevTimer = null;
@@ -3737,7 +3754,7 @@ async function previewRow(row) {
   // неверное число — «Приказать» недоступна и прикидка гаснет, пока не исправят (круг игры Г6)
   if (!window.DOC_BACKEND && !UI.panel.ro) $$("button[data-act]", row).forEach(b => { if (b.dataset.act !== "bot") b.disabled = !!bad; });   // запись — только смотреть: кнопки там выключены всегда
   $(".pl-prev", row) && $(".pl-prev", row).classList.toggle("stale", !!bad);
-  if (bad) { $(".pl-res", row).innerHTML = `<span class="st serious">▲ ${bad}</span>`; return; }
+  if (bad) { row._pseq = (row._pseq || 0) + 1; $(".pl-res", row).innerHTML = `<span class="st serious">▲ ${bad}</span>`; $(".pl-prev", row).innerHTML = ""; return; }   // прикидка старого числа под ошибкой — неправда (круг игры Г9)
   else if (/^▲ (число|наценка|введите)/.test($(".pl-res", row).textContent)) $(".pl-res", row).innerHTML = "";
   const q = `/api/preview?house=${encodeURIComponent(P.house)}&key=${k}&value=${encodeURIComponent(JSON.stringify(val))}` +
     (row.dataset.hk ? "" : `&trade=${encodeURIComponent(P.trade)}`);
@@ -3750,10 +3767,14 @@ async function previewRow(row) {
 document.addEventListener("click", async e => {
   const b = e.target.closest("[data-ocancel]"); if (!b || window.DOC_BACKEND) return;
   b.disabled = true;
+  // что отменяем — до отмены (в UI.houseData очереди может ещё не быть: приказ только что отдан из ящика)
+  const q = ((await api("/api/myhouse").catch(() => null) || {}).queued || []).find(o => o.n === +b.dataset.ocancel);
   const r = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ cancel: +b.dataset.ocancel, token: TOKEN }) }).then(x => x.json()).catch(() => ({ error: "нет связи" }));
   const res = b.closest(".pl-res");
-  if (r.cancelled) { if (res) res.innerHTML = `<span class="st">✕ отменён — дом живёт как прежде</span>`; toast("Приказ отменён"); }
+  if (r.cancelled) {
+    if (q) (UI.cancelled = UI.cancelled || []).push({ ...q, cx: ST.state ? ST.state.tick : 0 });
+    if (res) res.innerHTML = `<span class="st">✕ отменён — дом живёт как прежде</span>`; toast("Приказ отменён"); }
   else { if (res) res.innerHTML = `<span class="st serious">▲ ${esc(r.error || "не отменён")}</span>`; else toast(r.error || "не отменён"); }
   renderHouse(await api("/api/myhouse"));
 });
@@ -3799,17 +3820,19 @@ function bindPolicy() {
     const bad = ["set", "hset", "build", "cut"].includes(act) ? badRange($("input, select", row), val) : "";
     if (bad) { $(".pl-res", row).innerHTML = `<span class="st serious">▲ ${bad}</span>`; return; }
     if (act === "set") sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: val }, row);
-    if (act === "bot") sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: null }, row);
+    if (act === "bot") { $(".pl-prev", row).innerHTML = `<li>со следующего дня — по обычаю дома: приказчик решает сам</li>`; sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: null }, row); }
     if (act === "hset") sendOrder("lever", { trade: null, key: row.dataset.hk, value: val }, row);
     // разовые действия не отменить после исполнения: спросить с последствием (оба оценщика игры, круг Г1)
     if (act === "build" && await ask(`Достроить мощность на ${num(val, 2)}? Деньги уйдут на стройку насовсем; нужны камень и лес. До начала дня приказ можно отменить.`, "Достроить"))
       sendOrder("build", { trade: UI.panel.trade, add: val }, row);
     // сколько капитала уносит срез: мастерские в капитале — по цене стройки (круг игры Г7)
     const cl = ((UI.houseData && UI.houseData.lines) || []).find(l => l.t === UI.panel.trade);
-    const gone = cl && META && META.expand_cost ? Math.round((cl.cap - (val < 0.05 ? 0 : val)) * META.expand_cost) : 0;
+    // порог закрытия — тот же, что у стола приказов (min_cap ядра): окно и прикидка говорят одно (круг игры Г8: 0,05 — «срезать», а линия закрылась бы)
+    const shut = val < ((META && META.min_cap) || 0.05);
+    const gone = cl && META && META.expand_cost ? Math.round((cl.cap - (shut ? 0 : val)) * META.expand_cost) : 0;
     const loss = gone > 0 ? ` Капитал уменьшится примерно на ${num(gone)}.` : "";
-    if (act === "cut" && await ask(val < 0.05 ? `Закрыть линию? Мастерские не вернуть: стройка не окупается обратно.${loss} Отменить можно до начала следующего дня.`
-      : `Срезать мощность${cl ? ` ${num(cl.cap, 2)} →` : " до"} ${num(val, 2)}?${loss} Стройку не вернуть. Отменить можно до начала следующего дня.`, val < 0.05 ? "Закрыть линию" : "Срезать"))
+    if (act === "cut" && await ask(shut ? `Закрыть линию${cl ? ` «${cl.n}» (${num(cl.cap, 2)} → 0)` : ""}? Мастерские не вернуть: стройка не окупается обратно.${loss} Отменить можно до начала следующего дня.`
+      : `Срезать мощность${cl ? ` ${num(cl.cap, 2)} →` : " до"} ${num(val, 2)}?${loss} Стройку не вернуть. Отменить можно до начала следующего дня.`, shut ? "Закрыть линию" : "Срезать"))
       sendOrder("cut", { trade: UI.panel.trade, cap: val }, row);
   });
 }
@@ -4190,8 +4213,16 @@ async function poll() {
     const inF = sel => { const el = $(sel); return !!el && el.contains(document.activeElement); };
     const moved = ST.state.tick !== UI.lastPolledTick;
     if (now - lastTable > 2500 && (moved || UI.forceTable)) {
+      const prevTick = UI.lastPolledTick;
       lastTable = now; UI.lastPolledTick = ST.state.tick; UI.forceTable = false;
-      if (UI.view === "house") { if (!inF("#viewHouse")) loadHouse(); }
+      if (UI.view === "house") {
+        const vh = $("#viewHouse"), typing = inF("#viewHouse") && /^(INPUT|SELECT|TEXTAREA)$/.test(document.activeElement.tagName);
+        if (!inF("#viewHouse")) loadHouse();
+        // фокус на кнопке дома (после ящика он возвращается на «Настроить»), а день прыгнул (прокрутка, догонка) — перерисовать
+        // с возвратом фокуса: иначе дом стоял на дне до прокрутки под итогом «90 дней спустя» (круг игры Г8)
+        else if (!typing && prevTick != null && Math.abs(ST.state.tick - prevTick) > 1) { const k = focusKey(vh); loadHouse().then(() => focusBack(vh, k)); }
+        else UI.forceTable = true;   // под фокусом — повторить, когда он уйдёт, а не ждать следующего дня
+      }
       else {
         if (!inF("#tableWrap") && !heldUnder("table", UI.hoverTable)) loadTable();
         loadDungeon(); loadFlows();
