@@ -899,7 +899,7 @@ dialog form.about-x button { min-width: 40px; min-height: 40px; font-size: 20px;
 .ev-ref[hidden] { display: none; }
 @media (pointer: coarse) { .ev-ref { min-height: 40px; } }
 .events li.empty { display: block; grid-column: 1 / -1; }
-.doom-verdict .trend { font-weight: 400; color: var(--ink-2); white-space: nowrap; }
+.doom-verdict .trend { font-weight: 400; color: var(--ink-2); white-space: nowrap; margin-left: .35em; }   /* без «·»: на телефоне строка начиналась с точки (круг Г7) */
 .about-body dl.gloss .hit { background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 4px; }
 .about-body dl.gloss dt:focus { outline: none; }
 @media (pointer: coarse) { .rb-legend .rb-keys { display: none; } }   /* клавиши — тем, у кого они есть */
@@ -2074,6 +2074,9 @@ const TILES = [
   ["houses", "Живых домов", s => num(s.houses), s => `разорились ${num(s.bankrupt)}`],
   ["money", "Деньги", s => compact(s.money), s => `казна ${compact(s.treasury)}`],
 ];
+// подтверждение: в игре — своё окно на странице (DOC_ASK, play.html), иначе — confirm() браузера. В iframe площадки
+// без allow-modals confirm() молча отвечает «нет», и кнопки перестали бы работать (И-12)
+const ask = (text, ok) => (window.DOC_ASK ? window.DOC_ASK(text, ok) : Promise.resolve(confirm(text)));
 // запись — о доме игрока (третье лицо); игра — о вашем доме
 const MINE = (rec, live) => (window.DOC_BACKEND ? rec : live);
 const plural = (n, one, few, many) => { const a = n % 10, b = n % 100; return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 12 || b > 14) ? few : many; };
@@ -2119,7 +2122,7 @@ function renderDoom() {
   const yr = thr > gd ? 1 - Math.pow(1 - (thr - gd) / thr / bd, 360) : 0;
   const risk = thr > gd ? `<button type="button" class="linkish" data-gloss="Риск прорыва" title="Риск растёт с разрывом, но не выше ~26% в год: прорыв — случай, а не срок">риск прорыва</button> — около ${Math.max(1, Math.round(yr * 100))}% в год` : "";
   // ход разрыва — своей стрелкой (▲ — знак тяжести, а не роста)
-  const way = trend === "up" ? ` <span class="trend">· ↗ разрыв растёт</span>` : trend === "down" ? ` <span class="trend">· ↘ разрыв сокращается</span>` : trend === "flat" ? ` <span class="trend">· → разрыв не меняется</span>` : "";
+  const way = trend === "up" ? ` <span class="trend">↗ разрыв растёт</span>` : trend === "down" ? ` <span class="trend">↘ разрыв сокращается</span>` : trend === "flat" ? ` <span class="trend">→ разрыв не меняется</span>` : "";
   // заголовок полосы — разрыв и его ход (меняется, когда меняется положение); цвет — по тому же числу
   const head = fresh ? ""        // о свежем прорыве уже говорит тревожная строка над полосой
     : gd >= thr ? `<span class="st good">● гарнизон держит</span>`
@@ -2241,7 +2244,7 @@ function buildHeader() {
   $("#btnNew").onclick = async () => {
     const seed = parseInt($("#seedInput").value, 10);
     if (Number.isNaN(seed)) return;
-    if (!confirm(`Начать новый мир с сидом ${seed}? Нынешний мир не сохраняется.`)) return;
+    if (!(await ask(`Начать новый мир с сидом ${seed}? Нынешний мир не сохраняется.`, "Новый мир"))) return;
     await control("new", null, { seed });
     await fullReload();
   };
@@ -2363,10 +2366,10 @@ function buildPxSeries() {
   } else {
     PX.main = ch.addSeries(LC.LineSeries, { color: css("--ink-2"), lineWidth: 2 });   // цена — мера, не «кто»: чернилами
   }
-  PX.vol = ch.addSeries(LC.HistogramSeries, { color: css("--ink-3"), priceFormat: { type: "volume" }, priceLineVisible: false }, 1);
+  PX.vol = ch.addSeries(LC.HistogramSeries, { color: css("--ink-3"), priceFormat: { type: "volume" }, priceLineVisible: false, lastValueVisible: false }, 1);   // метка последнего объёма ложилась на деления оси (круг Г7)
   const panes = ch.panes();
   if (panes[1]) { panes[0].setStretchFactor(3); panes[1].setStretchFactor(1); }
-  PX.vol.priceScale().applyOptions({ scaleMargins: { top: 0.1, bottom: 0.32 } });   // низ панели — под логотип TradingView
+  PX.vol.priceScale().applyOptions({ scaleMargins: { top: 0.18, bottom: 0.4 } });   // низ панели — под логотип TradingView
   const d = pxData();
   PX.main.setData(d.main);
   PX.vol.setData(d.vol);
@@ -3041,12 +3044,12 @@ async function openFallen() {
   $("#drawerBody").innerHTML = `<p class="hint">Кто погиб в походах к ${evDay(ST.state ? ST.state.tick : 0)}, новые сверху. Имя — карточка человека и его история.${top ? ` Больше всего — на ярусах: ${top}.` : ""}` +
     `${nm ? ` <span class="mine-k"><i class="mine-dot" aria-hidden="true"></i>${num(nm)} из них ${nm % 10 === 1 && nm % 100 !== 11 ? "нёс" : "несли"} ${MINE("снаряжение дома игрока", "ваше снаряжение")}.</span>` : ""}</p>` +
     (list.length ? `<ul class="hist fallen">` + list.map(x => `<li><span class="t">${evDay(x.t)}</span><span>${ref(x.id, x.name)}` +
-      `${x.rank ? ` <span class="dim">${esc(x.rank)}${x.trips != null ? `, походов ${x.trips}` : ""}</span>` : ""} — ${x.d ? `на ${x.d}-м ярусе` : "в походе"}${x.squad ? `, отряд ${ref(x.squad, x.sq || x.squad)}` : ""}${x.mine ? ` <span class="mine-tag"><i class="mine-dot" aria-hidden="true"></i>со снаряжением дома игрока</span>` : ""}</span></li>`).join("") + `</ul>`
+      `${x.rank ? ` <span class="dim">${esc(x.rank)}${x.trips != null ? `, походов ${x.trips}` : ""}</span>` : ""} — ${x.d ? `на ${x.d}-м ярусе` : "в походе"}${x.squad ? `, отряд ${ref(x.squad, x.sq || x.squad)}` : ""}${x.mine ? ` <span class="mine-tag"><i class="mine-dot" aria-hidden="true"></i>${MINE("со снаряжением дома игрока", "с вашим снаряжением")}</span>` : ""}</span></li>`).join("") + `</ul>`
       : `<p class="empty">к этому дню в походах никто не погиб</p>`);
 }
 document.addEventListener("click", e => { if (e.target.closest("[data-fallen]")) { e.preventDefault(); openFallen(); } });
 // одно Esc — один слой: карточка закрылась — вводная и история под ней остаются (круг 24)
-document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open")) { e.stopImmediatePropagation(); $("#drawerClose").click(); } });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && $("#drawer").classList.contains("open") && !document.querySelector("dialog[open]")) { e.stopImmediatePropagation(); $("#drawerClose").click(); } });
 
 async function openEntity(id, push) {
   UI.panel = null;
@@ -3280,7 +3283,7 @@ async function loadDungeon() {
     const sq = r.squads.slice(0, 12).map(s =>
       // отряда к этому дню уже нет (снимок ярусов старше): бледной точкой, с днём конца — карточка не спорит с шахтой
       (s.gone != null ? `<a class="ref sqdot gone${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · по снимку ярусов — ${s.phase}; отряда нет с ${evDay(s.gone)}" aria-label="${esc(s.name)}: по снимку — ${s.phase}, ${r.d}-й ярус; отряда нет с ${evDay(s.gone)}">${PHASE[s.phase] || "●"}</a>` :
-      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}${s.mine ? " · со снаряжением дома игрока" : ""}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}${s.mine ? ", со снаряжением дома игрока" : ""}">${PHASE[s.phase] || "●"}</a>`)).join("") +
+      `<a class="ref sqdot ph-${s.phase === "не вернулся" ? "lost" : "ok"}${s.mine ? " mine" : ""}" href="#${s.id}" data-id="${s.id}" title="${esc(s.name)} · ${s.size} чел. · ${s.phase} · ${backTxt(s.back)} · шансы ${pct0(s.p)}${s.mine ? " · " + MINE("со снаряжением дома игрока", "с вашим снаряжением") : ""}" aria-label="${esc(s.name)}: ${s.phase}, ${r.d}-й ярус, шансы вернуться ${pct0(s.p)}${s.mine ? ", " + MINE("со снаряжением дома игрока", "с вашим снаряжением") : ""}">${PHASE[s.phase] || "●"}</a>`)).join("") +
       (r.squads.length > 12 ? `<span class="more">+${r.squads.length - 12}</span>` : "");
     const odd = v => v == null ? "—" : (v < g.min_odds ? `<span class="st serious">▲${pct0(v)}</span>` : pct0(v));
     // глубже — темнее: шахта читается как спуск, а не как таблица
@@ -3389,7 +3392,10 @@ function housePlot(id, series, range) {
   const u = new uPlot({
     width: el.clientWidth || 300, height: 180,
     cursor: { drag: { x: true, y: false } },
-    scales: { x: { time: false }, y: range ? { range } : { range: (u, lo, hi) => [Math.min(0, lo), hi > 0 ? hi * 1.08 : 1] } },
+    // игра: капитал — по данным, а не от нуля (круг Г6: 1 277 → 1 288 на оси от нуля — ровная черта, прогресса не видно);
+    // запись — как была (от нуля: величина дома среди медианы)
+    scales: { x: { time: false }, y: range ? { range } : { range: (u, lo, hi) => (window.DOC_BACKEND || lo == null || hi == null ? [Math.min(0, lo), hi > 0 ? hi * 1.08 : 1]
+      : (pad => [Math.max(0, lo - pad), hi + pad])(Math.max((hi - lo) * 0.15, Math.abs(hi) * 0.02, 1))) } },
     // деления — по целым дням: в первые дни после выбора дома ось иначе повторяла «г.4 д.2» трижды (круг игры Г1)
     axes: [Object.assign({}, ax, { space: 90, incrs: [1, 2, 5, 10, 15, 30, 45, 90, 180, 360, 720, 1800, 3600], values: (u, vals) => vals.map(v => shortDay(Math.round(v))) }),
            Object.assign({}, ax, { size: 56, values: (u, vals) => vals.map(compact) })],
@@ -3413,7 +3419,7 @@ async function loadHouse() {
     $("#houseBody").hidden = true;
     $("#houseEmpty").hidden = false;
     if (!c.candidates.length || !c.choosing) {
-      $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выбор дома</h2><p>Кандидаты появятся, когда мир прогреется — с ${evDay(me.after)} (сейчас ${evDay(me.tick)}).</p></div>`;
+      $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выбор дома</h2><p>${window.DOC_BACKEND ? `Кандидаты появятся, когда мир прогреется — с ${evDay(me.after)} (сейчас ${evDay(me.tick)}).` : `Дома на выбор появятся, когда город проживёт первые годы, — к ${evDay(me.after)}.`}</p></div>`;
       return;
     }
     $("#houseEmpty").innerHTML = `<div class="empty-card"><h2>Выберите дом</h2><p>Три дома города, примерно равных по величине, но разных по ремеслу, мастерству и истории. ` +
@@ -3462,7 +3468,7 @@ function renderHouseRisk(h) {
     // те же слова, что у полосы угрозы на «Городе» («в 1,1 раза сильнее») — одна правда о главном (круг игры Г3)
     : `<span class="st serious">▲ ${r == null ? "угроза сильнее гарнизона — гарнизона нет" : r < 1.1 ? "угроза чуть выше гарнизона" : `угроза в ${(v => `${num(v, Number.isInteger(v) ? 0 : 1)} ${Number.isInteger(v) ? plural(v, "раз", "раза", "раз") : "раза"}`)(r >= 10 ? Math.round(r) : Math.round(r * 10) / 10)} сильнее гарнизона`}</span>`;
   const turns = (h.journal || []).filter(([, x]) => !/^за месяц/.test(x)).slice(-3).reverse();
-  el.innerHTML = `<div class="hrisk-city"><span class="hrisk-k">${ic("guarded-tower")}Город у ворот</span> ${st} · ` +
+  el.innerHTML = `<div class="hrisk-city"><span class="hrisk-k">${ic("guarded-tower")}Город у ворот</span> ${st}${gd < thr ? " — возможен прорыв в город" : ""} · ` +   // что это значит — здесь же (круг игры Г7)
       `угроза ${compact(thr)} против ${compact(gd)} · фронтир — ${s.frontier}-й ярус. ` +
       `<button type="button" class="linkish" id="hToDoom">к полосе угрозы</button></div>` +
     // игра: ваша доля риска — на экране, где игрок проводит время (оба оценщика игры, круг Г1), а не только в итоге
@@ -3522,8 +3528,8 @@ function renderHouse(h) {
         `<dl class="kv"><dt>выпуск</dt><dd>${l.idle ? `${esc(l.good_ru)}: 0 — линия стоит <span class="dim">(на ходу — ${num(l.rate, 2)} в день, мощность ${num(l.cap, 2)})</span>` : `${esc(l.good_ru)}, ${num(l.rate, 2)} в день (мощность ${num(l.cap, 2)})`}</dd>` +
         `<dt>продажи</dt><dd>${num(l.sold, 2)} в день · запас ${l.cover >= 999 ? "&gt;999" : num(l.cover, 1)} дн.</dd>` +
         `<dt>цена</dt><dd>${l.ask ? num(l.ask, 2) : "—"} · рынок ${num(l.mkt, 2)}</dd>` +
-        `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? num(l.cost, 2) : "—"} <span class="dim">(по завтрашним входам)</span></dd>` +
-        `<dt>прибыль</dt><dd>${l.idle || !(l.rate > 0.005) ? `<span class="dim">сейчас 0 — линия стоит; до остановки — ${num(l.profit, 1)} в день</span>` : `<span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (сглажено)`}</dd>` +
+        `<dt>себестоимость</dt><dd title="по выбору материалов на следующий день: материалы выбираются заново каждый день, цена выставлена по прежнему выбору">${l.cost ? `${num(l.cost, 2)} <span class="dim">(по сырью на завтра)</span>` : l.idle ? `— <span class="dim">(линия стоит, сырьё не берёт)</span>` : "—"}</dd>` +
+        `<dt>прибыль</dt><dd>${l.idle || !(l.rate > 0.005) ? `<span class="dim">сейчас 0 — линия стоит; до остановки — ${num(l.profit, 1)} в день</span>` : `<span class="${l.profit > 0 ? "up" : l.profit < 0 ? "down" : ""}">${num(l.profit, 1)}</span> в день (в среднем)`}</dd>` +
         `<dt>входы завтра</dt><dd>${l.inputs.length ? l.inputs.map(x => `${esc(x.g)} ${num(x.n, 2)}`).join(", ") : "—"}</dd></dl>` +
         `<div class="lev">${lev.length ? lev.map(([k, v]) => `<span class="tag mine">${LEVER_RU[k] ? LEVER_RU[k](v) : k}</span>`).join("")
           : `<span class="tag">как у бота</span>`}` +
@@ -3592,7 +3598,8 @@ async function checkAway() {
   if (Number.isNaN(last) || ST.state.tick - last < 7) return;
   const r = await api(`/api/since?t=${last}`);
   if (r.error) return;
-  const d = (a, b) => (b - a >= 0 ? "+" : "") + compact(b - a);
+  // приращение — тем же округлением, что и сами числа (круг Г7: «1 288 → 1 380 (+91,5)»)
+  const d = (a, b) => { const x = Math.abs(b - a) >= 10 ? Math.round(b - a) : b - a; return (x >= 0 ? "+" : "") + compact(x); };
   $("#awayCard").innerHTML = `<div class="card-head"><h2>Пока вас не было — ${num(r.days)} дн.</h2>` +
     `<div class="card-tools"><button type="button" id="awayOk">Понятно</button></div></div>` +
     `<dl class="kv"><dt>капитал</dt><dd>${compact(r.wealth0)} → ${compact(r.wealth1)} (${d(r.wealth0, r.wealth1)})` +
@@ -3601,7 +3608,7 @@ async function checkAway() {
     `<dt>место среди домов</dt><dd>${num(r.pctl0, 0)}% → ${num(r.pctl1, 0)}% домов беднее` +
       (Math.round(r.pctl1) !== Math.round(r.pctl0) ? ` <span class="st ${r.pctl1 > r.pctl0 ? "good" : "serious"}">${r.pctl1 > r.pctl0 ? "▲ выше" : "▼ ниже"}</span>` : "") + `</dd>` +
     `<dt>касса</dt><dd>${compact(r.cash0)} → ${compact(r.cash1)}</dd>` +
-    ((r.goods || []).length ? `<dt>цены моих товаров</dt><dd>${r.goods.map(g => `${esc(g.g)} ${num(g.px0, 2)} → ${num(g.px1, 2)}`).join("; ")}</dd>` : "") +
+    ((r.goods || []).length ? `<dt>цены ваших товаров</dt><dd>${r.goods.map(g => `${esc(g.g)} ${num(g.px0, 2)} → ${num(g.px1, 2)}`).join("; ")}</dd>` : "") +
     (r.orders.length ? `<dt>приказов исполнено</dt><dd>${r.orders.filter(o => o.ok).length} из ${r.orders.length}</dd>` : "") +
     (r.town ? `<dt>город</dt><dd>внизу погибли ${num(r.town.fallen)}${r.town.mine_dead ? `, из них с вашим снаряжением — ${num(r.town.mine_dead)}` : ""}` +
       `${r.town.breaches ? `; прорывов — ${num(r.town.breaches)}` : ""}; фронтир ${r.town.front0}-й → ${r.town.front1}-й` +
@@ -3642,6 +3649,7 @@ const HOUSE_LEVERS_UI = [
   { key: "open", label: "Новые линии своей отрасли", opts: [[true, "открывать, как бот"], [false, "не открывать"]] },
 ];
 function openPolicy(h, t) {
+  UI.houseData = h;   // свежий дом — и для слоя игры (приказы в очереди в ящике)
   const l = h.lines.find(x => x.t === t);
   if (!l) return;
   UI.drawer = [];                       // не карточка сущности: автообновление её не трогает
@@ -3650,13 +3658,17 @@ function openPolicy(h, t) {
   $("#drawerBack").hidden = true;
   const noOrders = META.orders === false;   // запись мира: смотреть можно, приказывать нельзя
   const ro = !META.control || noOrders;
+  UI.panel.ro = ro;
   const row = (lv, cur) => {
     const mine = cur !== undefined && cur !== null;
     const bv = lv.bot(h);
-    const shown = mine ? cur : (bv != null ? bv : (lv.def != null ? lv.def : ""));
+    // у бота нет числа (цена по запасу, потолок по марже) — поле пустое, а не «0»: иначе «Приказать» молча меняла правило бота
+    // на выдуманное число (круг игры Г7); пример — подсказкой в поле
+    const blank = !mine && bv == null && lv.def != null && !ro;
+    const shown = mine ? cur : (bv != null ? bv : blank ? "" : (lv.def != null ? lv.def : ""));
     const ctrl = lv.type === "sel"
       ? `<select data-k="${lv.key}"${ro ? " disabled" : ""}>${lv.opts.map(([v, s]) => `<option value="${v}"${v === shown ? " selected" : ""}>${s}</option>`).join("")}</select>`
-      : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${typeof shown === "number" ? +shown.toFixed(2) : shown}"${ro ? " disabled" : ""}>`;
+      : `<input type="number" data-k="${lv.key}" min="${lv.min}" max="${lv.max}" step="${lv.step}" value="${typeof shown === "number" ? +shown.toFixed(2) : shown}"${blank ? ` placeholder="например, ${num(lv.def === 0 ? 0.1 : lv.def, 2)}"` : ""}${ro ? " disabled" : ""}>`;
     // запись: рычаг — значением, без полей и кнопок (менять нечего)
     if (noOrders) return `<div class="pl ro" data-k="${lv.key}"><div class="pl-head"><b>${lv.label}</b>` +
       `<span class="pl-val">${mine ? lv.fmt(cur) : "как у бота" + (bv != null && !/как у бота/.test(lv.fmt(bv)) ? ": " + lv.fmt(bv) : lv.botText ? ": " + lv.botText : "")}</span></div></div>`;
@@ -3690,13 +3702,14 @@ function openPolicy(h, t) {
 }
 const parseVal = (el) => {
   if (el.tagName === "SELECT") return el.value === "true" ? true : el.value === "false" ? false : el.value;
-  const v = parseFloat(el.value);
+  const v = parseFloat(String(el.value).trim().replace(",", ".").replace("−", "-"));   // игра: поле текстовое, запятая — как в тексте
   return Number.isNaN(v) ? null : v;
 };
 let prevTimer = null;
 // число вне границ поля — сказать до прикидки и приказа, по-русски и с запятой (круг игры Г1: «▲ значение вне -0.5…1.0»)
 function badRange(inp, val) {
-  if (!inp || inp.type !== "number" || typeof val !== "number") return "";
+  if (!inp || (inp.type !== "number" && !inp.dataset.num) || (typeof val !== "number" && !inp.dataset.num)) return "";
+  if (val == null) return "введите число";
   const lo = inp.min !== "" ? +inp.min : null, hi = inp.max !== "" ? +inp.max : null;
   if (Number.isNaN(val)) return "введите число";
   // наценка — долей (0,10 = +10%): сказать это в ошибке (круг игры Г3: вводили «5», имея в виду 5%)
@@ -3711,13 +3724,26 @@ async function previewRow(row) {
   if (!P) return;
   const k = row.dataset.k || row.dataset.hk;
   const inp = $("input, select", row);
+  // пустое поле с примером (у бота нет числа) — ни ошибки, ни прикидки: ждём число игрока
+  if (inp && inp.tagName === "INPUT" && inp.placeholder && !inp.value.trim()) {
+    row._pseq = (row._pseq || 0) + 1;
+    if (!window.DOC_BACKEND && !UI.panel.ro) $$("button[data-act=set]", row).forEach(b => { b.disabled = true; });
+    $(".pl-prev", row).innerHTML = `<li>введите число — прикидка покажет, что изменится завтра</li>`;
+    if (/^▲ (число|наценка|введите)/.test($(".pl-res", row).textContent)) $(".pl-res", row).innerHTML = "";
+    return;
+  }
   const val = parseVal(inp);
   const bad = badRange(inp, val);
+  // неверное число — «Приказать» недоступна и прикидка гаснет, пока не исправят (круг игры Г6)
+  if (!window.DOC_BACKEND && !UI.panel.ro) $$("button[data-act]", row).forEach(b => { if (b.dataset.act !== "bot") b.disabled = !!bad; });   // запись — только смотреть: кнопки там выключены всегда
+  $(".pl-prev", row) && $(".pl-prev", row).classList.toggle("stale", !!bad);
   if (bad) { $(".pl-res", row).innerHTML = `<span class="st serious">▲ ${bad}</span>`; return; }
-  else if (/^▲ число/.test($(".pl-res", row).textContent)) $(".pl-res", row).innerHTML = "";
+  else if (/^▲ (число|наценка|введите)/.test($(".pl-res", row).textContent)) $(".pl-res", row).innerHTML = "";
   const q = `/api/preview?house=${encodeURIComponent(P.house)}&key=${k}&value=${encodeURIComponent(JSON.stringify(val))}` +
     (row.dataset.hk ? "" : `&trade=${encodeURIComponent(P.trade)}`);
+  const seq = row._pseq = (row._pseq || 0) + 1;   // ответ на старое значение не затирает новый
   const r = await api(q);
+  if (seq !== row._pseq) return;
   $(".pl-prev", row).innerHTML = (r.lines || []).map(s => `<li>${esc(s)}</li>`).join("");
 }
 // «Отменить» у приказа в очереди (ящик рычагов и «Журнал приказов»): до начала дня, когда он исполнится
@@ -3765,7 +3791,7 @@ function bindPolicy() {
     clearTimeout(prevTimer);
     prevTimer = setTimeout(() => previewRow(row), 250);
   });
-  body.addEventListener("click", e => {
+  body.addEventListener("click", async e => {
     const b = e.target.closest("button[data-act]");
     if (!b || !UI.panel) return;
     const row = b.closest(".pl"), act = b.dataset.act;
@@ -3776,10 +3802,14 @@ function bindPolicy() {
     if (act === "bot") sendOrder("lever", { trade: UI.panel.trade, key: row.dataset.k, value: null }, row);
     if (act === "hset") sendOrder("lever", { trade: null, key: row.dataset.hk, value: val }, row);
     // разовые действия не отменить после исполнения: спросить с последствием (оба оценщика игры, круг Г1)
-    if (act === "build" && confirm(`Достроить мощность на ${num(val, 2)}? Деньги уйдут на стройку насовсем; нужны камень и лес. До начала дня приказ можно отменить.`))
+    if (act === "build" && await ask(`Достроить мощность на ${num(val, 2)}? Деньги уйдут на стройку насовсем; нужны камень и лес. До начала дня приказ можно отменить.`, "Достроить"))
       sendOrder("build", { trade: UI.panel.trade, add: val }, row);
-    if (act === "cut" && confirm(val < 0.05 ? "Закрыть линию? Мастерские не вернуть: стройка не окупается обратно. До начала дня приказ можно отменить."
-      : `Срезать мощность до ${num(val, 2)}? Стройку не вернуть. До начала дня приказ можно отменить.`))
+    // сколько капитала уносит срез: мастерские в капитале — по цене стройки (круг игры Г7)
+    const cl = ((UI.houseData && UI.houseData.lines) || []).find(l => l.t === UI.panel.trade);
+    const gone = cl && META && META.expand_cost ? Math.round((cl.cap - (val < 0.05 ? 0 : val)) * META.expand_cost) : 0;
+    const loss = gone > 0 ? ` Капитал уменьшится примерно на ${num(gone)}.` : "";
+    if (act === "cut" && await ask(val < 0.05 ? `Закрыть линию? Мастерские не вернуть: стройка не окупается обратно.${loss} Отменить можно до начала следующего дня.`
+      : `Срезать мощность${cl ? ` ${num(cl.cap, 2)} →` : " до"} ${num(val, 2)}?${loss} Стройку не вернуть. Отменить можно до начала следующего дня.`, val < 0.05 ? "Закрыть линию" : "Срезать"))
       sendOrder("cut", { trade: UI.panel.trade, cap: val }, row);
   });
 }
